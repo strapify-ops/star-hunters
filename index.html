@@ -158,6 +158,9 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .ing:active { transform:scale(.85); }
 .flyer { position:fixed; width:42px; height:42px; z-index:60; pointer-events:none; transition:all .55s cubic-bezier(.5,-0.2,.6,1.2); }
 .flyer svg { width:100%; height:100%; }
+.dragGhost { position:fixed; transform:translate(-50%,-50%); pointer-events:none; z-index:200; filter:drop-shadow(0 5px 7px rgba(0,0,0,.45)); animation:grab .15s; }
+@keyframes grab { from{transform:translate(-50%,-50%) scale(.7)} to{transform:translate(-50%,-50%) scale(1.1)} }
+.dragGhost svg { width:100%; height:100%; }
 .heart { position:fixed; font-size:26px; z-index:60; pointer-events:none; animation:heartup 1.2s ease-out forwards; }
 @keyframes heartup { 0%{transform:scale(.4);opacity:1} 100%{transform:translateY(-90px) scale(1.4);opacity:0} }
 
@@ -211,6 +214,33 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .voiceRow.sel { border-color:#fde047; background:rgba(253,224,71,.22); }
 .voiceRow .vl { opacity:.7; font-size:12px; }
 
+/* shop */
+#shopGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+.shopCard { border-radius:18px; padding:12px 8px 10px; background:rgba(255,255,255,.13); text-align:center; position:relative; border:3px solid transparent; }
+.shopCard .sIco { font-size:40px; display:block; }
+.shopCard .sName { font-weight:900; font-size:13px; margin:2px 0 6px; }
+.shopCard .sBuy { border:none; border-radius:14px; padding:7px 12px; font-weight:900; font-size:13px; color:#fff;
+  background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 3px 0 rgba(0,0,0,.25); }
+.shopCard .sBuy:active { transform:translateY(2px); }
+.shopCard.owned { border-color:#4ade80; }
+.shopCard .ownedTag { color:#4ade80; font-weight:900; font-size:13px; padding:7px 0; }
+.shopCard .sPack { display:flex; gap:3px; justify-content:center; margin-bottom:4px; flex-wrap:wrap; }
+.shopCard .sPack svg { width:22px; height:22px; }
+
+/* jump */
+#jumpWrap { position:relative; width:100%; max-width:480px; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+#jumpCanvas { display:block; width:100%; touch-action:none; }
+#jumpOverlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(26,11,61,.72); color:#fff; text-align:center; gap:10px; }
+#jumpOverlay.hidden { display:none; }
+#jumpOverlay h3 { font-size:26px; }
+#jumpOverlay button { border:none; border-radius:18px; padding:12px 26px; font-size:18px; font-weight:900; color:#fff;
+  background:linear-gradient(135deg,#4ade80,#0ea5e9); box-shadow:0 5px 0 rgba(0,0,0,.3); }
+.stickTray { display:flex; gap:7px; width:100%; overflow-x:auto; padding:6px 2px; -webkit-overflow-scrolling:touch; }
+.stickTray .st { flex:0 0 auto; width:52px; height:52px; border-radius:14px; border:3px solid transparent; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; }
+.stickTray .st svg { width:40px; height:40px; }
+.stickTray .st.sel { border-color:#fde047; background:rgba(253,224,71,.3); }
+
 .burst { position:fixed; pointer-events:none; font-size:30px; animation:burstup 1s forwards; z-index:99; font-weight:900; }
 @keyframes burstup { 0%{transform:scale(.3);opacity:1} 100%{transform:scale(1.9) translateY(-80px);opacity:0} }
 #confetti { position:fixed; inset:0; pointer-events:none; z-index:98; }
@@ -240,8 +270,24 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <button class="mcard c2" onclick="startLetters()"><span class="mi">🔤</span>Letter Zap</button>
       <button class="mcard c5" onclick="startCount()"><span class="mi">🔢</span>Counting</button>
       <button class="mcard c6" onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
+      <button class="mcard c2" onclick="startJump()"><span class="mi">🦘</span>Jump &amp; Run</button>
+      <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
       <button class="mcard c7" onclick="go('pet')"><span class="mi" id="miPet"></span>Boba Buddy</button>
     </div>
+  </div>
+
+  <!-- SHOP -->
+  <div class="screen" id="scr-shop">
+    <h2>🎁 Sticker &amp; Dress-Up Shop</h2>
+    <p class="sub">Spend your ⭐ stars on outfits, wands and sticker packs!</p>
+    <div id="shopGrid"></div>
+  </div>
+
+  <!-- JUMP -->
+  <div class="screen" id="scr-jump">
+    <h2>🦘 Jump &amp; Run</h2>
+    <p class="sub" id="jumpHint">Tap the screen to JUMP over the demons and silly things!</p>
+    <div id="jumpWrap"><canvas id="jumpCanvas"></canvas><div id="jumpOverlay"></div></div>
   </div>
 
   <!-- DRESS UP -->
@@ -261,6 +307,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <div id="paintLines"></div>
     </div>
     <div id="paintTools"></div>
+    <div class="stickTray" id="paintStickers"></div>
     <button class="bigbtn green" onclick="paintDone()">✨ Finished! +3⭐</button>
   </div>
 
@@ -376,7 +423,18 @@ S.outfits = S.outfits ?? [];
 while(S.outfits.length < GIRLS.length) S.outfits.push(JSON.parse(JSON.stringify(DEF_OUTFITS[S.outfits.length])));
 S.music = S.music ?? true;
 S.voiceURI = S.voiceURI ?? null;
+S.owned = S.owned ?? {};
+S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs'];
+S.owned.acc = S.owned.acc ?? ['crown','bow','catEars','starPin','glasses','necklace','mic','sword','wings'];
+S.owned.stickers = S.owned.stickers ?? ['heart','star','rainbow','flower'];
 function save(){ localStorage.setItem('starHunters2', JSON.stringify(S)); }
+function owns(cat,id){ return S.owned[cat].includes(id); }
+function buy(cat,id,cost){
+  if(owns(cat,id)) return true;
+  if(S.stars<cost){ sNo(); say('You need more stars! Play games to earn them!'); return false; }
+  S.stars-=cost; S.owned[cat].push(id); save(); updStars(); sWin(); confettiBurst();
+  return true;
+}
 
 function $(id){ return document.getElementById(id); }
 function shuffle(a){ return a.sort(()=>Math.random()-.5); }
@@ -548,12 +606,29 @@ function girlSVG(c){
     s+=`<path d="M52 92 Q46 24 100 24 Q154 24 148 92 L156 206 Q160 220 148 218 Q154 232 140 228 Q144 242 128 234 L126 150 L74 150 L72 234 Q56 242 60 228 Q46 232 52 218 Q40 220 44 206 Z" fill="${hc}"/>`;
     if(!c.lineart) s+=`<path d="M60 110 Q52 170 56 212 M140 110 Q148 170 144 212" stroke="rgba(255,255,255,.4)" stroke-width="3" fill="none"/>`;
   }
-  // legs + shoes
-  s+=`<rect x="84" y="192" width="11" height="52" rx="5.5" fill="${sk}"/><rect x="105" y="192" width="11" height="52" rx="5.5" fill="${sk}"/>`;
-  s+=`<ellipse cx="88" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/><ellipse cx="112" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/>`;
-  // OUTFIT
   const o=c.outfit;
-  if(o==='idol'){
+  // legs + shoes (mermaid gets a tail instead)
+  if(o==='mermaid'){
+    s+=`<path d="M82 176 Q100 168 118 176 Q136 214 116 240 Q140 246 128 260 Q112 254 100 248 Q88 254 72 260 Q60 246 84 240 Q64 214 82 176 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M90 196 Q100 200 110 196 M88 214 Q100 219 112 214 M92 230 Q100 234 108 230" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>`;
+  } else {
+    s+=`<rect x="84" y="192" width="11" height="52" rx="5.5" fill="${sk}"/><rect x="105" y="192" width="11" height="52" rx="5.5" fill="${sk}"/>`;
+    s+=`<ellipse cx="88" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/><ellipse cx="112" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/>`;
+  }
+  // OUTFIT
+  if(o==='witch'){
+    s+=`<path d="M76 138 L124 138 L146 232 L54 232 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M100 140 L100 228 M76 138 L84 150 M124 138 L116 150" stroke="rgba(0,0,0,.25)" stroke-width="2.5" fill="none"/><path d="M92 170 l2 4 4.5 .5 -3.4 3.4 .9 4.5 -4 -2.4 -4 2.4 .9 -4.5 -3.4 -3.4 4.5 -.5 Z" fill="#fde047"/><path d="M110 196 l2 4 4.5 .5 -3.4 3.4 .9 4.5 -4 -2.4 -4 2.4 .9 -4.5 -3.4 -3.4 4.5 -.5 Z" fill="#fde047"/>`;
+    s+=`<path d="M70 138 L130 138 L134 150 L66 150 Z" fill="${c.lineart?'#fff':'#1e1b4b'}"/>`;
+  } else if(o==='princess'){
+    s+=`<path d="M80 138 L120 138 L152 244 L48 244 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M80 138 L120 138 L128 176 L72 176 Z" fill="rgba(255,255,255,.35)"/><path d="M72 176 Q100 190 128 176 L138 210 Q100 226 62 210 Z" fill="rgba(255,255,255,.2)"/><circle cx="100" cy="158" r="4" fill="#fde68a"/><circle cx="86" cy="200" r="4" fill="#fde68a"/><circle cx="114" cy="200" r="4" fill="#fde68a"/><circle cx="100" cy="224" r="4" fill="#fde68a"/>`;
+    s+=`<rect x="74" y="170" width="52" height="8" rx="4" fill="#fbbf24"/>`;
+    s+=`<circle cx="80" cy="144" r="8" fill="${dc}"/><circle cx="120" cy="144" r="8" fill="${dc}"/>`;
+  } else if(o==='mermaid'){
+    s+=`<path d="M78 136 Q100 128 122 136 L118 160 Q100 168 82 160 Z" fill="${c.lineart?'#fff':'#f472b6'}"/>`;
+    if(!c.lineart) s+=`<path d="M84 146 Q92 154 84 160 M116 146 Q108 154 116 160" stroke="#be185d" stroke-width="3" fill="none"/><circle cx="100" cy="150" r="4" fill="#fbbf24"/>`;
+  } else if(o==='idol'){
     s+=`<path d="M79 138 L121 138 L134 208 L66 208 Z" fill="${dc}"/>`;
     if(!c.lineart) s+=`<path d="M79 138 L121 138 L127 172 L73 172 Z" fill="rgba(255,255,255,.22)"/>`+starDots();
     s+=`<rect x="74" y="162" width="52" height="9" rx="4.5" fill="#fbbf24"/>`;
@@ -601,7 +676,12 @@ function girlSVG(c){
     s+=`<path d="M55 90 Q50 36 100 32 Q150 36 145 90 Q141 58 126 56 Q131 74 118 64 Q109 78 100 58 Q91 78 82 64 Q69 74 74 56 Q59 58 55 90 Z" fill="${hc}"/>`;
   }
   if(!c.lineart) s+=`<path d="M70 46 Q86 38 104 42" stroke="rgba(255,255,255,.4)" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  // outfit head-pieces
+  if(o==='witch') s+=`<path d="M100 8 L128 62 L72 62 Z" fill="${c.lineart?'#fff':'#312e81'}"/><path d="M60 60 L140 60 L146 70 L54 70 Z" fill="${c.lineart?'#fff':'#312e81'}"/><rect x="90" y="52" width="20" height="9" rx="2" fill="#fbbf24"/><path d="M100 8 Q108 30 100 44" stroke="rgba(255,255,255,.3)" stroke-width="2" fill="none"/>`;
+  if(o==='princess' && !A('crown')) s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="#fbbf24"/><circle cx="100" cy="24" r="3.4" fill="#f472b6"/><circle cx="84" cy="26" r="2.4" fill="#38bdf8"/><circle cx="116" cy="26" r="2.4" fill="#38bdf8"/>`;
   // ACCESSORIES
+  if(A('halo')) s+=`<ellipse cx="100" cy="18" rx="26" ry="7" fill="none" stroke="#fde047" stroke-width="4"/>`;
+  if(A('horns')) s+=`<path d="M74 38 Q66 14 82 20 Q78 30 82 40 Z" fill="#ef4444"/><path d="M126 38 Q134 14 118 20 Q122 30 118 40 Z" fill="#ef4444"/>`;
   if(A('crown')) s+=`<path d="M82 34 L89 18 L100 30 L111 18 L118 34 Z" fill="#fbbf24"/><circle cx="89" cy="19" r="3.2" fill="#f472b6"/><circle cx="111" cy="19" r="3.2" fill="#38bdf8"/><circle cx="100" cy="31" r="2.6" fill="#f472b6"/>`;
   if(A('bow')) s+=`<path d="M62 44 L46 34 L50 50 Z" fill="#f472b6"/><path d="M62 44 L50 60 L64 60 Z" fill="#f472b6"/><circle cx="62" cy="46" r="5" fill="#be185d"/>`;
   if(A('catEars')) s+=`<path d="M58 42 L66 16 L84 34 Z" fill="${hc}"/><path d="M63 37 L68 24 L77 33 Z" fill="#f9a8d4"/><path d="M142 42 L134 16 L116 34 Z" fill="${hc}"/><path d="M137 37 L132 24 L123 33 Z" fill="#f9a8d4"/>`;
@@ -615,12 +695,73 @@ function girlSVG(c){
     s+=`<rect x="140" y="188" width="26" height="7" rx="3.5" fill="#fbbf24" transform="rotate(16 153 191)"/>`;
     s+=`<rect x="150" y="193" width="7" height="16" rx="3" fill="#92400e" transform="rotate(16 153 200)"/>`;
   }
+  if(A('wand')){
+    s+=`<rect x="150" y="150" width="6" height="52" rx="3" fill="#fbbf24" transform="rotate(18 153 176)"/>`;
+    s+=`<path d="M163 138 l4 8 9 1 -6.5 6.5 1.5 9 -8 -4.5 -8 4.5 1.5 -9 -6.5 -6.5 9 -1 Z" fill="#fde047"/>`;
+  }
+  if(A('magicwand')){
+    s+=`<rect x="150" y="150" width="6" height="52" rx="3" fill="#f472b6" transform="rotate(18 153 176)"/>`;
+    s+=`<path d="M166 132 C158 124 148 132 158 142 C168 132 158 124 166 132 Z" fill="#f43f5e"/>`;
+  }
   return `<svg viewBox="0 0 200 262" xmlns="http://www.w3.org/2000/svg" class="${c.cls||''} ${c.lineart?'lineart':''}">${s}</svg>`;
 }
 function starDots(){
   let r=''; [[86,185],[108,192],[96,200],[118,180]].forEach(p=>{ r+=`<path d="M${p[0]} ${p[1]} l2 4 4.5 .5 -3.4 3.4 .9 4.5 -4 -2.4 -4 2.4 .9 -4.5 -3.4 -3.4 4.5 -.5 Z" fill="#fde047" opacity=".9"/>`; });
   return r;
 }
+
+/* ================= STICKERS ================= */
+const STICKERS = {
+  heart:`<svg viewBox="0 0 60 60"><path d="M30 52 C6 34 8 14 24 14 C30 14 30 20 30 22 C30 20 30 14 36 14 C52 14 54 34 30 52 Z" fill="#f43f5e"/></svg>`,
+  star:`<svg viewBox="0 0 60 60"><path d="M30 4 l7 16 18 2 -13 12 4 18 -16 -9 -16 9 4 -18 -13 -12 18 -2 Z" fill="#fbbf24"/></svg>`,
+  rainbow:`<svg viewBox="0 0 60 60"><path d="M6 46 A24 24 0 0 1 54 46" fill="none" stroke="#ef4444" stroke-width="6"/><path d="M13 46 A17 17 0 0 1 47 46" fill="none" stroke="#fbbf24" stroke-width="6"/><path d="M20 46 A10 10 0 0 1 40 46" fill="none" stroke="#4ade80" stroke-width="6"/></svg>`,
+  flower:`<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="9" fill="#fbbf24"/><g fill="#f472b6"><ellipse cx="30" cy="14" rx="7" ry="10"/><ellipse cx="30" cy="46" rx="7" ry="10"/><ellipse cx="14" cy="30" rx="10" ry="7"/><ellipse cx="46" cy="30" rx="10" ry="7"/></g></svg>`,
+  lips:`<svg viewBox="0 0 60 60"><path d="M8 26 Q18 18 30 24 Q42 18 52 26 Q42 44 30 44 Q18 44 8 26 Z" fill="#e11d48"/><path d="M8 26 Q30 30 52 26 Q30 34 8 26 Z" fill="#fff" opacity=".5"/></svg>`,
+  heel:`<svg viewBox="0 0 60 60"><path d="M8 20 Q30 22 44 30 L52 30 L52 38 L20 42 Q10 42 8 34 Z" fill="#ec4899"/><rect x="44" y="38" width="5" height="16" fill="#be185d"/></svg>`,
+  bag:`<svg viewBox="0 0 60 60"><path d="M18 22 A12 12 0 0 1 42 22" fill="none" stroke="#a855f7" stroke-width="4"/><rect x="12" y="22" width="36" height="26" rx="5" fill="#c084fc"/><circle cx="30" cy="35" r="4" fill="#fbbf24"/></svg>`,
+  diamond:`<svg viewBox="0 0 60 60"><path d="M14 24 L46 24 L30 50 Z" fill="#38bdf8"/><path d="M14 24 L22 12 L38 12 L46 24 Z" fill="#7dd3fc"/><path d="M14 24 L30 50 L22 24 Z" fill="#0ea5e9"/></svg>`,
+  crownS:`<svg viewBox="0 0 60 60"><path d="M10 44 L16 20 L30 34 L44 16 L50 44 Z" fill="#fbbf24"/><circle cx="16" cy="20" r="4" fill="#f472b6"/><circle cx="44" cy="16" r="4" fill="#38bdf8"/></svg>`,
+  bowS:`<svg viewBox="0 0 60 60"><path d="M30 30 L8 16 L12 44 Z" fill="#f472b6"/><path d="M30 30 L52 16 L48 44 Z" fill="#f472b6"/><circle cx="30" cy="30" r="7" fill="#be185d"/></svg>`,
+  note:`<svg viewBox="0 0 60 60"><circle cx="18" cy="44" r="8" fill="#a855f7"/><circle cx="44" cy="38" r="8" fill="#a855f7"/><rect x="24" y="14" width="4" height="30" fill="#a855f7"/><rect x="50" y="8" width="4" height="30" fill="#a855f7"/><path d="M24 14 L54 8 L54 16 L24 22 Z" fill="#a855f7"/></svg>`,
+  light:`<svg viewBox="0 0 60 60"><circle cx="30" cy="16" r="11" fill="#f9a8d4"/><circle cx="30" cy="16" r="6" fill="#fff"/><rect x="26" y="26" width="8" height="28" rx="4" fill="#ec4899"/><path d="M22 8 L18 2 M38 8 L42 2 M30 4 L30 -2" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  micS:`<svg viewBox="0 0 60 60"><rect x="26" y="30" width="8" height="20" rx="4" fill="#64748b"/><circle cx="30" cy="20" r="13" fill="#f472b6"/><circle cx="26" cy="16" r="4" fill="#fff" opacity=".7"/><rect x="22" y="50" width="16" height="5" rx="2.5" fill="#64748b"/></svg>`,
+  cassette:`<svg viewBox="0 0 60 60"><rect x="8" y="16" width="44" height="30" rx="5" fill="#38bdf8"/><rect x="14" y="22" width="32" height="10" rx="2" fill="#e0f2fe"/><circle cx="22" cy="27" r="3" fill="#0369a1"/><circle cx="38" cy="27" r="3" fill="#0369a1"/><rect x="18" y="40" width="24" height="3" fill="#0369a1"/></svg>`,
+  boombox:`<svg viewBox="0 0 60 60"><rect x="6" y="18" width="48" height="28" rx="5" fill="#334155"/><circle cx="18" cy="32" r="8" fill="#94a3b8"/><circle cx="42" cy="32" r="8" fill="#94a3b8"/><rect x="26" y="22" width="8" height="6" rx="2" fill="#fbbf24"/><rect x="14" y="12" width="32" height="6" rx="3" fill="#334155"/></svg>`,
+  catS:`<svg viewBox="0 0 60 60"><path d="M14 20 L10 8 L22 16 Z" fill="#cbd5e1"/><path d="M46 20 L50 8 L38 16 Z" fill="#cbd5e1"/><circle cx="30" cy="32" r="18" fill="#e2e8f0"/><circle cx="23" cy="30" r="2.5" fill="#1e293b"/><circle cx="37" cy="30" r="2.5" fill="#1e293b"/><path d="M27 37 L33 37 L30 40 Z" fill="#f9a8d4"/></svg>`,
+  dogS:`<svg viewBox="0 0 60 60"><ellipse cx="14" cy="26" rx="6" ry="12" fill="#92400e"/><ellipse cx="46" cy="26" rx="6" ry="12" fill="#92400e"/><circle cx="30" cy="30" r="17" fill="#d97706"/><circle cx="23" cy="27" r="2.6" fill="#1e293b"/><circle cx="37" cy="27" r="2.6" fill="#1e293b"/><ellipse cx="30" cy="37" rx="6" ry="4.5" fill="#1e293b"/></svg>`,
+  bunnyS:`<svg viewBox="0 0 60 60"><ellipse cx="22" cy="14" rx="6" ry="14" fill="#fbcfe8"/><ellipse cx="38" cy="14" rx="6" ry="14" fill="#fbcfe8"/><circle cx="30" cy="36" r="16" fill="#fce7f3"/><circle cx="24" cy="34" r="2.4" fill="#1e293b"/><circle cx="36" cy="34" r="2.4" fill="#1e293b"/><path d="M27 40 L33 40 L30 43 Z" fill="#f472b6"/></svg>`,
+  bfly:`<svg viewBox="0 0 60 60"><ellipse cx="30" cy="30" rx="3" ry="16" fill="#7c3aed"/><path d="M28 22 Q6 10 8 28 Q10 40 28 32 Z" fill="#c084fc"/><path d="M32 22 Q54 10 52 28 Q50 40 32 32 Z" fill="#c084fc"/><path d="M28 34 Q12 40 16 52 Q22 50 28 40 Z" fill="#a855f7"/><path d="M32 34 Q48 40 44 52 Q38 50 32 40 Z" fill="#a855f7"/></svg>`,
+  uni:`<svg viewBox="0 0 60 60"><path d="M30 2 L36 20 L24 20 Z" fill="#fde047"/><circle cx="30" cy="34" r="18" fill="#fff"/><path d="M14 26 Q6 30 10 42 M46 26 Q54 30 50 42" stroke="#f472b6" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="24" cy="32" r="2.6" fill="#1e293b"/><circle cx="36" cy="32" r="2.6" fill="#1e293b"/><ellipse cx="30" cy="40" rx="4" ry="3" fill="#f9a8d4"/></svg>`,
+};
+const STICKER_LABEL = {heart:'Heart',star:'Star',rainbow:'Rainbow',flower:'Flower',lips:'Lipstick',heel:'Shoe',bag:'Handbag',diamond:'Gem',crownS:'Crown',bowS:'Bow',note:'Music',light:'Lightstick',micS:'Mic',cassette:'Tape',boombox:'Boombox',catS:'Kitty',dogS:'Puppy',bunnyS:'Bunny',bfly:'Butterfly',uni:'Unicorn'};
+function nameStickerSVG(name, c1, c2){
+  const w = 34 + name.length*22;
+  return `<svg viewBox="0 0 ${w} 60" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="12" width="${w-8}" height="36" rx="18" fill="${c1}" stroke="#fff" stroke-width="3"/><text x="${w/2}" y="38" font-family="Arial" font-weight="900" font-size="26" fill="#fff" text-anchor="middle">${name}</text><path d="M12 6 l2 5 5 .5 -4 4 1 5 -4.5 -2.5 -4.5 2.5 1 -5 -4 -4 5 -.5 Z" fill="${c2}"/></svg>`;
+}
+const NAME_STICKERS = {
+  name_ruby:{svg:nameStickerSVG('Ruby','#e11d48','#fde047'), label:'Ruby'},
+  name_mira:{svg:nameStickerSVG('Mira','#db2777','#fef08a'), label:'Mira'},
+  name_zoey:{svg:nameStickerSVG('Zoey','#16a34a','#fde047'), label:'Zoey'},
+  name_hazel:{svg:nameStickerSVG('Hazel','#7c3aed','#f9a8d4'), label:'Hazel'},
+  name_aurelia:{svg:nameStickerSVG('Aurelia','#f59e0b','#fff'), label:'Aurelia'},
+};
+function stickerSVG(id){ return STICKERS[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].svg) || STICKERS.star; }
+function stickerLabel(id){ return STICKER_LABEL[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].label) || ''; }
+
+/* ================= SHOP ================= */
+const SHOP = [
+  {cat:'outfits', id:'princess', name:'Princess Gown', cost:14, ico:'👸'},
+  {cat:'outfits', id:'witch', name:'Witch Dress', cost:12, ico:'🧙‍♀️'},
+  {cat:'outfits', id:'mermaid', name:'Mermaid Tail', cost:14, ico:'🧜‍♀️'},
+  {cat:'acc', id:'wand', name:'Star Wand', cost:8, ico:'🪄'},
+  {cat:'acc', id:'magicwand', name:'Heart Wand', cost:8, ico:'💗'},
+  {cat:'acc', id:'halo', name:'Angel Halo', cost:6, ico:'😇'},
+  {cat:'acc', id:'horns', name:'Demon Horns', cost:6, ico:'😈'},
+  {pack:true, name:'Barbie Sticker Pack', cost:10, ico:'💖', stickers:['lips','heel','bag','diamond','crownS','bowS']},
+  {pack:true, name:'KPop Sticker Pack', cost:10, ico:'🎤', stickers:['note','light','micS','cassette','boombox']},
+  {pack:true, name:'Name Sticker Pack', cost:12, ico:'🏷️', stickers:['name_ruby','name_mira','name_zoey','name_hazel','name_aurelia']},
+  {pack:true, name:'Animal Sticker Pack', cost:8, ico:'🐱', stickers:['catS','dogS','bunnyS','bfly','uni']},
+];
 function demonSVG(c){
   c=c||{};
   const col=c.color||'#c084fc';
@@ -652,6 +793,31 @@ function poofSVG(){
   <path d="M30 14 L33 24 L43 21 L36 29 L45 34 L34 35 L38 45 L29 38 L22 46 L24 35 L14 36 L22 29 L17 20 L26 25 Z" fill="#fb923c"/>
   <circle cx="30" cy="30" r="5" fill="#fff"/></svg>`;
 }
+
+/* ================= DRAG HELPER ================= */
+let activeDrag=null;
+function startDrag(e, html, onDrop, size){
+  e.preventDefault();
+  const g=document.createElement('div'); g.className='dragGhost';
+  g.style.width=(size||52)+'px'; g.style.height=(size||52)+'px';
+  g.innerHTML=html; g.style.left=e.clientX+'px'; g.style.top=e.clientY+'px';
+  document.body.appendChild(g);
+  activeDrag={g, onDrop, sx:e.clientX, sy:e.clientY};
+  sPop();
+}
+document.addEventListener('pointermove', e=>{
+  if(!activeDrag) return; e.preventDefault();
+  activeDrag.g.style.left=e.clientX+'px'; activeDrag.g.style.top=e.clientY+'px';
+}, {passive:false});
+function endDrag(e){
+  if(!activeDrag) return;
+  const d=activeDrag; activeDrag=null; d.g.remove();
+  const dist=Math.hypot(e.clientX-d.sx, e.clientY-d.sy);
+  d.onDrop(e.clientX, e.clientY, dist<12);
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+function overRect(x,y,el,pad){ const r=el.getBoundingClientRect(); pad=pad||0; return x>r.left-pad&&x<r.right+pad&&y>r.top-pad&&y<r.bottom+pad; }
 
 /* ================= FOOD ART ================= */
 const FOODS = {
@@ -749,6 +915,7 @@ function animalArt(kind){
 
 /* ================= NAV ================= */
 function go(name){
+  if(name!=='jump') stopJump();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $('scr-'+name).classList.add('active');
   speechSynthesis.cancel();
@@ -768,10 +935,10 @@ function renderHome(){
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
 /* ================= DRESS UP ================= */
-const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs']];
+const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid']];
 const DRESS_COLORS = ['#a855f7','#ec4899','#ef4444','#f97316','#fde047','#22c55e','#38bdf8','#6366f1','#f9a8d4','#0f172a'];
 const HAIR_COLORS = ['#7c3aed','#db2777','#111827','#fcd34d','#38bdf8','#22c55e','#ef4444','#f9a8d4','#a16207','#e5e7eb'];
-const ACCS = [['crown','👑'],['bow','🎀'],['catEars','🐱'],['starPin','⭐'],['glasses','🕶️'],['necklace','📿'],['mic','🎤'],['sword','⚔️'],['wings','🪽']];
+const ACCS = [['crown','👑'],['bow','🎀'],['catEars','🐱'],['starPin','⭐'],['glasses','🕶️'],['necklace','📿'],['mic','🎤'],['sword','⚔️'],['wings','🪽'],['wand','🪄'],['magicwand','💗'],['halo','😇'],['horns','😈']];
 let duGirl=0, duTab='outfit';
 function startDressup(){ duGirl=S.char; duTab='outfit'; go('dressup'); renderDU(); say("Let's dress up "+GIRLS[duGirl].nm+"! Tap the clothes and sparkles!"); }
 function renderDU(pop){
@@ -781,16 +948,22 @@ function renderDU(pop){
   $('duTabs').innerHTML = tabs.map(t=>`<button class="${t[0]===duTab?'sel':''}" onclick="duTabGo('${t[0]}')">${t[1]}</button>`).join('');
   const o=S.outfits[duGirl];
   let items='';
-  if(duTab==='outfit') items = OUTFITS.map(x=>`<button class="duItem ${o.outfit===x[0]?'sel':''}" onclick="duSet('outfit','${x[0]}')"><span>${x[1]}<div class="lab">${x[2]}</div></span></button>`).join('');
+  if(duTab==='outfit') items = OUTFITS.map(x=>{ const lock=!owns('outfits',x[0]);
+      return `<button class="duItem ${o.outfit===x[0]?'sel':''}" onclick="duSet('outfit','${x[0]}')"><span>${lock?'🔒':x[1]}<div class="lab">${x[2]}</div></span></button>`; }).join('');
   else if(duTab==='dcolor') items = DRESS_COLORS.map(c=>`<button class="duItem sw ${o.dressColor===c?'sel':''}" style="background:${c}" onclick="duSet('dressColor','${c}')"></button>`).join('');
   else if(duTab==='hcolor') items = HAIR_COLORS.map(c=>`<button class="duItem sw ${o.hairColor===c?'sel':''}" style="background:${c}" onclick="duSet('hairColor','${c}')"></button>`).join('');
-  else items = ACCS.map(a=>`<button class="duItem ${o.acc.includes(a[0])?'sel':''}" onclick="duAcc('${a[0]}')">${a[1]}</button>`).join('');
+  else items = ACCS.map(a=>{ const lock=!owns('acc',a[0]);
+      return `<button class="duItem ${o.acc.includes(a[0])?'sel':''}" onclick="duAcc('${a[0]}')">${lock?'🔒':a[1]}</button>`; }).join('');
   $('duItems').innerHTML = items;
 }
 function duPick(i){ duGirl=i; sPop(); renderDU(true); say(GIRLS[i].greet); }
 function duTabGo(t){ duTab=t; sPop(); renderDU(); }
-function duSet(k,v){ S.outfits[duGirl][k]=v; save(); sPop(); renderDU(true); }
+function duSet(k,v){
+  if(k==='outfit' && !owns('outfits',v)){ sNo(); say('You need to buy the '+v+' outfit in the shop! Tap the gift box.'); return; }
+  S.outfits[duGirl][k]=v; save(); sPop(); renderDU(true);
+}
 function duAcc(a){
+  if(!owns('acc',a)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
   const arr=S.outfits[duGirl].acc; const ix=arr.indexOf(a);
   if(ix>=0) arr.splice(ix,1); else arr.push(a);
   save(); sPop(); renderDU(true);
@@ -811,16 +984,23 @@ const PAINT_PICS = [
   {id:'butterfly', label:'Butterfly'},{id:'fish', label:'Fish'},{id:'unicorn', label:'Unicorn'},
   {id:'flower', label:'Flower'},{id:'rainbow', label:'Rainbow'},{id:'blank', label:'Free draw'},
 ];
-let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawing=false, lastPt=null, rainbowHue=0;
+let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawing=false, lastPt=null, rainbowHue=0, pStickerId=null;
+const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid'];
+let pOutfit={};
+const stickerImgCache={};
+function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
 function startPaint(){
-  pPic='g'+S.char;
+  pPic='g'+S.char; pTool='brush';
   go('paint');
-  renderPaintUI();
+  renderPaintUI(); renderPaintStickers();
+  S.owned.stickers.forEach(getStickerImg);
   setTimeout(setupCanvas, 60);
-  say('Painting time! Pick a colour and draw with your finger!');
+  say('Painting time! Pick a colour and draw, or drag stickers onto your picture!');
 }
 function renderPaintUI(){
-  $('picRow').innerHTML = PAINT_PICS.map(p=>`<button class="${pPic===p.id?'sel':''}" onclick="paintPic('${p.id}')">${p.label}</button>`).join('');
+  const isGirl=pPic.startsWith('g');
+  $('picRow').innerHTML = PAINT_PICS.map(p=>`<button class="${pPic===p.id?'sel':''}" onclick="paintPic('${p.id}')">${p.label}</button>`).join('')
+    + (isGirl?`<button onclick="paintOutfit()">👗 Outfit</button>`:'');
   $('paintTools').innerHTML =
     PAINT_COLORS.map(c=>`<button class="swatch ${pTool==='brush'&&pColor===c?'sel':''}" style="background:${c};color:${c}" onclick="paintCol('${c}')"></button>`).join('') +
     `<button class="toolBtn ${pTool==='rainbow'?'sel':''}" onclick="paintTool('rainbow')">🌈</button>` +
@@ -831,13 +1011,39 @@ function renderPaintUI(){
     `<button class="toolBtn ${pSize===26?'sel':''}" onclick="paintSize(26)" style="font-size:24px">●</button>` +
     `<button class="toolBtn" onclick="paintClear()">🗑️</button>`;
 }
+function renderPaintStickers(){
+  $('paintStickers').innerHTML = '<div style="flex:0 0 auto;align-self:center;font-weight:900;font-size:12px;padding:0 4px">Stickers:</div>' +
+    S.owned.stickers.map(id=>`<button class="st ${pTool==='sticker'&&pStickerId===id?'sel':''}" onpointerdown="paintStickerDrag(event,'${id}')">${stickerSVG(id)}</button>`).join('');
+}
+function paintOutfit(){
+  const gi=parseInt(pPic.slice(1));
+  const owned=PAINT_OUTFITS.filter(o=>owns('outfits',o));
+  const cur=pOutfit[gi]||S.outfits[gi].outfit;
+  const next=owned[(owned.indexOf(cur)+1)%owned.length];
+  pOutfit[gi]=next; sPop(); drawLineArt(); say('New outfit! Colour it in!');
+}
+function paintStickerDrag(e, id){
+  startDrag(e, stickerSVG(id), (x,y,isTap)=>{
+    if(overRect(x,y,$('paintBox'),0)){
+      const r=$('paintCanvas').getBoundingClientRect();
+      stampSticker(id, x-r.left, y-r.top);
+    }
+  }, 46);
+}
+function stampSticker(id, x, y){
+  const img=getStickerImg(id);
+  const sz=Math.max(40, pSize*3.2);
+  const draw=()=>{ pCtx.drawImage(img, x-sz/2, y-sz/2, sz, sz); sDing(); };
+  if(img.complete) draw(); else img.onload=draw;
+}
 function paintPic(p){ pPic=p; sPop(); renderPaintUI(); drawLineArt(); paintClear(); }
-function paintCol(c){ pColor=c; pTool='brush'; sPop(); renderPaintUI(); }
-function paintTool(t){ pTool=t; sPop(); renderPaintUI(); }
+function paintCol(c){ pColor=c; pTool='brush'; sPop(); renderPaintUI(); renderPaintStickers(); }
+function paintTool(t){ pTool=t; sPop(); renderPaintUI(); renderPaintStickers(); }
 function paintSize(s){ pSize=s; sPop(); renderPaintUI(); }
 function drawLineArt(){
   let html='';
-  if(pPic.startsWith('g')) html = girlSVG(girlCfg(parseInt(pPic.slice(1)),{lineart:true}));
+  if(pPic.startsWith('g')){ const gi=parseInt(pPic.slice(1)); const of=pOutfit[gi]||S.outfits[gi].outfit;
+    html = girlSVG(girlCfg(gi,{lineart:true, outfit:of})); }
   else if(pPic==='demon') html = demonSVG({lineart:true});
   else if(pPic!=='blank') html = animalArt(pPic);
   $('paintLines').innerHTML = html;
@@ -894,10 +1100,11 @@ function paintDone(){ cheer(); addStars(3); say('Wow! That is so beautiful! You 
 const SKINS=['#ffe0cc','#f5c99b','#d9a066','#8d5a3b'];
 let faceSkin=SKINS[0], faceSel=null, facePlaced=[], faceDrag=null;
 const FEAT = [
-  {id:'eyes1', nm:'cute eyes', w:34, svg:`<svg viewBox="0 0 120 40"><ellipse cx="30" cy="20" rx="12" ry="16" fill="#3a2b4f"/><circle cx="34" cy="14" r="4.5" fill="#fff"/><ellipse cx="90" cy="20" rx="12" ry="16" fill="#3a2b4f"/><circle cx="94" cy="14" r="4.5" fill="#fff"/></svg>`},
-  {id:'eyes2', nm:'star eyes', w:34, svg:`<svg viewBox="0 0 120 40"><path d="M30 2 l6 12 13 2 -9.5 9 2.5 13 -12 -6.5 -12 6.5 2.5 -13 -9.5 -9 13 -2 Z" fill="#fbbf24"/><path d="M90 2 l6 12 13 2 -9.5 9 2.5 13 -12 -6.5 -12 6.5 2.5 -13 -9.5 -9 13 -2 Z" fill="#fbbf24"/></svg>`},
-  {id:'eyes3', nm:'sleepy eyes', w:34, svg:`<svg viewBox="0 0 120 40"><path d="M14 20 Q30 34 46 20" stroke="#3a2b4f" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M74 20 Q90 34 106 20" stroke="#3a2b4f" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M22 30 L18 36 M38 30 L42 36 M82 30 L78 36 M98 30 L102 36" stroke="#3a2b4f" stroke-width="3" stroke-linecap="round"/></svg>`},
-  {id:'brows', nm:'eyebrows', w:36, svg:`<svg viewBox="0 0 120 30"><path d="M12 22 Q30 6 50 18" stroke="#513a28" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M70 18 Q90 6 108 22" stroke="#513a28" stroke-width="7" fill="none" stroke-linecap="round"/></svg>`},
+  {id:'eye1', nm:'a cute eye', w:15, svg:`<svg viewBox="0 0 44 48"><ellipse cx="22" cy="24" rx="14" ry="19" fill="#3a2b4f"/><circle cx="27" cy="16" r="5.5" fill="#fff"/><circle cx="18" cy="30" r="2.4" fill="#fff" opacity=".8"/></svg>`},
+  {id:'eye2', nm:'a star eye', w:15, svg:`<svg viewBox="0 0 44 48"><path d="M22 3 l7 14 15 2 -11 10.5 3 15 -14 -7.5 -14 7.5 3 -15 -11 -10.5 15 -2 Z" fill="#fbbf24"/></svg>`},
+  {id:'eye3', nm:'a sleepy eye', w:16, svg:`<svg viewBox="0 0 48 30"><path d="M6 14 Q24 30 42 14" stroke="#3a2b4f" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M14 24 L10 30 M24 27 L24 30 M34 24 L38 30" stroke="#3a2b4f" stroke-width="3" stroke-linecap="round"/></svg>`},
+  {id:'eye4', nm:'a winky eye', w:15, svg:`<svg viewBox="0 0 44 40"><path d="M8 20 Q22 34 36 20" stroke="#3a2b4f" stroke-width="6" fill="none" stroke-linecap="round"/></svg>`},
+  {id:'brow', nm:'an eyebrow', w:17, svg:`<svg viewBox="0 0 50 22"><path d="M6 16 Q25 2 44 14" stroke="#513a28" stroke-width="7" fill="none" stroke-linecap="round"/></svg>`},
   {id:'nose1', nm:'button nose', w:10, svg:`<svg viewBox="0 0 40 32"><ellipse cx="20" cy="16" rx="11" ry="9" fill="#f4a988"/><ellipse cx="16" cy="13" rx="3.5" ry="2.5" fill="#ffd9c4"/></svg>`},
   {id:'nose2', nm:'clown nose', w:12, svg:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="#ef4444"/><circle cx="14" cy="14" r="5" fill="#fca5a5"/></svg>`},
   {id:'mouth1', nm:'smile', w:24, svg:`<svg viewBox="0 0 80 40"><path d="M8 10 Q40 42 72 10" stroke="#c2415e" stroke-width="7" fill="none" stroke-linecap="round"/></svg>`},
@@ -917,7 +1124,7 @@ const FEAT = [
 function startFace(){
   go('face');
   faceSel=null; renderFaceBase(); renderFaceTray(); renderFaceSkins();
-  say('Silly face time! Pick some eyes, then tap the face to stick them on! You can drag them around too!');
+  say('Silly face time! Drag the eyes, nose and mouth onto the face! Add one eye at a time!');
 }
 function renderFaceBase(){
   $('faceBase').innerHTML = `<svg viewBox="0 0 240 280">
@@ -932,31 +1139,26 @@ function renderFaceSkins(){
 }
 function facePickSkin(c){ faceSkin=c; sPop(); renderFaceBase(); renderFaceSkins(); }
 function renderFaceTray(){
-  $('faceTray').innerHTML = FEAT.map(f=>`<button class="ftItem ${faceSel===f.id?'sel':''}" onclick="facePickFeat('${f.id}')">${f.svg}</button>`).join('');
+  $('faceTray').innerHTML = FEAT.map(f=>`<button class="ftItem" onpointerdown="faceTrayDrag(event,'${f.id}')">${f.svg}</button>`).join('');
 }
-function facePickFeat(id){
-  faceSel=id; sPop(); renderFaceTray();
+function faceTrayDrag(e, id){
   const f=FEAT.find(x=>x.id===id);
-  say(f.nm+'! Now tap the face!');
+  const stageW=$('faceStage').getBoundingClientRect().width;
+  startDrag(e, f.svg, (x,y,isTap)=>{
+    const r=$('faceStage').getBoundingClientRect();
+    if(x>r.left&&x<r.right&&y>r.top&&y<r.bottom) placeFeature(f, x-r.left, y-r.top);
+    else if(isTap) placeFeature(f, r.width/2, r.height*0.4);
+  }, Math.max(40, stageW*f.w/100));
 }
-$('faceStage').addEventListener('pointerdown', e=>{
-  if(e.target.closest('.placed')) return;
-  if(!faceSel) return;
-  e.preventDefault();
-  const f=FEAT.find(x=>x.id===faceSel);
-  const r=$('faceStage').getBoundingClientRect();
-  const wPct=f.w;
+function placeFeature(f, lx, ly){
   const d=document.createElement('div');
-  d.className='placed';
-  d.style.width=wPct+'%';
-  d.innerHTML=f.svg;
+  d.className='placed'; d.style.width=f.w+'%'; d.innerHTML=f.svg;
   $('faceStage').appendChild(d);
-  d.style.left=(e.clientX-r.left)+'px';
-  d.style.top=(e.clientY-r.top)+'px';
+  d.style.left=lx+'px'; d.style.top=ly+'px';
   attachDrag(d);
   facePlaced.push(d);
   sPop();
-});
+}
 function attachDrag(d){
   d.addEventListener('pointerdown', e=>{
     e.preventDefault(); e.stopPropagation();
@@ -994,7 +1196,7 @@ function startKitchen(mode){
   go('kitchen');
   $('kitTitle').textContent = kit.title;
   drawVessel();
-  $('kitShelf').innerHTML = kit.ings.map(i=>`<button class="ing" onclick="kitAdd(event,'${i}')">${FOODS[i].svg}</button>`).join('');
+  $('kitShelf').innerHTML = kit.ings.map(i=>`<button class="ing" onpointerdown="kitDrag(event,'${i}')">${FOODS[i].svg}</button>`).join('');
   renderKitGirl('smile');
   newOrder();
 }
@@ -1045,30 +1247,32 @@ function renderCounter(){
   Object.keys(counts).forEach(k=>{ if(k!==kitOrder.id) html+=`<div class="cntChip">${FOODS[k].svg} ${counts[k]}</div>`; });
   $('kitCounter').innerHTML=html;
 }
-function kitAdd(e, id){
+function kitDrag(e, id){
   if(kitBusy) return;
-  sPop();
-  const btn=e.currentTarget.getBoundingClientRect();
-  const tgt=$('toppings').getBoundingClientRect();
-  const fl=document.createElement('div'); fl.className='flyer'; fl.innerHTML=FOODS[id].svg;
-  fl.style.left=btn.left+btn.width/2-21+'px'; fl.style.top=btn.top+'px';
-  document.body.appendChild(fl);
-  const dx=tgt.left+tgt.width*(0.15+Math.random()*0.7)-21, dy=tgt.top+tgt.height*(0.2+Math.random()*0.5);
-  requestAnimationFrame(()=>{ fl.style.left=dx+'px'; fl.style.top=dy+'px'; fl.style.transform='rotate(360deg) scale(.9)'; });
-  setTimeout(()=>{
-    fl.remove();
-    const t=document.createElement('span'); t.className='topping'; t.innerHTML=FOODS[id].svg;
-    t.style.left=(4+Math.random()*72)+'%'; t.style.top=(2+Math.random()*52)+'%';
-    t.style.animationDelay=(-Math.random()*2)+'s';
-    $('toppings').appendChild(t);
-    kitItems.push(id);
-    renderCounter();
-    if(id===kitOrder.id){
-      const c=kitItems.filter(x=>x===id).length;
-      say(String(c));
-      if(c===kitOrder.n) sDing();
+  startDrag(e, FOODS[id].svg, (x,y,isTap)=>{
+    if(kitBusy) return;
+    if(overRect(x,y,$('vesselBox'),44) || isTap){
+      const tgt=$('toppings').getBoundingClientRect();
+      let lx, ly;
+      if(!isTap && x>tgt.left && x<tgt.right && y>tgt.top && y<tgt.bottom){
+        lx=(x-tgt.left)/tgt.width*100; ly=(y-tgt.top)/tgt.height*100;
+      } else { lx=4+Math.random()*72; ly=2+Math.random()*52; }
+      kitPlace(id, lx, ly);
     }
-  }, 560);
+  }, 46);
+}
+function kitPlace(id, lx, ly){
+  const t=document.createElement('span'); t.className='topping'; t.innerHTML=FOODS[id].svg;
+  t.style.left=Math.max(0,Math.min(80,lx))+'%'; t.style.top=Math.max(0,Math.min(60,ly))+'%';
+  t.style.animationDelay=(-Math.random()*2)+'s';
+  $('toppings').appendChild(t);
+  kitItems.push(id);
+  renderCounter();
+  if(id===kitOrder.id){
+    const c=kitItems.filter(x=>x===id).length;
+    say(String(c));
+    if(c===kitOrder.n) sDing();
+  }
 }
 function kitClear(){ if(kitBusy) return; kitItems=[]; $('toppings').innerHTML=''; renderCounter(); sPop(); say('All empty! Start again!'); }
 function kitServe(){
@@ -1205,9 +1409,144 @@ function feedPet(){ petAction('hunger',2,30,'Yum yum! 🍙','Yum yum yum! Thank 
 function playPet(){ petAction('happy',1,25,'La la laaa! 🎤','La la la! I love singing with you!'); }
 function washPet(){ petAction('clean',1,30,'Bubble bubble! 🫧','Splish splash! So clean and shiny!'); }
 
+/* ================= SHOP ================= */
+function startShop(){ go('shop'); renderShop(); say('Welcome to the shop! Buy pretty outfits, magic wands and sticker packs with your stars!'); }
+function renderShop(){
+  $('shopGrid').innerHTML = SHOP.map((it,i)=>{
+    let owned, contentIco;
+    if(it.pack){
+      owned = it.stickers.every(s=>owns('stickers',s));
+      contentIco = `<div class="sPack">${it.stickers.map(s=>stickerSVG(s)).join('')}</div>`;
+    } else {
+      owned = owns(it.cat, it.id);
+      contentIco = `<span class="sIco">${it.ico}</span>`;
+    }
+    return `<div class="shopCard ${owned?'owned':''}">${contentIco}<div class="sName">${it.name}</div>${
+      owned ? `<div class="ownedTag">✓ Yours!</div>` : `<button class="sBuy" onclick="shopBuy(${i})">⭐ ${it.cost}</button>`}</div>`;
+  }).join('');
+}
+function shopBuy(i){
+  const it=SHOP[i];
+  if(it.pack){
+    if(S.stars<it.cost){ sNo(); say('You need more stars! Play games to earn them!'); return; }
+    S.stars-=it.cost; it.stickers.forEach(s=>{ if(!owns('stickers',s)) S.owned.stickers.push(s); });
+    save(); updStars(); sWin(); confettiBurst();
+    say('Yay! You unlocked the '+it.name+'! Use them in the painting game!');
+  } else {
+    if(!buy(it.cat, it.id, it.cost)) return;
+    say('Yay! You got the '+it.name+'! Try it in dress up!');
+  }
+  renderShop();
+}
+
+/* ================= JUMP & RUN ================= */
+let jumpState=null, jumpSprites=null, jumpRAF=null;
+function svgToImg(svg){
+  if(svg.indexOf('xmlns')<0) svg=svg.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');
+  const img=new Image(); img.src='data:image/svg+xml;charset=utf8,'+encodeURIComponent(svg); return img;
+}
+const OBS_ART = {
+  cactus:`<svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="20" width="12" height="48" rx="6" fill="#16a34a"/><path d="M24 40 Q10 40 10 26 L10 20" stroke="#16a34a" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M36 46 Q50 46 50 32 L50 26" stroke="#16a34a" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="30" cy="26" r="2" fill="#fde047"/><circle cx="30" cy="36" r="2" fill="#fde047"/></svg>`,
+  rock:`<svg viewBox="0 0 60 50" xmlns="http://www.w3.org/2000/svg"><path d="M6 46 Q4 24 22 20 Q30 8 44 18 Q58 22 54 46 Z" fill="#94a3b8"/><path d="M22 46 L28 30 L38 34 L34 46 Z" fill="#64748b"/></svg>`,
+  donut:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="24" fill="#f9a8d4"/><circle cx="30" cy="30" r="9" fill="#1a0b3d"/><path d="M12 24 Q18 20 22 26 M40 18 Q46 22 42 28 M46 38 Q40 44 36 38" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="20" cy="34" r="2" fill="#38bdf8"/><circle cx="40" cy="40" r="2" fill="#fde047"/></svg>`,
+  sushiO:`<svg viewBox="0 0 60 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="30" cy="34" rx="24" ry="14" fill="#fff"/><path d="M8 28 Q30 14 52 28 Q30 36 8 28 Z" fill="#fb923c"/><rect x="24" y="20" width="12" height="24" rx="3" fill="#1f2937" opacity=".85"/></svg>`,
+};
+function startJump(){
+  go('jump');
+  if(!jumpSprites){
+    jumpSprites={ player:svgToImg(girlSVG(girlCfg(S.char))),
+      cactus:svgToImg(OBS_ART.cactus), rock:svgToImg(OBS_ART.rock), donut:svgToImg(OBS_ART.donut),
+      sushi:svgToImg(OBS_ART.sushiO), demon:svgToImg(demonSVG({})) };
+  } else {
+    jumpSprites.player=svgToImg(girlSVG(girlCfg(S.char)));
+  }
+  jumpInit();
+}
+function jumpInit(){
+  const cvs=$('jumpCanvas');
+  const w=Math.min(480, $('jumpWrap').clientWidth||360), h=260, dpr=window.devicePixelRatio||1;
+  cvs.width=w*dpr; cvs.height=h*dpr; cvs.style.height=h+'px';
+  const ctx=cvs.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  jumpState={ ctx, w, h, ground:h-34, px:56, py:h-34, vy:0, r:false, jumping:false, dbl:false,
+    obs:[], t:0, spawn:0, speed:3.4, passed:0, over:false, dead:false, clouds:[{x:80,y:40},{x:260,y:66},{x:420,y:30}] };
+  $('jumpOverlay').className='hidden';
+  $('jumpHint').textContent='Tap the screen to JUMP! Tap twice for a double jump!';
+  cancelAnimationFrame(jumpRAF);
+  jumpRAF=requestAnimationFrame(jumpLoop);
+}
+function stopJump(){ if(jumpRAF){ cancelAnimationFrame(jumpRAF); jumpRAF=null; } jumpState=null; }
+function jumpTap(){
+  const s=jumpState; if(!s) return;
+  if(s.over){ jumpInit(); return; }
+  if(!s.jumping){ s.vy=-9.6; s.jumping=true; s.dbl=false; tone(600,0,.12,'sine',.2); }
+  else if(!s.dbl){ s.vy=-8.4; s.dbl=true; tone(760,0,.12,'sine',.18); }
+}
+$('jumpWrap').addEventListener('pointerdown', e=>{ e.preventDefault(); jumpTap(); });
+function jumpLoop(){
+  const s=jumpState; if(!s){ return; }
+  const {ctx,w,h}=s;
+  s.t++;
+  // physics
+  s.vy+=0.52; s.py+=s.vy;
+  if(s.py>=s.ground){ s.py=s.ground; s.vy=0; s.jumping=false; s.dbl=false; }
+  // spawn
+  s.spawn--;
+  if(s.spawn<=0){
+    const kinds=['cactus','rock','donut','sushi','demon'];
+    const k=kinds[Math.floor(Math.random()*kinds.length)];
+    const fly = k==='demon' && Math.random()<0.5;
+    s.obs.push({x:w+20, k, fly, w:38, h:40, scored:false});
+    s.spawn=Math.max(46, 96-s.t*0.02) + Math.random()*40;
+  }
+  s.speed=3.4 + s.t*0.0016;
+  s.obs.forEach(o=>o.x-=s.speed);
+  // collisions & scoring
+  const pL=s.px-20, pR=s.px+18, pT=s.py-58, pB=s.py-2;
+  for(const o of s.obs){
+    const oy = o.fly ? s.ground-70 : s.ground;
+    const oL=o.x-16, oR=o.x+16, oT=oy-36, oB=oy-2;
+    if(pR>oL && pL<oR && pB>oT && pT<oB){ s.over=true; s.dead=true; }
+    if(!o.scored && o.x<s.px-20){ o.scored=true; s.passed++; if(s.passed%3===0) tone(1000,0,.1,'triangle',.15); }
+  }
+  s.obs=s.obs.filter(o=>o.x>-40);
+  // draw
+  ctx.clearRect(0,0,w,h);
+  const sky=ctx.createLinearGradient(0,0,0,h); sky.addColorStop(0,'#7dd3fc'); sky.addColorStop(1,'#c4b5fd');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  s.clouds.forEach(c=>{ c.x-=s.speed*0.3; if(c.x<-40) c.x=w+40;
+    ctx.beginPath(); ctx.arc(c.x,c.y,13,0,7); ctx.arc(c.x+16,c.y+4,16,0,7); ctx.arc(c.x+34,c.y,12,0,7); ctx.fill(); });
+  ctx.fillStyle='#86efac'; ctx.fillRect(0,s.ground,w,h-s.ground);
+  ctx.fillStyle='#4ade80'; ctx.fillRect(0,s.ground,w,5);
+  // obstacles
+  s.obs.forEach(o=>{
+    const img=jumpSprites[o.k]; const oy=o.fly?s.ground-70:s.ground;
+    if(img&&img.complete) ctx.drawImage(img, o.x-20, oy-40, 40, 40);
+    else { ctx.fillStyle='#ef4444'; ctx.fillRect(o.x-16, oy-34, 32, 34); }
+  });
+  // player
+  const pimg=jumpSprites.player;
+  if(pimg&&pimg.complete) ctx.drawImage(pimg, s.px-26, s.py-72, 52, 68);
+  else { ctx.fillStyle='#a855f7'; ctx.fillRect(s.px-18, s.py-56, 36, 54); }
+  // score
+  ctx.fillStyle='#1e293b'; ctx.font='900 20px Arial'; ctx.textAlign='left';
+  ctx.fillText('⭐ '+s.passed, 12, 28);
+  if(s.over){ jumpOver(); return; }
+  jumpRAF=requestAnimationFrame(jumpLoop);
+}
+function jumpOver(){
+  const s=jumpState; sNo();
+  const earned=Math.max(1, Math.floor(s.passed/2));
+  S.stars+=earned; save(); updStars();
+  $('jumpOverlay').className='';
+  $('jumpOverlay').innerHTML=`<h3>Great running! 🦘</h3><div style="font-size:18px;font-weight:900">You dodged ${s.passed} things!</div><div style="font-size:20px">⭐ +${earned} stars!</div><button onclick="jumpInit()">▶ Play again</button><button style="background:linear-gradient(135deg,#f472b6,#a855f7)" onclick="go('home')">🏠 Home</button>`;
+  say('Great running! You earned '+earned+' stars!');
+  confettiBurst();
+}
+
 /* ================= INIT ================= */
 renderHome(); updStars(); decayPet(); renderMusicBtns();
-window.addEventListener('resize', ()=>{ if($('scr-paint').classList.contains('active')) setupCanvas(); });
+window.addEventListener('resize', ()=>{ if($('scr-paint').classList.contains('active')) setupCanvas(); if(jumpState) jumpInit(); });
 </script>
 </body>
 </html>
