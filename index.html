@@ -625,7 +625,8 @@ function girlSVG(c){
     s+=`<path d="M82 176 Q100 168 118 176 Q136 214 116 240 Q140 246 128 260 Q112 254 100 248 Q88 254 72 260 Q60 246 84 240 Q64 214 82 176 Z" fill="${dc}"/>`;
     if(!c.lineart) s+=`<path d="M90 196 Q100 200 110 196 M88 214 Q100 219 112 214 M92 230 Q100 234 108 230" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>`;
   } else {
-    s+=`<rect x="84" y="192" width="11" height="52" rx="5.5" fill="${sk}"/><rect x="105" y="192" width="11" height="52" rx="5.5" fill="${sk}"/>`;
+    const legFill = (o==='stripes' && !c.lineart) ? '#1f2937' : sk;
+    s+=`<rect x="84" y="192" width="11" height="52" rx="5.5" fill="${legFill}"/><rect x="105" y="192" width="11" height="52" rx="5.5" fill="${legFill}"/>`;
     s+=`<ellipse cx="88" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/><ellipse cx="112" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/>`;
   }
   // OUTFIT
@@ -633,7 +634,7 @@ function girlSVG(c){
     s+=`<path d="M78 136 L122 136 L131 236 L69 236 Z" fill="${c.lineart?'#fff':'#f8fafc'}"/>`;
     s+=`<defs><clipPath id="stripeclip"><path d="M78 136 L122 136 L131 236 L69 236 Z"/></clipPath></defs>`;
     if(!c.lineart){ s+=`<g clip-path="url(#stripeclip)">`;
-      for(let y=140;y<236;y+=14) s+=`<rect x="66" y="${y}" width="70" height="7" fill="#1f2937"/>`;
+      for(let y=139;y<236;y+=9) s+=`<rect x="66" y="${y}" width="70" height="4" fill="#7dd3fc"/>`;
       s+=`</g>`; }
   } else if(o==='witch'){
     s+=`<path d="M76 138 L124 138 L146 232 L54 232 Z" fill="${dc}"/>`;
@@ -679,8 +680,8 @@ function girlSVG(c){
     s+=`<path d="M74 145 Q57 162 59 190" stroke="${c.lineart?'#fff':'#f8fafc'}" stroke-width="13" fill="none" stroke-linecap="round"/>`;
     s+=`<path d="M126 145 Q143 162 141 190" stroke="${c.lineart?'#fff':'#f8fafc'}" stroke-width="13" fill="none" stroke-linecap="round"/>`;
     if(!c.lineart){
-      s+=`<path d="M74 145 Q57 162 59 190" stroke="#1f2937" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="6 8"/>`;
-      s+=`<path d="M126 145 Q143 162 141 190" stroke="#1f2937" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="6 8"/>`;
+      s+=`<path d="M74 145 Q57 162 59 190" stroke="#7dd3fc" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="4 6"/>`;
+      s+=`<path d="M126 145 Q143 162 141 190" stroke="#7dd3fc" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="4 6"/>`;
     }
   }
   // neck + head
