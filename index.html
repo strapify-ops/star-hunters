@@ -40,10 +40,12 @@ h2 { font-size:20px; text-align:center; margin:4px 0; text-shadow:0 2px 6px rgba
 .sub { opacity:.85; text-align:center; font-size:13px; margin-bottom:6px; }
 
 #homeGirls { display:flex; justify-content:center; align-items:flex-end; gap:1px; width:100%; margin:0 0 6px; }
-.homeGirl { width:19.5%; position:relative; border-radius:16px; padding:2px 0 0; }
+.homeGirl { width:16.2%; position:relative; border-radius:16px; padding:2px 0 0; }
 .homeGirl svg { width:100%; animation:dance 1.6s ease-in-out infinite; }
-.homeGirl:nth-child(2) svg { animation-delay:.2s; } .homeGirl:nth-child(3) svg { animation-delay:.4s; }
-.homeGirl:nth-child(4) svg { animation-delay:.6s; } .homeGirl:nth-child(5) svg { animation-delay:.8s; }
+.homeGirl:nth-child(2) svg { animation-delay:.15s; } .homeGirl:nth-child(3) svg { animation-delay:.3s; }
+.homeGirl:nth-child(4) svg { animation-delay:.45s; } .homeGirl:nth-child(5) svg { animation-delay:.6s; }
+.homeGirl:nth-child(6) svg { animation-delay:.75s; }
+.homeGirl .gname { font-size:10px; }
 @keyframes dance { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
 .homeGirl.sel { background:rgba(253,224,71,.18); box-shadow:0 0 0 3px #fde047, 0 0 20px rgba(253,224,71,.6); }
 .homeGirl .gname { text-align:center; font-weight:900; font-size:11px; padding:1px 0 5px; }
@@ -406,6 +408,7 @@ const DEF_OUTFITS = [
   {outfit:'hoodie', dressColor:'#22c55e', hairColor:'#1f2937', acc:['catEars']},
   {outfit:'hanbok', dressColor:'#ef4444', hairColor:'#111827', acc:['starPin']},
   {outfit:'gown', dressColor:'#38bdf8', hairColor:'#fcd34d', acc:['crown','wings']},
+  {outfit:'stripes', dressColor:'#111827', hairColor:'#111827', acc:['glasses','bow']},
 ];
 const GIRLS = [
   {nm:'Ruby', hair:'braid', skin:'#ffe0cc', greet:"Hi! I'm Ruby! Let's hunt some demons!"},
@@ -413,6 +416,7 @@ const GIRLS = [
   {nm:'Zoey', hair:'buns', skin:'#ffe4d0', greet:"Yo! I'm Zoey! Let's go!"},
   {nm:'Hazel', hair:'bob', skin:'#ffdfc0', greet:"Hi hi! I'm Hazel! Let's play together!"},
   {nm:'Aurelia', hair:'wavy', skin:'#ffe6d4', greet:"Hello! I'm Aurelia! Sparkle time!"},
+  {nm:'Amelie', hair:'pigtails', skin:'#ffe0c4', greet:"Hi! I'm Amelie! Let's shakey shake shake!"},
 ];
 let S;
 try { S = JSON.parse(localStorage.getItem('starHunters2')||'{}'); } catch(e){ S={}; }
@@ -424,9 +428,10 @@ while(S.outfits.length < GIRLS.length) S.outfits.push(JSON.parse(JSON.stringify(
 S.music = S.music ?? true;
 S.voiceURI = S.voiceURI ?? null;
 S.owned = S.owned ?? {};
-S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs'];
+S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs','stripes'];
 S.owned.acc = S.owned.acc ?? ['crown','bow','catEars','starPin','glasses','necklace','mic','sword','wings'];
 S.owned.stickers = S.owned.stickers ?? ['heart','star','rainbow','flower'];
+if(!S.owned.outfits.includes('stripes')) S.owned.outfits.push('stripes'); // migrate older saves
 function save(){ localStorage.setItem('starHunters2', JSON.stringify(S)); }
 function owns(cat,id){ return S.owned[cat].includes(id); }
 function buy(cat,id,cost){
@@ -602,6 +607,14 @@ function girlSVG(c){
   } else if(c.hair==='bob'){
     s+=`<path d="M50 92 Q46 26 100 26 Q154 26 150 92 L155 152 Q154 170 138 164 L62 164 Q46 170 45 152 Z" fill="${hc}"/>`;
     if(!c.lineart) s+=`<path d="M58 100 Q56 136 60 156 M142 100 Q144 136 140 156" stroke="rgba(255,255,255,.28)" stroke-width="3" fill="none"/>`;
+  } else if(c.hair==='pigtails'){
+    s+=`<path d="M55 96 Q50 30 100 28 Q150 30 145 96 Q148 126 136 134 L64 134 Q52 126 55 96 Z" fill="${hc}"/>`;
+    // hanging pigtails
+    s+=`<ellipse cx="46" cy="122" rx="15" ry="21" fill="${hc}"/><ellipse cx="44" cy="152" rx="13" ry="20" fill="${hc}"/><path d="M38 170 L54 170 L46 190 Z" fill="${hc}"/>`;
+    s+=`<ellipse cx="154" cy="122" rx="15" ry="21" fill="${hc}"/><ellipse cx="156" cy="152" rx="13" ry="20" fill="${hc}"/><path d="M146 170 L162 170 L154 190 Z" fill="${hc}"/>`;
+    if(!c.lineart) s+=`<path d="M40 118 Q44 140 42 160 M160 118 Q156 140 158 160" stroke="rgba(255,255,255,.22)" stroke-width="2.5" fill="none"/>`;
+    // hair ties
+    s+=`<rect x="35" y="104" width="18" height="8" rx="4" fill="#f472b6"/><rect x="147" y="104" width="18" height="8" rx="4" fill="#f472b6"/>`;
   } else { /* wavy */
     s+=`<path d="M52 92 Q46 24 100 24 Q154 24 148 92 L156 206 Q160 220 148 218 Q154 232 140 228 Q144 242 128 234 L126 150 L74 150 L72 234 Q56 242 60 228 Q46 232 52 218 Q40 220 44 206 Z" fill="${hc}"/>`;
     if(!c.lineart) s+=`<path d="M60 110 Q52 170 56 212 M140 110 Q148 170 144 212" stroke="rgba(255,255,255,.4)" stroke-width="3" fill="none"/>`;
@@ -616,7 +629,13 @@ function girlSVG(c){
     s+=`<ellipse cx="88" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/><ellipse cx="112" cy="248" rx="12" ry="7" fill="${c.lineart?'#fff':dark}"/>`;
   }
   // OUTFIT
-  if(o==='witch'){
+  if(o==='stripes'){
+    s+=`<path d="M78 136 L122 136 L131 236 L69 236 Z" fill="${c.lineart?'#fff':'#f8fafc'}"/>`;
+    s+=`<defs><clipPath id="stripeclip"><path d="M78 136 L122 136 L131 236 L69 236 Z"/></clipPath></defs>`;
+    if(!c.lineart){ s+=`<g clip-path="url(#stripeclip)">`;
+      for(let y=140;y<236;y+=14) s+=`<rect x="66" y="${y}" width="70" height="7" fill="#1f2937"/>`;
+      s+=`</g>`; }
+  } else if(o==='witch'){
     s+=`<path d="M76 138 L124 138 L146 232 L54 232 Z" fill="${dc}"/>`;
     if(!c.lineart) s+=`<path d="M100 140 L100 228 M76 138 L84 150 M124 138 L116 150" stroke="rgba(0,0,0,.25)" stroke-width="2.5" fill="none"/><path d="M92 170 l2 4 4.5 .5 -3.4 3.4 .9 4.5 -4 -2.4 -4 2.4 .9 -4.5 -3.4 -3.4 4.5 -.5 Z" fill="#fde047"/><path d="M110 196 l2 4 4.5 .5 -3.4 3.4 .9 4.5 -4 -2.4 -4 2.4 .9 -4.5 -3.4 -3.4 4.5 -.5 Z" fill="#fde047"/>`;
     s+=`<path d="M70 138 L130 138 L134 150 L66 150 Z" fill="${c.lineart?'#fff':'#1e1b4b'}"/>`;
@@ -655,6 +674,15 @@ function girlSVG(c){
   // arms
   s+=`<path d="M74 146 Q58 162 60 188" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/>`;
   s+=`<path d="M126 146 Q142 162 140 188" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/>`;
+  // long striped sleeves (drawn over the arms)
+  if(o==='stripes'){
+    s+=`<path d="M74 145 Q57 162 59 190" stroke="${c.lineart?'#fff':'#f8fafc'}" stroke-width="13" fill="none" stroke-linecap="round"/>`;
+    s+=`<path d="M126 145 Q143 162 141 190" stroke="${c.lineart?'#fff':'#f8fafc'}" stroke-width="13" fill="none" stroke-linecap="round"/>`;
+    if(!c.lineart){
+      s+=`<path d="M74 145 Q57 162 59 190" stroke="#1f2937" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="6 8"/>`;
+      s+=`<path d="M126 145 Q143 162 141 190" stroke="#1f2937" stroke-width="13" fill="none" stroke-linecap="butt" stroke-dasharray="6 8"/>`;
+    }
+  }
   // neck + head
   s+=`<rect x="93" y="122" width="14" height="16" rx="6" fill="${sk}"/>`;
   s+=`<ellipse cx="100" cy="92" rx="46" ry="43" fill="${sk}"/>`;
@@ -686,7 +714,7 @@ function girlSVG(c){
   if(A('bow')) s+=`<path d="M62 44 L46 34 L50 50 Z" fill="#f472b6"/><path d="M62 44 L50 60 L64 60 Z" fill="#f472b6"/><circle cx="62" cy="46" r="5" fill="#be185d"/>`;
   if(A('catEars')) s+=`<path d="M58 42 L66 16 L84 34 Z" fill="${hc}"/><path d="M63 37 L68 24 L77 33 Z" fill="#f9a8d4"/><path d="M142 42 L134 16 L116 34 Z" fill="${hc}"/><path d="M137 37 L132 24 L123 33 Z" fill="#f9a8d4"/>`;
   if(A('starPin')) s+=`<path d="M70 52 l3.5 7 8 1 -6 6 1.5 8 -7 -4 -7 4 1.5 -8 -6 -6 8 -1 Z" fill="#fde047"/>`;
-  if(A('glasses')) s+=`<circle cx="81" cy="96" r="14" fill="rgba(147,197,253,.3)" stroke="${dark}" stroke-width="3"/><circle cx="119" cy="96" r="14" fill="rgba(147,197,253,.3)" stroke="${dark}" stroke-width="3"/><path d="M95 96 L105 96" stroke="${dark}" stroke-width="3"/>`;
+  if(A('glasses')) s+=`<circle cx="81" cy="96" r="14" fill="rgba(196,181,253,.4)" stroke="${c.lineart?dark:'#7c3aed'}" stroke-width="3.5"/><circle cx="119" cy="96" r="14" fill="rgba(196,181,253,.4)" stroke="${c.lineart?dark:'#7c3aed'}" stroke-width="3.5"/><path d="M95 96 L105 96" stroke="${c.lineart?dark:'#7c3aed'}" stroke-width="3.5"/>`;
   if(A('necklace')) s+=`<path d="M88 132 Q100 142 112 132" stroke="#fbbf24" stroke-width="3" fill="none"/><path d="M100 140 l4 4 -4 6 -4 -6 Z" fill="#f472b6"/>`;
   if(A('mic')) s+=`<rect x="52" y="172" width="9" height="22" rx="4" fill="#64748b" transform="rotate(-14 56 183)"/><circle cx="60" cy="168" r="10" fill="#94a3b8"/><circle cx="57" cy="164" r="3" fill="#e2e8f0"/>`;
   if(A('sword')){
@@ -744,6 +772,7 @@ const NAME_STICKERS = {
   name_zoey:{svg:nameStickerSVG('Zoey','#16a34a','#fde047'), label:'Zoey'},
   name_hazel:{svg:nameStickerSVG('Hazel','#7c3aed','#f9a8d4'), label:'Hazel'},
   name_aurelia:{svg:nameStickerSVG('Aurelia','#f59e0b','#fff'), label:'Aurelia'},
+  name_amelie:{svg:nameStickerSVG('Amelie','#0ea5e9','#fde047'), label:'Amelie'},
 };
 function stickerSVG(id){ return STICKERS[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].svg) || STICKERS.star; }
 function stickerLabel(id){ return STICKER_LABEL[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].label) || ''; }
@@ -759,7 +788,7 @@ const SHOP = [
   {cat:'acc', id:'horns', name:'Demon Horns', cost:6, ico:'😈'},
   {pack:true, name:'Barbie Sticker Pack', cost:10, ico:'💖', stickers:['lips','heel','bag','diamond','crownS','bowS']},
   {pack:true, name:'KPop Sticker Pack', cost:10, ico:'🎤', stickers:['note','light','micS','cassette','boombox']},
-  {pack:true, name:'Name Sticker Pack', cost:12, ico:'🏷️', stickers:['name_ruby','name_mira','name_zoey','name_hazel','name_aurelia']},
+  {pack:true, name:'Name Sticker Pack', cost:12, ico:'🏷️', stickers:['name_ruby','name_mira','name_zoey','name_hazel','name_aurelia','name_amelie']},
   {pack:true, name:'Animal Sticker Pack', cost:8, ico:'🐱', stickers:['catS','dogS','bunnyS','bfly','uni']},
 ];
 function demonSVG(c){
@@ -935,7 +964,7 @@ function renderHome(){
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
 /* ================= DRESS UP ================= */
-const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid']];
+const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid']];
 const DRESS_COLORS = ['#a855f7','#ec4899','#ef4444','#f97316','#fde047','#22c55e','#38bdf8','#6366f1','#f9a8d4','#0f172a'];
 const HAIR_COLORS = ['#7c3aed','#db2777','#111827','#fcd34d','#38bdf8','#22c55e','#ef4444','#f9a8d4','#a16207','#e5e7eb'];
 const ACCS = [['crown','👑'],['bow','🎀'],['catEars','🐱'],['starPin','⭐'],['glasses','🕶️'],['necklace','📿'],['mic','🎤'],['sword','⚔️'],['wings','🪽'],['wand','🪄'],['magicwand','💗'],['halo','😇'],['horns','😈']];
