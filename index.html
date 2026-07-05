@@ -229,6 +229,29 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .shopCard .sPack { display:flex; gap:3px; justify-content:center; margin-bottom:4px; flex-wrap:wrap; }
 .shopCard .sPack svg { width:22px; height:22px; }
 
+/* phone */
+#phonePick { display:flex; gap:10px; justify-content:center; margin:6px 0; }
+#phonePick button { border:none; border-radius:18px; padding:10px 20px; font-weight:900; font-size:17px; color:#fff; background:rgba(255,255,255,.16); box-shadow:0 4px 0 rgba(0,0,0,.25); }
+#phonePick button.sel { background:linear-gradient(135deg,#38bdf8,#6366f1); box-shadow:0 0 14px rgba(56,189,248,.8); }
+#phoneStage { width:100%; display:flex; flex-direction:column; align-items:center; }
+#phoneAvatar { font-size:66px; line-height:1; margin:2px 0; }
+#phoneAvatar.ring { animation:ringing .4s ease-in-out infinite; }
+@keyframes ringing { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
+#phoneNumber { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin:6px 0; }
+.pdigit { width:32px; height:44px; border-radius:10px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:900; border:3px solid transparent; }
+.pdigit.done { background:rgba(74,222,128,.4); border-color:#4ade80; animation:popin .3s; }
+.pdigit.next { border-color:#fde047; animation:pulseD 1s infinite; }
+.pdigit.gap { width:10px; background:none; border:none; }
+@keyframes pulseD { 50%{transform:scale(1.18)} }
+#phoneBtnRow { display:flex; gap:10px; align-items:center; margin-bottom:4px; }
+#phonePeekBtn { border:none; border-radius:16px; padding:9px 14px; font-weight:900; font-size:13px; color:#fff; background:rgba(255,255,255,.18); }
+#phonePad { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; width:100%; max-width:300px; margin:6px auto 0; }
+.padBtn { border:none; border-radius:16px; padding:15px 0; font-size:28px; font-weight:900; color:#fff; background:rgba(255,255,255,.16); box-shadow:0 5px 0 rgba(0,0,0,.28); }
+.padBtn:active { transform:translateY(3px); }
+.padBtn.empty { background:none; box-shadow:none; pointer-events:none; }
+.padBtn.wrong { background:#ef4444 !important; animation:shake .35s; }
+#feedbackP { font-size:19px; font-weight:900; text-align:center; min-height:28px; margin-top:8px; color:#fde047; }
+
 /* jump */
 #jumpWrap { position:relative; width:100%; max-width:480px; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.4); }
 #jumpCanvas { display:block; width:100%; touch-action:none; }
@@ -273,6 +296,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <button class="mcard c5" onclick="startCount()"><span class="mi">🔢</span>Counting</button>
       <button class="mcard c6" onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
       <button class="mcard c2" onclick="startJump()"><span class="mi">🦘</span>Jump &amp; Run</button>
+      <button class="mcard c3" onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
       <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
       <button class="mcard c7" onclick="go('pet')"><span class="mi" id="miPet"></span>Boba Buddy</button>
     </div>
@@ -290,6 +314,23 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <h2>🦘 Jump &amp; Run</h2>
     <p class="sub" id="jumpHint">Tap the screen to JUMP over the demons and silly things!</p>
     <div id="jumpWrap"><canvas id="jumpCanvas"></canvas><div id="jumpOverlay"></div></div>
+  </div>
+
+  <!-- PHONE -->
+  <div class="screen" id="scr-phone">
+    <h2>📱 Phone Call</h2>
+    <p class="sub">Learn Mum &amp; Dad's numbers! Tap them on the phone to call!</p>
+    <div id="phonePick"></div>
+    <div id="phoneStage">
+      <div id="phoneAvatar"></div>
+      <div id="phoneNumber"></div>
+      <div id="phoneBtnRow">
+        <button class="speakBtn" onclick="phoneSay()">🔊</button>
+        <button id="phonePeekBtn" onclick="phonePeek()">👀 Hide</button>
+      </div>
+    </div>
+    <div id="phonePad"></div>
+    <div id="feedbackP"></div>
   </div>
 
   <!-- DRESS UP -->
@@ -1572,6 +1613,82 @@ function jumpOver(){
   $('jumpOverlay').innerHTML=`<h3>Great running! 🦘</h3><div style="font-size:18px;font-weight:900">You dodged ${s.passed} things!</div><div style="font-size:20px">⭐ +${earned} stars!</div><button onclick="jumpInit()">▶ Play again</button><button style="background:linear-gradient(135deg,#f472b6,#a855f7)" onclick="go('home')">🏠 Home</button>`;
   say('Great running! You earned '+earned+' stars!');
   confettiBurst();
+}
+
+/* ================= PHONE CALL ================= */
+const DIGWORD=['zero','one','two','three','four','five','six','seven','eight','nine'];
+const PHONES = {
+  dad: { label:'Dad', emoji:'👨', num:'0400274666', groups:[4,3,3] },
+  mum: { label:'Mum', emoji:'👩', num:'0403426545', groups:[4,3,3] },
+};
+let phoneWho=null, phoneIdx=0, phoneShow=true, phoneDone=false;
+function startPhone(){ phoneWho=null; phoneShow=true; go('phone'); renderPhone(); say("Let's learn Mum and Dad's phone numbers! Tap Mum or Dad to call them!"); }
+function phonePick(k){ phoneWho=k; phoneIdx=0; phoneDone=false; sPop(); renderPhone(); setTimeout(phoneSay, 400); }
+function phonePeek(){ phoneShow=!phoneShow; sPop(); renderPhone(); }
+function phoneNumberHTML(){
+  const p=PHONES[phoneWho], num=p.num;
+  let html='', pos=0;
+  p.groups.forEach((g,gi)=>{
+    for(let j=0;j<g;j++){
+      const i=pos;
+      let cls='pdigit', txt='';
+      if(i<phoneIdx){ cls+=' done'; txt=num[i]; }
+      else if(i===phoneIdx && !phoneDone){ cls+=' next'; txt=phoneShow?num[i]:'?'; }
+      else { txt=phoneShow?num[i]:'•'; }
+      html+=`<span class="${cls}">${txt}</span>`;
+      pos++;
+    }
+    if(gi<p.groups.length-1) html+='<span class="pdigit gap"></span>';
+  });
+  return html;
+}
+function renderPhone(){
+  $('phonePick').innerHTML = Object.keys(PHONES).map(k=>
+    `<button class="${phoneWho===k?'sel':''}" onclick="phonePick('${k}')">${PHONES[k].emoji} ${PHONES[k].label}</button>`).join('');
+  if(!phoneWho){ $('phoneStage').style.display='none'; $('phonePad').innerHTML=''; $('feedbackP').textContent=''; return; }
+  $('phoneStage').style.display='flex';
+  $('phoneAvatar').textContent = PHONES[phoneWho].emoji + '📱';
+  $('phoneAvatar').className='';
+  $('phoneNumber').innerHTML = phoneNumberHTML();
+  $('phonePeekBtn').textContent = phoneShow ? '🙈 Hide number' : '👀 Show number';
+  const order=[1,2,3,4,5,6,7,8,9,'e',0,'e'];
+  $('phonePad').innerHTML = order.map(d=> d==='e'
+    ? `<button class="padBtn empty"></button>`
+    : `<button class="padBtn" onclick="phoneTap(this,${d})">${d}</button>`).join('');
+}
+function phoneSay(){
+  if(!phoneWho) return;
+  const p=PHONES[phoneWho];
+  say(p.label+"'s number is. "+ p.num.split('').map(d=>DIGWORD[+d]).join(', '));
+}
+function phoneTap(btn, d){
+  if(phoneDone || !phoneWho) return;
+  const num=PHONES[phoneWho].num;
+  if(String(d)===num[phoneIdx]){
+    phoneIdx++; sPop(); say(DIGWORD[d]); renderPhone();
+    if(phoneIdx===num.length) phoneWinCall();
+  } else {
+    btn.classList.add('wrong'); sNo();
+    $('feedbackP').textContent='Try again! 🤔';
+    say('Oops! The next number is '+DIGWORD[+num[phoneIdx]]);
+    setTimeout(()=>btn.classList.remove('wrong'),500);
+  }
+}
+function phoneWinCall(){
+  phoneDone=true;
+  const p=PHONES[phoneWho];
+  $('phoneNumber').innerHTML = phoneNumberHTML();
+  $('phoneAvatar').className='ring';
+  $('feedbackP').textContent='📞 Ring ring... calling '+p.label+'!';
+  say('Ring, ring! Ring, ring!');
+  sDing();
+  setTimeout(()=>{
+    $('phoneAvatar').className='';
+    $('phoneAvatar').textContent='😊'+p.emoji;
+    $('feedbackP').textContent=cheer()+' You called '+p.label+'! 💛';
+    addStars(3);
+    say('Hello! You remembered '+p.label+"'s phone number! You are so clever!");
+  }, 2200);
 }
 
 /* ================= INIT ================= */
