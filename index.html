@@ -716,6 +716,21 @@ function girlSVG(c){
     if(!c.lineart) s+=`<path d="M72 158 L128 158 L130 170 L70 170 Z" fill="rgba(255,255,255,.3)"/>`;
     s+=`<path d="M77 136 L123 136 L127 162 L73 162 Z" fill="${c.lineart?'#fff':'#fff7ed'}"/>`;
     s+=`<path d="M96 148 L104 148 L102 170 L98 170 Z" fill="${dc}"/><circle cx="100" cy="150" r="4" fill="${dc}"/>`;
+  } else if(o==='fairy'){
+    s+=`<path d="M80 138 L120 138 L132 210 Q122 226 114 208 Q106 228 98 208 Q90 228 82 208 Q74 226 68 210 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M80 138 L120 138 L126 168 L74 168 Z" fill="rgba(255,255,255,.3)"/><path d="M100 150 L100 205 M85 150 L90 204 M115 150 L110 204" stroke="rgba(255,255,255,.35)" stroke-width="2" fill="none"/>`;
+    s+=`<circle cx="100" cy="168" r="5" fill="#fde68a"/>`;
+  } else if(o==='fairysparkle'){
+    s+=`<path d="M82 138 L118 138 L122 172 L78 172 Z" fill="${dc}"/><ellipse cx="100" cy="204" rx="50" ry="38" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<circle cx="76" cy="188" r="3" fill="#fff" opacity=".85"/><circle cx="124" cy="196" r="3" fill="#fff" opacity=".85"/><circle cx="100" cy="222" r="3" fill="#fff" opacity=".85"/><circle cx="88" cy="210" r="2.4" fill="#fde047"/><circle cx="112" cy="212" r="2.4" fill="#fde047"/>`;
+    s+=`<circle cx="100" cy="152" r="5" fill="#fde047"/>`;
+  } else if(o==='fairyleaf'){
+    s+=`<path d="M78 140 L122 136 L140 224 Q100 240 60 224 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M90 160 Q80 180 92 196 Q100 180 90 160 Z" fill="rgba(74,222,128,.55)"/><path d="M112 170 Q124 188 110 204 Q104 186 112 170 Z" fill="rgba(74,222,128,.55)"/>`;
+    s+=`<path d="M122 136 L134 118" stroke="${dc}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
+  } else if(o==='fairymoon'){
+    s+=`<path d="M80 138 L120 138 L146 232 L54 232 Z" fill="${dc}"/>`;
+    if(!c.lineart) s+=`<path d="M80 138 L120 138 L134 190 L66 190 Z" fill="rgba(30,27,75,.35)"/><path d="M84 160 Q76 172 84 184 Q92 178 90 172 Q92 166 84 160 Z" fill="#fde68a"/><path d="M114 168 l2 4 4 .4 -3 3 .7 4 -3.7 -2.2 -3.7 2.2 .7 -4 -3 -3 4 -.4 Z" fill="#fde68a"/>`;
   } else {
     s+=`<path d="M78 136 L122 136 L129 236 L71 236 Z" fill="${dc}"/>`;
     if(!c.lineart) s+=`<circle cx="88" cy="160" r="4" fill="#fff" opacity=".8"/><circle cx="112" cy="175" r="4" fill="#fff" opacity=".8"/><circle cx="94" cy="200" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="220" r="4" fill="#fff" opacity=".8"/>`;
@@ -848,6 +863,10 @@ const SHOP = [
   {cat:'outfits', id:'princess', name:'Princess Gown', cost:14, ico:'👸'},
   {cat:'outfits', id:'witch', name:'Witch Dress', cost:12, ico:'🧙‍♀️'},
   {cat:'outfits', id:'mermaid', name:'Mermaid Tail', cost:14, ico:'🧜‍♀️'},
+  {cat:'outfits', id:'fairy', name:'Petal Fairy', cost:14, ico:'🧚'},
+  {cat:'outfits', id:'fairysparkle', name:'Sparkle Fairy', cost:14, ico:'🧚‍♀️'},
+  {cat:'outfits', id:'fairyleaf', name:'Leaf Fairy', cost:12, ico:'🍃'},
+  {cat:'outfits', id:'fairymoon', name:'Moonlight Fairy', cost:16, ico:'🌙'},
   {cat:'acc', id:'wand', name:'Star Wand', cost:8, ico:'🪄'},
   {cat:'acc', id:'magicwand', name:'Heart Wand', cost:8, ico:'💗'},
   {cat:'acc', id:'halo', name:'Angel Halo', cost:6, ico:'😇'},
@@ -1030,7 +1049,7 @@ function renderHome(){
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
 /* ================= DRESS UP ================= */
-const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid']];
+const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid'],['fairy','🧚','Fairy'],['fairysparkle','🧚‍♀️','Sparkle'],['fairyleaf','🍃','Leaf'],['fairymoon','🌙','Moonlight']];
 const DRESS_COLORS = ['#a855f7','#ec4899','#ef4444','#f97316','#fde047','#22c55e','#38bdf8','#6366f1','#f9a8d4','#0f172a'];
 const HAIR_COLORS = ['#7c3aed','#db2777','#111827','#fcd34d','#38bdf8','#22c55e','#ef4444','#f9a8d4','#a16207','#e5e7eb'];
 const ACCS = [['crown','👑'],['bow','🎀'],['catEars','🐱'],['starPin','⭐'],['glasses','🕶️'],['necklace','📿'],['mic','🎤'],['sword','⚔️'],['wings','🪽'],['wand','🪄'],['magicwand','💗'],['halo','😇'],['horns','😈']];
@@ -1089,7 +1108,7 @@ const PAINT_PICS = [
   {id:'flower', label:'Flower'},{id:'rainbow', label:'Rainbow'},{id:'blank', label:'Free draw'},
 ];
 let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawing=false, lastPt=null, rainbowHue=0, pStickerId=null;
-const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid'];
+const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid','fairy','fairysparkle','fairyleaf','fairymoon'];
 let pOutfit={};
 const stickerImgCache={};
 function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
