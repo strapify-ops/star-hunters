@@ -35,6 +35,7 @@ h1 { font-size:28px; text-align:center; margin:2px 0;
   background:linear-gradient(90deg,#fde047,#f472b6,#a78bfa,#fde047); background-size:300% auto;
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   animation:shimmer 3s linear infinite; font-weight:900; }
+#versionBadge { text-align:center; font-size:11px; font-weight:800; color:rgba(255,255,255,.5); margin:-4px 0 6px; letter-spacing:.5px; }
 @keyframes shimmer { to{background-position:300% center} }
 h2 { font-size:20px; text-align:center; margin:4px 0; text-shadow:0 2px 6px rgba(0,0,0,.5); }
 .sub { opacity:.85; text-align:center; font-size:13px; margin-bottom:6px; }
@@ -290,6 +291,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <h1>STAR HUNTERS</h1>
+    <div id="versionBadge"></div>
     <div id="homeGirls" class="girlWrap"></div>
     <div id="menuGrid">
       <button class="mcard c1" onclick="startDressup()"><span class="mi">👗</span>Dress Up</button>
@@ -441,6 +443,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <p class="sub">Pick the voice you like best — tap one to hear it. Tip: on iPhone you can download nicer voices in Settings → Accessibility → Spoken Content → Voices → English, and they'll show up here.</p>
     <button class="bigbtn" onclick="toggleMusic()" id="musicBtn2">🎵 Music on/off</button>
     <div id="voiceList"></div>
+    <p class="sub" id="versionTag"></p>
   </div>
 </div>
 <div id="zapFlash"></div>
@@ -448,6 +451,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 
 <script>
 'use strict';
+const VERSION = 'v8';
 /* ================= STATE ================= */
 const DEF_OUTFITS = [
   {outfit:'idol', dressColor:'#a855f7', hairColor:'#7c3aed', acc:['sword','starPin']},
@@ -585,6 +589,7 @@ function renderSettings(){
     `<button class="voiceRow ${cur&&v.voiceURI===cur.voiceURI?'sel':''}" onclick="pickVoice('${encodeURIComponent(v.voiceURI)}')">
       <span>${v.name}</span><span class="vl">${v.lang}</span></button>`).join('')
     : '<p class="sub">Voices are still loading — tap the screen once, then come back here.</p>';
+  $('versionTag').textContent = 'Star Hunters ' + VERSION;
 }
 function pickVoice(uri){
   S.voiceURI=decodeURIComponent(uri); save(); renderSettings();
@@ -1779,6 +1784,7 @@ function phoneWinCall(){
 }
 
 /* ================= INIT ================= */
+$('versionBadge').textContent = VERSION;
 renderHome(); updStars(); decayPet(); renderMusicBtns();
 window.addEventListener('resize', ()=>{ if($('scr-paint').classList.contains('active')) setupCanvas(); if(jumpState) jumpInit(); });
 </script>
