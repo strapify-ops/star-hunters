@@ -457,6 +457,20 @@ const DEF_OUTFITS = [
   {outfit:'gown', dressColor:'#38bdf8', hairColor:'#fcd34d', acc:['crown','wings']},
   {outfit:'stripes', dressColor:'#111827', hairColor:'#111827', acc:['glasses','bow']},
 ];
+/* magical dresses inspired by classic fairytale princesses (original designs) */
+const PRINCESS_DRESSES = [
+  {id:'pd_ice',      name:'Ice Queen Gown',     ico:'❄️', cost:14, dress:'#bde9ff', bodice:'#eaf9ff', trim:'#38bdf8', tiara:'#c7f0ff'},
+  {id:'pd_sea',      name:'Sea Shell Dress',    ico:'🐚', cost:14, dress:'#2dd4bf', bodice:'#7c3aed', trim:'#5eead4', tiara:'#fde68a'},
+  {id:'pd_rose',     name:'Golden Rose Gown',   ico:'🌹', cost:14, dress:'#fde047', bodice:'#fef9c3', trim:'#facc15', tiara:'#fde047'},
+  {id:'pd_sunflower',name:'Sunflower Braid Dress',ico:'🌻', cost:14, dress:'#c084fc', bodice:'#fbcfe8', trim:'#f472b6', tiara:'#f472b6'},
+  {id:'pd_island',   name:'Island Wayfinder Dress',ico:'🌺', cost:14, dress:'#f97316', bodice:'#fee2c2', trim:'#dc2626', tiara:'#fb923c'},
+  {id:'pd_bayou',    name:'Emerald Bayou Gown', ico:'🐊', cost:14, dress:'#16a34a', bodice:'#fef9c3', trim:'#facc15', tiara:'#bbf7d0'},
+  {id:'pd_desert',   name:'Desert Jewel Dress', ico:'🧞', cost:14, dress:'#06b6d4', bodice:'#0e7490', trim:'#fbbf24', tiara:'#67e8f9'},
+  {id:'pd_apple',    name:'Snow Blossom Dress', ico:'🍎', cost:14, dress:'#3b82f6', bodice:'#fde047', trim:'#ef4444', tiara:'#fde047'},
+  {id:'pd_dawn',     name:'Dawn Rose Gown',     ico:'🌸', cost:14, dress:'#f9a8d4', bodice:'#bfdbfe', trim:'#f472b6', tiara:'#fbcfe8'},
+  {id:'pd_glass',    name:'Glass Slipper Gown', ico:'👠', cost:14, dress:'#93c5fd', bodice:'#eff6ff', trim:'#c0c0c0', tiara:'#e0f2fe'},
+];
+const PD_MAP = Object.fromEntries(PRINCESS_DRESSES.map(p=>[p.id,p]));
 const GIRLS = [
   {nm:'Ruby', hair:'braid', skin:'#ffe0cc', greet:"Hi! I'm Ruby! Let's hunt some demons!"},
   {nm:'Mira', hair:'long', skin:'#ffd9c2', greet:"Hey! I'm Mira! Ready to be a star?"},
@@ -694,6 +708,16 @@ function girlSVG(c){
     if(!c.lineart) s+=`<path d="M80 138 L120 138 L128 176 L72 176 Z" fill="rgba(255,255,255,.35)"/><path d="M72 176 Q100 190 128 176 L138 210 Q100 226 62 210 Z" fill="rgba(255,255,255,.2)"/><circle cx="100" cy="158" r="4" fill="#fde68a"/><circle cx="86" cy="200" r="4" fill="#fde68a"/><circle cx="114" cy="200" r="4" fill="#fde68a"/><circle cx="100" cy="224" r="4" fill="#fde68a"/>`;
     s+=`<rect x="74" y="170" width="52" height="8" rx="4" fill="#fbbf24"/>`;
     s+=`<circle cx="80" cy="144" r="8" fill="${dc}"/><circle cx="120" cy="144" r="8" fill="${dc}"/>`;
+  } else if(PD_MAP[o]){
+    const pd=PD_MAP[o];
+    s+=`<path d="M80 138 L120 138 L152 244 L48 244 Z" fill="${c.lineart?'#fff':pd.dress}"/>`;
+    if(!c.lineart){
+      s+=`<path d="M80 138 L120 138 L128 176 L72 176 Z" fill="${pd.bodice}"/>`;
+      s+=`<path d="M72 176 Q100 190 128 176 L138 210 Q100 226 62 210 Z" fill="rgba(255,255,255,.22)"/>`;
+      s+=`<circle cx="100" cy="158" r="4" fill="${pd.trim}"/><circle cx="86" cy="200" r="4" fill="${pd.trim}"/><circle cx="114" cy="200" r="4" fill="${pd.trim}"/><circle cx="100" cy="224" r="4" fill="${pd.trim}"/>`;
+    }
+    s+=`<rect x="74" y="170" width="52" height="8" rx="4" fill="${c.lineart?'#fff':pd.trim}"/>`;
+    s+=`<circle cx="80" cy="144" r="8" fill="${c.lineart?'#fff':pd.dress}"/><circle cx="120" cy="144" r="8" fill="${c.lineart?'#fff':pd.dress}"/>`;
   } else if(o==='mermaid'){
     s+=`<path d="M78 136 Q100 128 122 136 L118 160 Q100 168 82 160 Z" fill="${c.lineart?'#fff':'#f472b6'}"/>`;
     if(!c.lineart) s+=`<path d="M84 146 Q92 154 84 160 M116 146 Q108 154 116 160" stroke="#be185d" stroke-width="3" fill="none"/><circle cx="100" cy="150" r="4" fill="#fbbf24"/>`;
@@ -754,6 +778,7 @@ function girlSVG(c){
   // outfit head-pieces
   if(o==='witch') s+=`<path d="M100 8 L128 62 L72 62 Z" fill="${c.lineart?'#fff':'#312e81'}"/><path d="M60 60 L140 60 L146 70 L54 70 Z" fill="${c.lineart?'#fff':'#312e81'}"/><rect x="90" y="52" width="20" height="9" rx="2" fill="#fbbf24"/><path d="M100 8 Q108 30 100 44" stroke="rgba(255,255,255,.3)" stroke-width="2" fill="none"/>`;
   if(o==='princess' && !A('crown')) s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="#fbbf24"/><circle cx="100" cy="24" r="3.4" fill="#f472b6"/><circle cx="84" cy="26" r="2.4" fill="#38bdf8"/><circle cx="116" cy="26" r="2.4" fill="#38bdf8"/>`;
+  if(PD_MAP[o] && !A('crown')){ const pd=PD_MAP[o]; s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="${pd.tiara}"/><circle cx="100" cy="24" r="3.4" fill="${pd.trim}"/><circle cx="84" cy="26" r="2.4" fill="${pd.trim}"/><circle cx="116" cy="26" r="2.4" fill="${pd.trim}"/>`; }
   // ACCESSORIES
   if(A('halo')) s+=`<ellipse cx="100" cy="18" rx="26" ry="7" fill="none" stroke="#fde047" stroke-width="4"/>`;
   if(A('horns')) s+=`<path d="M74 38 Q66 14 82 20 Q78 30 82 40 Z" fill="#ef4444"/><path d="M126 38 Q134 14 118 20 Q122 30 118 40 Z" fill="#ef4444"/>`;
@@ -848,6 +873,7 @@ const SHOP = [
   {cat:'outfits', id:'princess', name:'Princess Gown', cost:14, ico:'👸'},
   {cat:'outfits', id:'witch', name:'Witch Dress', cost:12, ico:'🧙‍♀️'},
   {cat:'outfits', id:'mermaid', name:'Mermaid Tail', cost:14, ico:'🧜‍♀️'},
+  ...PRINCESS_DRESSES.map(pd=>({cat:'outfits', id:pd.id, name:pd.name, cost:pd.cost, ico:pd.ico})),
   {cat:'acc', id:'wand', name:'Star Wand', cost:8, ico:'🪄'},
   {cat:'acc', id:'magicwand', name:'Heart Wand', cost:8, ico:'💗'},
   {cat:'acc', id:'halo', name:'Angel Halo', cost:6, ico:'😇'},
@@ -1030,7 +1056,8 @@ function renderHome(){
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
 /* ================= DRESS UP ================= */
-const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid']];
+const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid'],
+  ...PRINCESS_DRESSES.map(pd=>[pd.id, pd.ico, pd.name.replace(/ Gown| Dress/,'')])];
 const DRESS_COLORS = ['#a855f7','#ec4899','#ef4444','#f97316','#fde047','#22c55e','#38bdf8','#6366f1','#f9a8d4','#0f172a'];
 const HAIR_COLORS = ['#7c3aed','#db2777','#111827','#fcd34d','#38bdf8','#22c55e','#ef4444','#f9a8d4','#a16207','#e5e7eb'];
 const ACCS = [['crown','👑'],['bow','🎀'],['catEars','🐱'],['starPin','⭐'],['glasses','🕶️'],['necklace','📿'],['mic','🎤'],['sword','⚔️'],['wings','🪽'],['wand','🪄'],['magicwand','💗'],['halo','😇'],['horns','😈']];
@@ -1089,7 +1116,7 @@ const PAINT_PICS = [
   {id:'flower', label:'Flower'},{id:'rainbow', label:'Rainbow'},{id:'blank', label:'Free draw'},
 ];
 let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawing=false, lastPt=null, rainbowHue=0, pStickerId=null;
-const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid'];
+const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid', ...PRINCESS_DRESSES.map(pd=>pd.id)];
 let pOutfit={};
 const stickerImgCache={};
 function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
