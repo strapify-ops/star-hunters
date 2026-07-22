@@ -83,14 +83,14 @@ svg.happyjump { animation:hjump .5s ease-in-out 2; }
 @keyframes hjump { 30%{transform:translateY(-16px) rotate(-4deg)} 60%{transform:translateY(0)} 80%{transform:translateY(-8px) rotate(3deg)} }
 
 /* dress up */
-#duStage { width:60%; max-width:220px; margin:0 auto; position:relative; }
-#duSwitch { display:flex; gap:5px; justify-content:center; margin:4px 0; flex-wrap:wrap; }
-#duSwitch button { border:none; border-radius:14px; padding:6px 10px; font-weight:900; font-size:12px; color:#fff; background:rgba(255,255,255,.15); }
-#duSwitch button.sel { background:linear-gradient(135deg,#f472b6,#a855f7); box-shadow:0 0 12px rgba(244,114,182,.8); }
-#duTabs { display:flex; gap:6px; width:100%; margin:6px 0 4px; }
-#duTabs button { flex:1; border:none; border-radius:14px; padding:9px 2px; font-weight:900; font-size:12px; color:#fff; background:rgba(255,255,255,.13); }
-#duTabs button.sel { background:linear-gradient(135deg,#fbbf24,#f97316); }
-#duItems { display:flex; gap:8px; width:100%; overflow-x:auto; padding:6px 2px 10px; -webkit-overflow-scrolling:touch; }
+#duStage, .duStage { width:60%; max-width:220px; margin:0 auto; position:relative; }
+#duSwitch, .duSwitch { display:flex; gap:5px; justify-content:center; margin:4px 0; flex-wrap:wrap; }
+#duSwitch button, .duSwitch button { border:none; border-radius:14px; padding:6px 10px; font-weight:900; font-size:12px; color:#fff; background:rgba(255,255,255,.15); }
+#duSwitch button.sel, .duSwitch button.sel { background:linear-gradient(135deg,#f472b6,#a855f7); box-shadow:0 0 12px rgba(244,114,182,.8); }
+#duTabs, .duTabs { display:flex; gap:6px; width:100%; margin:6px 0 4px; }
+#duTabs button, .duTabs button { flex:1; border:none; border-radius:14px; padding:9px 2px; font-weight:900; font-size:12px; color:#fff; background:rgba(255,255,255,.13); }
+#duTabs button.sel, .duTabs button.sel { background:linear-gradient(135deg,#fbbf24,#f97316); }
+#duItems, .duItems { display:flex; gap:8px; width:100%; overflow-x:auto; padding:6px 2px 10px; -webkit-overflow-scrolling:touch; }
 .duItem { flex:0 0 auto; width:60px; height:60px; border-radius:16px; border:3px solid transparent; background:rgba(255,255,255,.14);
   font-size:28px; display:flex; align-items:center; justify-content:center; color:#fff; }
 .duItem.sel { border-color:#fde047; background:rgba(253,224,71,.25); transform:scale(1.08); }
@@ -98,6 +98,19 @@ svg.happyjump { animation:hjump .5s ease-in-out 2; }
 .duItem.sw { border-radius:50%; }
 .duItem.prev { padding:0; overflow:hidden; background:rgba(255,255,255,.9); }
 .duItem.prev svg { width:100%; height:100%; display:block; }
+
+/* princess mixer */
+#mxStyleRow { display:flex; gap:6px; width:100%; margin:4px 0 8px; }
+#mxStyleRow button { flex:1; border:none; border-radius:16px; padding:10px 4px; font-weight:900; font-size:12px; color:#fff; background:rgba(255,255,255,.14); }
+#mxStyleRow button.kpop { background:linear-gradient(135deg,#6366f1,#a855f7); }
+#mxStyleRow button.barbie { background:linear-gradient(135deg,#f472b6,#fb7185); }
+#mxStyleRow button.disney { background:linear-gradient(135deg,#38bdf8,#fbbf24); }
+#mxGallery { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; width:100%; }
+.mxCard { width:28%; min-width:88px; background:rgba(255,255,255,.1); border-radius:16px; padding:6px 0 4px; position:relative; }
+.mxCard svg { width:100%; }
+.mxCard .lab { font-size:11px; font-weight:900; text-align:center; padding-top:2px; }
+.mxCard .del { position:absolute; top:2px; right:2px; background:rgba(0,0,0,.4); border:none; color:#fff; border-radius:50%; width:22px; height:22px; font-size:12px; }
+.mxEmpty { opacity:.75; font-size:14px; text-align:center; padding:20px; }
 
 /* paint */
 #paintBox { position:relative; width:100%; max-width:360px; aspect-ratio:5/6; background:#fff; border-radius:22px; overflow:hidden;
@@ -293,6 +306,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div id="homeGirls" class="girlWrap"></div>
     <div id="menuGrid">
       <button class="mcard c1" onclick="startDressup()"><span class="mi">👗</span>Dress Up</button>
+      <button class="mcard c6" onclick="startMixer()"><span class="mi">✨</span>Princess Mixer</button>
       <button class="mcard c8" onclick="startPaint()"><span class="mi">🎨</span>Painting</button>
       <button class="mcard c9" onclick="startFace()"><span class="mi">🥸</span>Funny Face</button>
       <button class="mcard c3" onclick="startKitchen('ramen')"><span class="mi" id="miRamen"></span>Ramen Shop</button>
@@ -345,6 +359,30 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div id="duTabs"></div>
     <div id="duItems"></div>
     <button class="bigbtn gold" onclick="duPhoto()">📸 Photo shoot! +2⭐</button>
+  </div>
+
+  <!-- PRINCESS MIXER -->
+  <div class="screen" id="scr-mixer">
+    <h2>✨ Princess Mixer</h2>
+    <p class="sub">Mix KPop Hunter, Barbie and Disney Princess looks to make your own!</p>
+    <div id="mxStyleRow">
+      <button class="kpop" onclick="mxPreset('kpop')">🎤 KPop Hunter</button>
+      <button class="barbie" onclick="mxPreset('barbie')">💖 Barbie</button>
+      <button class="disney" onclick="mxPreset('disney')">👑 Disney</button>
+    </div>
+    <div id="mxStage" class="duStage"></div>
+    <div id="mxTabs" class="duTabs"></div>
+    <div id="mxItems" class="duItems"></div>
+    <button class="bigbtn gold" onclick="saveMixPrincess()">💾 Save my Princess!</button>
+    <button class="bigbtn" onclick="startGallery()">👯 My Princesses</button>
+  </div>
+
+  <!-- MY PRINCESSES GALLERY -->
+  <div class="screen" id="scr-gallery">
+    <h2>👯 My Princesses</h2>
+    <p class="sub">All the mixed-up princesses you've created!</p>
+    <div id="mxGallery"></div>
+    <button class="bigbtn" onclick="startMixer()">✨ Make another</button>
   </div>
 
   <!-- PAINT -->
@@ -493,6 +531,8 @@ S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs','str
 S.owned.acc = S.owned.acc ?? ['crown','bow','catEars','starPin','glasses','necklace','mic','sword','wings'];
 S.owned.stickers = S.owned.stickers ?? ['heart','star','rainbow','flower'];
 if(!S.owned.outfits.includes('stripes')) S.owned.outfits.push('stripes'); // migrate older saves
+S.mix = S.mix ?? { hairStyle:'wavy', hairColor:'#7c3aed', skin:'#ffe0cc', outfit:'idol', dressColor:'#a855f7', acc:[], eyeStyle:'default' };
+S.gallery = S.gallery ?? [];
 function save(){ localStorage.setItem('starHunters2', JSON.stringify(S)); }
 function owns(cat,id){ return S.owned[cat].includes(id); }
 function buy(cat,id,cost){
@@ -730,6 +770,11 @@ function girlSVG(c){
     s+=`<path d="M81 138 L119 138 L148 242 L52 242 Z" fill="${dc}"/>`;
     if(!c.lineart) s+=`<path d="M100 150 Q120 200 140 238 L52 242 Q80 200 100 150" fill="rgba(255,255,255,.18)"/><circle cx="100" cy="165" r="4" fill="#fde68a"/><circle cx="90" cy="195" r="4" fill="#fde68a"/><circle cx="110" cy="195" r="4" fill="#fde68a"/>`;
     s+=`<circle cx="78" cy="144" r="8" fill="${dc}"/><circle cx="122" cy="144" r="8" fill="${dc}"/>`;
+  } else if(o==='barbie'){
+    s+=`<path d="M80 138 L120 138 L138 220 L62 220 Z" fill="${dc}"/>`;
+    if(!c.lineart){ s+=`<path d="M80 138 L120 138 L126 168 L74 168 Z" fill="rgba(255,255,255,.3)"/>`;
+      s+=`<path d="M92 190 l3 -4 3 4 4 .4 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 Z" fill="#fff" opacity=".85"/><path d="M108 200 l3 -4 3 4 4 .4 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 Z" fill="#fff" opacity=".85"/>`; }
+    s+=`<circle cx="79" cy="144" r="7" fill="${dc}"/><circle cx="121" cy="144" r="7" fill="${dc}"/>`;
   } else if(o==='hoodie'){
     s+=`<rect x="72" y="136" width="56" height="46" rx="13" fill="${dc}"/>`;
     s+=`<path d="M84 138 Q100 152 116 138" stroke="rgba(0,0,0,.25)" stroke-width="3" fill="none"/>`;
@@ -873,6 +918,7 @@ const SHOP = [
   {cat:'outfits', id:'princess', name:'Princess Gown', cost:14, ico:'👸'},
   {cat:'outfits', id:'witch', name:'Witch Dress', cost:12, ico:'🧙‍♀️'},
   {cat:'outfits', id:'mermaid', name:'Mermaid Tail', cost:14, ico:'🧜‍♀️'},
+  {cat:'outfits', id:'barbie', name:'Barbie Glam Dress', cost:14, ico:'💖'},
   ...PRINCESS_DRESSES.map(pd=>({cat:'outfits', id:pd.id, name:pd.name, cost:pd.cost, ico:pd.ico})),
   {cat:'acc', id:'wand', name:'Star Wand', cost:8, ico:'🪄'},
   {cat:'acc', id:'magicwand', name:'Heart Wand', cost:8, ico:'💗'},
@@ -1056,7 +1102,7 @@ function renderHome(){
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
 /* ================= DRESS UP ================= */
-const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid'],
+const OUTFITS = [['idol','🌟','Idol'],['gown','👑','Gown'],['hoodie','🧢','Street'],['hanbok','🎀','Hanbok'],['pjs','🌙','PJs'],['stripes','🦓','Stripes'],['princess','👸','Princess'],['witch','🧙‍♀️','Witch'],['mermaid','🧜‍♀️','Mermaid'],['barbie','💖','Barbie'],
   ...PRINCESS_DRESSES.map(pd=>[pd.id, pd.ico, pd.name.replace(/ Gown| Dress/,'')])];
 const DRESS_COLORS = ['#a855f7','#ec4899','#ef4444','#f97316','#fde047','#22c55e','#38bdf8','#6366f1','#f9a8d4','#0f172a'];
 const HAIR_COLORS = ['#7c3aed','#db2777','#111827','#fcd34d','#38bdf8','#22c55e','#ef4444','#f9a8d4','#a16207','#e5e7eb'];
@@ -1106,6 +1152,76 @@ function duPhoto(){
   setTimeout(()=>say(GIRLS[duGirl].nm+' looks amazing! What a super star!'),600);
 }
 
+/* ================= PRINCESS MIXER ================= */
+const MIX_PRESETS = {
+  kpop:   { hairStyle:'braid', hairColor:'#7c3aed', outfit:'idol',    dressColor:'#a855f7', acc:['starPin','mic'], eyeStyle:'star' },
+  barbie: { hairStyle:'long',  hairColor:'#fcd34d', outfit:'barbie',  dressColor:'#f472b6', acc:['necklace'],      eyeStyle:'sparkle' },
+  disney: { hairStyle:'wavy',  hairColor:'#fcd34d', outfit:'princess',dressColor:'#38bdf8', acc:['crown'],         eyeStyle:'happy' },
+};
+let mxTab='outfit';
+function mxCfg(extra){
+  return Object.assign({hair:S.mix.hairStyle, skin:S.mix.skin, hairColor:S.mix.hairColor,
+    outfit:S.mix.outfit, dressColor:S.mix.dressColor, acc:S.mix.acc.slice(), eyes:S.mix.eyeStyle||'default', mouth:'smile'}, extra||{});
+}
+function mxHeadPreview(overrides){
+  return girlSVG(mxCfg(overrides)).replace('viewBox="0 0 200 262"','viewBox="46 44 108 104"');
+}
+function startMixer(){ mxTab='outfit'; go('mixer'); renderMixer(); say("Let's mix and match to create your own magical princess!"); }
+function mxPreset(style){
+  const p = MIX_PRESETS[style];
+  if(!owns('outfits',p.outfit)){ sNo(); say('Buy that outfit in the shop first to unlock this look! Tap the gift box.'); return; }
+  Object.assign(S.mix, {hairStyle:p.hairStyle, hairColor:p.hairColor, outfit:p.outfit, dressColor:p.dressColor,
+    acc:p.acc.filter(a=>owns('acc',a)), eyeStyle:p.eyeStyle});
+  save(); sPop(); renderMixer(true);
+  say("Ta-da! Now mix in more parts from the tabs to make her your own!");
+}
+function renderMixer(pop){
+  $('mxStage').innerHTML = girlSVG(mxCfg({cls:pop?'pop':''}));
+  const tabs=[['outfit','👗'],['dcolor','🎨'],['hstyle','💇'],['hcolor','🌈'],['eyes','👁️'],['skin','✋'],['acc','✨']];
+  $('mxTabs').innerHTML = tabs.map(t=>`<button class="${t[0]===mxTab?'sel':''}" onclick="mxTabGo('${t[0]}')">${t[1]}</button>`).join('');
+  const o=S.mix;
+  const curHair=o.hairStyle, curEye=o.eyeStyle||'default', curSkin=o.skin;
+  let items='';
+  if(mxTab==='outfit') items = OUTFITS.map(x=>{ const lock=!owns('outfits',x[0]);
+      return `<button class="duItem ${o.outfit===x[0]?'sel':''}" onclick="mxSet('outfit','${x[0]}')"><span>${lock?'🔒':x[1]}<div class="lab">${x[2]}</div></span></button>`; }).join('');
+  else if(mxTab==='dcolor') items = DRESS_COLORS.map(c=>`<button class="duItem sw ${o.dressColor===c?'sel':''}" style="background:${c}" onclick="mxSet('dressColor','${c}')"></button>`).join('');
+  else if(mxTab==='hstyle') items = HAIR_STYLES.map(h=>`<button class="duItem prev ${curHair===h?'sel':''}" onclick="mxSet('hairStyle','${h}')">${mxHeadPreview({hair:h})}</button>`).join('');
+  else if(mxTab==='hcolor') items = HAIR_COLORS.map(c=>`<button class="duItem sw ${o.hairColor===c?'sel':''}" style="background:${c}" onclick="mxSet('hairColor','${c}')"></button>`).join('');
+  else if(mxTab==='eyes') items = EYE_STYLES.map(e=>`<button class="duItem prev ${curEye===e?'sel':''}" onclick="mxSet('eyeStyle','${e}')">${mxHeadPreview({eyes:e})}</button>`).join('');
+  else if(mxTab==='skin') items = SKIN_TONES.map(c=>`<button class="duItem sw ${curSkin===c?'sel':''}" style="background:${c}" onclick="mxSet('skin','${c}')"></button>`).join('');
+  else items = ACCS.map(a=>{ const lock=!owns('acc',a[0]);
+      return `<button class="duItem ${o.acc.includes(a[0])?'sel':''}" onclick="mxAcc('${a[0]}')">${lock?'🔒':a[1]}</button>`; }).join('');
+  $('mxItems').innerHTML = items;
+}
+function mxTabGo(t){ mxTab=t; sPop(); renderMixer(); }
+function mxSet(k,v){
+  if(k==='outfit' && !owns('outfits',v)){ sNo(); say('You need to buy this outfit in the shop! Tap the gift box.'); return; }
+  S.mix[k]=v; save(); sPop(); renderMixer(true);
+}
+function mxAcc(a){
+  if(!owns('acc',a)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
+  const arr=S.mix.acc; const ix=arr.indexOf(a);
+  if(ix>=0) arr.splice(ix,1); else arr.push(a);
+  save(); sPop(); renderMixer(true);
+}
+function saveMixPrincess(){
+  const name = 'Princess '+(S.gallery.length+1);
+  S.gallery.push({name, cfg: JSON.parse(JSON.stringify(S.mix))});
+  if(S.gallery.length>18) S.gallery.shift();
+  save(); sWin(); confettiBurst(); addStars(2);
+  say('Yay! '+name+' was saved to your gallery! What a magical mix!');
+}
+function startGallery(){ go('gallery'); renderGallery(); }
+function renderGallery(){
+  if(!S.gallery.length){ $('mxGallery').innerHTML = `<div class="mxEmpty">No princesses yet! Go mix one up! ✨</div>`; return; }
+  $('mxGallery').innerHTML = S.gallery.map((p,i)=>{
+    const cfg={hair:p.cfg.hairStyle, skin:p.cfg.skin, hairColor:p.cfg.hairColor, outfit:p.cfg.outfit,
+      dressColor:p.cfg.dressColor, acc:p.cfg.acc, eyes:p.cfg.eyeStyle||'default', mouth:'smile'};
+    return `<div class="mxCard">${girlSVG(cfg)}<div class="lab">${p.name}</div><button class="del" onclick="deleteMixPrincess(${i})">✕</button></div>`;
+  }).join('');
+}
+function deleteMixPrincess(i){ S.gallery.splice(i,1); save(); renderGallery(); }
+
 /* ================= PAINT ================= */
 const PAINT_COLORS = ['#ef4444','#f97316','#fde047','#4ade80','#38bdf8','#a855f7','#f472b6','#a16207','#111827','#ffffff'];
 const PAINT_PICS = [
@@ -1116,7 +1232,7 @@ const PAINT_PICS = [
   {id:'flower', label:'Flower'},{id:'rainbow', label:'Rainbow'},{id:'blank', label:'Free draw'},
 ];
 let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawing=false, lastPt=null, rainbowHue=0, pStickerId=null;
-const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid', ...PRINCESS_DRESSES.map(pd=>pd.id)];
+const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid','barbie', ...PRINCESS_DRESSES.map(pd=>pd.id)];
 let pOutfit={};
 const stickerImgCache={};
 function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
