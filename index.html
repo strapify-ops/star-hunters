@@ -128,6 +128,18 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #picRow button { flex:0 0 auto; border:none; border-radius:14px; padding:7px 12px; font-weight:900; font-size:13px; color:#fff; background:rgba(255,255,255,.14); }
 #picRow button.sel { background:linear-gradient(135deg,#2dd4bf,#a855f7); }
 
+/* dot to dot */
+#dotsPicRow { display:flex; gap:7px; width:100%; overflow-x:auto; padding:4px 2px 8px; -webkit-overflow-scrolling:touch; }
+#dotsPicRow button { flex:0 0 auto; border:none; border-radius:14px; padding:7px 12px; font-weight:900; font-size:13px; color:#fff; background:rgba(255,255,255,.14); white-space:nowrap; }
+#dotsPicRow button.sel { background:linear-gradient(135deg,#2dd4bf,#a855f7); }
+#dotsStage { width:100%; max-width:320px; margin:0 auto; background:rgba(255,255,255,.08); border-radius:22px; padding:10px 6px; }
+#dotsStage svg { width:100%; touch-action:manipulation; }
+.dotPt { cursor:pointer; }
+.dotPt circle { transform-origin:center; transform-box:fill-box; }
+.dotPt.next circle { animation:dotPulse 1s ease-in-out infinite; }
+@keyframes dotPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+#dotsBtnRow { display:flex; gap:8px; margin-top:8px; }
+
 /* funny face */
 #faceStage { position:relative; width:100%; max-width:340px; aspect-ratio:6/7; background:linear-gradient(160deg,#fdf2f8,#e0e7ff);
   border-radius:22px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.4); touch-action:none; }
@@ -313,6 +325,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <button class="mcard c4" onclick="startKitchen('sushi')"><span class="mi" id="miSushi"></span>Sushi Bar</button>
       <button class="mcard c2" onclick="startLetters()"><span class="mi">🔤</span>Letter Zap</button>
       <button class="mcard c5" onclick="startCount()"><span class="mi">🔢</span>Counting</button>
+      <button class="mcard c4" onclick="startDots()"><span class="mi">🔘</span>Dot to Dot</button>
       <button class="mcard c6" onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
       <button class="mcard c2" onclick="startJump()"><span class="mi">🦘</span>Jump &amp; Run</button>
       <button class="mcard c3" onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
@@ -446,6 +459,18 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div id="countField"></div>
     <div class="grid" id="countGrid"></div>
     <div id="feedback2"></div>
+  </div>
+
+  <!-- DOT TO DOT -->
+  <div class="screen" id="scr-dots">
+    <h2>🔘 Dot to Dot</h2>
+    <p class="sub" id="dotsHint">Tap the numbers in order to reveal the picture!</p>
+    <div id="dotsPicRow"></div>
+    <div id="dotsStage"></div>
+    <div id="dotsBtnRow">
+      <button class="bigbtn" onclick="dotsReset()">🔄 Try Again</button>
+      <button class="bigbtn gold" onclick="dotsNext()">➡️ Next Picture</button>
+    </div>
   </div>
 
   <!-- WORD -->
@@ -1624,6 +1649,55 @@ function pickCount(btn,n){
     document.querySelectorAll('.cdemon').forEach((el,i)=>setTimeout(()=>{el.innerHTML=poofSVG(); setTimeout(()=>el.style.opacity=0,250);}, i*120));
     $('feedback2').textContent=cheer()+' '+n+' demons zapped! ⚡'; addStars(1); setTimeout(nextCount,1900);
   } else { btn.classList.add('wrong'); sNo(); say('Try counting again! Point to each demon!'); setTimeout(()=>btn.classList.remove('wrong'),500); }
+}
+
+/* ================= DOT TO DOT ================= */
+const DOT_STAR = [[120,40],[146.5,113.6],[224.6,116],[162.8,163.9],[184.7,239],[120,195],[55.3,239],[77.2,163.9],[15.4,116],[93.5,113.6]];
+const DOT_HEART = [[120,114],[129.4,89.7],[175.1,64.2],[226.8,92.2],[226.8,151.9],[175.1,206.8],[129.4,252],[120,272.4],[110.6,252],[64.9,206.8],[13.2,151.9],[13.2,92.2],[64.9,64.2],[110.6,89.7]];
+const DOT_CROWN = [[40,220],[40,160],[70,90],[100,150],[120,40],[140,150],[170,90],[200,160],[200,220]];
+const DOT_PICS = [
+  {label:"Ruby's Star", cat:'kpop', ico:'⭐', color:'#a855f7', pts:DOT_STAR},
+  {label:"Mira's Star", cat:'kpop', ico:'⭐', color:'#ec4899', pts:DOT_STAR},
+  {label:"Zoey's Star", cat:'kpop', ico:'⭐', color:'#22c55e', pts:DOT_STAR},
+  {label:'Barbie Heart', cat:'barbie', ico:'💖', color:'#f472b6', pts:DOT_HEART},
+  {label:'Glam Heart', cat:'barbie', ico:'💖', color:'#fb7185', pts:DOT_HEART},
+  {label:'Sparkle Heart', cat:'barbie', ico:'💖', color:'#fbbf24', pts:DOT_HEART},
+  {label:'Ice Crown', cat:'disney', ico:'👑', color:'#38bdf8', pts:DOT_CROWN},
+  {label:'Rose Crown', cat:'disney', ico:'👑', color:'#f472b6', pts:DOT_CROWN},
+  {label:'Dawn Crown', cat:'disney', ico:'👑', color:'#fbbf24', pts:DOT_CROWN},
+];
+let dtPicIdx=0, dtNext=1, dtDone=false;
+function startDots(){ dtPicIdx=0; go('dots'); dotsLoad(); say("Let's connect the dots! Tap the numbers in order to reveal a picture!"); }
+function dotsLoad(){ dtNext=1; dtDone=false; dotsPicRow(); renderDots(); }
+function dotsPicRow(){
+  $('dotsPicRow').innerHTML = DOT_PICS.map((p,i)=>`<button class="${i===dtPicIdx?'sel':''}" onclick="dotsPick(${i})">${p.ico} ${p.label}</button>`).join('');
+}
+function dotsPick(i){ dtPicIdx=i; dotsLoad(); sPop(); }
+function dotsReset(){ dtNext=1; dtDone=false; renderDots(); sPop(); }
+function dotsNext(){ dtPicIdx=(dtPicIdx+1)%DOT_PICS.length; dotsLoad(); say("Let's do "+DOT_PICS[dtPicIdx].label+"!"); }
+function renderDots(){
+  const pic = DOT_PICS[dtPicIdx], pts = pic.pts, seen = dtNext-1;
+  let s='';
+  if(dtDone) s += `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="${pic.color}" opacity=".35"/>`;
+  for(let i=1;i<seen;i++) s += `<line x1="${pts[i-1][0]}" y1="${pts[i-1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}" stroke="${pic.color}" stroke-width="6" stroke-linecap="round"/>`;
+  if(dtDone) s += `<line x1="${pts[pts.length-1][0]}" y1="${pts[pts.length-1][1]}" x2="${pts[0][0]}" y2="${pts[0][1]}" stroke="${pic.color}" stroke-width="6" stroke-linecap="round"/>`;
+  pts.forEach((p,i)=>{
+    const num=i+1, state = num<dtNext ? 'done' : (num===dtNext ? 'next' : 'todo');
+    s += `<g class="dotPt ${state}" onclick="dotsTap(${num})"><circle cx="${p[0]}" cy="${p[1]}" r="${state==='next'?16:13}" fill="${state==='todo'?'#fff':pic.color}"/><text x="${p[0]}" y="${p[1]+5}" text-anchor="middle" font-size="15" font-weight="900" fill="${state==='todo'?'#333':'#fff'}">${num}</text></g>`;
+  });
+  $('dotsStage').innerHTML = `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  $('dotsHint').textContent = dtDone ? '🎉 '+pic.label+' is finished! Tap Next Picture for another!' : 'Tap number '+dtNext+' next!';
+}
+function dotsTap(num){
+  if(dtDone) return;
+  const pic = DOT_PICS[dtPicIdx];
+  if(num!==dtNext){ sNo(); say('Look for number '+dtNext+'!'); return; }
+  dtNext++; sPop();
+  if(dtNext > pic.pts.length){
+    dtDone=true; cheer(); addStars(3);
+    setTimeout(()=>say(pic.label+' is all done! Great connecting!'),700);
+  }
+  renderDots();
 }
 
 /* ================= WORD MAGIC ================= */
