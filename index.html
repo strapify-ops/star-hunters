@@ -769,12 +769,12 @@ function playPhon(k, gap){
 function playBuf(b, gap){
   const a=ac(); if(!a) return 0;
   speechSynthesis.cancel();
-  const now=a.currentTime, t=Math.max(now+.02, phonEnd+(gap==null?.08:gap));
+  const now=a.currentTime, t = gap==='now' ? now+.01 : Math.max(now+.02, phonEnd+(gap==null?.08:gap));
   if(t-now>3) return -1;   // fingers far ahead of the sounds: skip, don't pile up
   const s=a.createBufferSource(), g=a.createGain(); g.gain.value=1.2;
   s.buffer=b; s.connect(g); g.connect(a.destination); s.start(t);
   phonSrc.push(s); s.onended=()=>{ phonSrc=phonSrc.filter(x=>x!==s); if(!phonSrc.length && !speaking) duckMusic(false); };
-  phonEnd=t+b.duration; duckMusic(true);
+  phonEnd=Math.max(phonEnd, t+b.duration); duckMusic(true);
   return t-now;
 }
 function stopPhon(){
@@ -800,8 +800,8 @@ function soundUnit(box, units, k, gap){
   let wait;
   if(u.s) wait=playPhon(u.s, gap);
   else {   // the quiet e of a_e: a sparkle, no sound
-    const a=ac(); const t=Math.max(a.currentTime+.02, phonEnd+(gap==null?.08:gap));
-    wait=t-a.currentTime; tone(1320,wait,.12,'sine',.08); tone(1760,wait+.06,.18,'sine',.06); phonEnd=t+.25;
+    const a=ac(); const t = gap==='now' ? a.currentTime+.01 : Math.max(a.currentTime+.02, phonEnd+(gap==null?.08:gap));
+    wait=t-a.currentTime; tone(1320,wait,.12,'sine',.08); tone(1760,wait+.06,.18,'sine',.06); phonEnd=Math.max(phonEnd, t+.25);
   }
   if(wait<0) return 0;
   phonT.push(setTimeout(()=>{
@@ -2847,7 +2847,7 @@ function attachSwipe(box, get){
   const enter=k=>{
     const st=get(); if(k<0||k===last||!st.ready(k)) return;
     if(!seen.length){ st.stop&&st.stop(); stopPhon(); }
-    last=k; seen.push(k); soundUnit(box, st.units, k);
+    last=k; seen.push(k); soundUnit(box, st.units, k, 'now');   // overlap: each sound starts the moment the finger arrives
   };
   box.addEventListener('pointerdown',e=>{ down=true; last=-1; seen=[]; try{ box.releasePointerCapture(e.pointerId); }catch(_){} enter(unitAt(e.clientX,e.clientY)); });
   addEventListener('pointermove',e=>{ if(down) enter(unitAt(e.clientX,e.clientY)); });
@@ -2932,12 +2932,12 @@ function showReadWord(){
   const w=rd.list[rd.i];
   $('readDone').style.display='none'; $('readMain').style.display='flex';
   if(!w) return readFinished();
-  rd.units=wordUnits(w); rd.sounds=rd.mode==='practice'; rd.hints=0; rd.last=null;
+  rd.units=wordUnits(w); rd.sounds=true; rd.hints=0; rd.last=null;
   showReadProg(); renderGoal();
   $('readPic').innerHTML=wordPicHTML(w); repoBuf('w', w);
   const box=$('readWord'); box.innerHTML=unitsHTML(w, rd.units, w.length); drawSplitArc(box, rd.units);
   box.classList.toggle('quiet', !rd.sounds);
-  $('readStatus').textContent = rd.mode==='practice' ? 'Slide your finger under the word to sound it out.' : 'Tap 🎤 and read the word out loud.';
+  $('readStatus').textContent = rd.mode==='practice' ? 'Slide your finger under the word to sound it out.' : 'Slide your finger under the word to hear its sounds, then tap 🎤 and read it.';
   $('readSetBtn').style.display = rd.mode==='practice' ? 'none' : '';
   $('readHintBtn').style.display = rd.mode==='practice' ? 'none' : '';
   $('readHearBtn').style.display = rd.mode==='practice' ? '' : 'none';
@@ -2955,7 +2955,7 @@ function readHint(){
   const w=rd.list[rd.i]; if(!w || rd.recording) return;
   rd.hints++; sPop();
   rd.sounds=true; $('readWord').classList.remove('quiet');
-  if(rd.hints===1){ stopPhon(); let t=0; rd.units.forEach((u,k)=>{ t=soundUnit($('readWord'), rd.units, k, .3); }); $('readStatus').textContent='💡 Slide your finger under the word to sound it out.'; }
+  if(rd.hints===1){ stopPhon(); let t=0; rd.units.forEach((u,k)=>{ t=soundUnit($('readWord'), rd.units, k, .3); }); $('readStatus').textContent='💡 Listen to the sounds, then put them together!'; }
   else { sayWord(w, '.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
 }
 function readHear(){ const w=rd.list[rd.i]; if(!w) return; stopPhon(); playUnitsThenWord($('readWord'), rd.units, w); }
