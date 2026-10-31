@@ -288,6 +288,13 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .rvPic { width:48px; height:48px; flex:0 0 48px; } .rvPic svg { width:100%; height:100%; } .rvPic .wEmoji { font-size:38px; line-height:48px; }
 .rvWord { flex:1; display:flex; flex-direction:column; min-width:0; } .rvWord b { font-size:24px; } .rvWord small { font-size:11px; opacity:.7; }
 .rvBtn { border:none; border-radius:12px; width:46px; height:46px; font-size:20px; color:#fff; background:rgba(255,255,255,.2); flex:0 0 46px; }
+.rvBtn.rec { background:rgba(244,63,94,.55); } .rvBtn.rec.on { animation:recPulse 1s ease-in-out infinite; }
+.rvCard.recOn { outline:3px solid #f43f5e; }
+.rvWord .mine { color:#fde047; font-weight:900; }
+#rvVoiceMode { display:flex; gap:6px; justify-content:center; margin-bottom:4px; }
+#rvVoiceMode button { border:2px solid transparent; border-radius:12px; padding:8px 12px; font-size:14px; font-weight:900; color:#fff; background:rgba(255,255,255,.15); }
+#rvVoiceMode button.sel { border-color:#fde047; background:rgba(253,224,71,.25); }
+#rvList .sub b { color:#fde047; }
 .rvBtn.ok { background:rgba(34,197,94,.5); } .rvBtn.no { background:rgba(239,68,68,.5); }
 .wEmoji { font-size:88px; line-height:110px; text-align:center; }
 #wordPic { width:110px; height:110px; margin:0 auto; animation:wiggle 3s ease-in-out infinite; }
@@ -722,8 +729,12 @@ function loadPhon(){
 }
 // play clip k after whatever is already playing (+gap); returns seconds until it starts
 function playPhon(k, gap){
-  const a=ac(), b=PHON_BUF[k];
+  const a=ac(), b=MYVOICE['s:'+k] || PHON_BUF[k];
   if(!a || !(b instanceof AudioBuffer)){ loadPhon(); return 0; }
+  return playBuf(b, gap);
+}
+function playBuf(b, gap){
+  const a=ac(); if(!a) return 0;
   speechSynthesis.cancel();
   const now=a.currentTime, t=Math.max(now+.02, phonEnd+(gap==null?.08:gap));
   if(t-now>3) return -1;   // fingers far ahead of the sounds: skip, don't pile up
@@ -736,6 +747,11 @@ function playPhon(k, gap){
 function stopPhon(){
   phonSrc.forEach(s=>{ try{ s.stop(); }catch(e){} }); phonSrc=[]; phonT.forEach(clearTimeout); phonT=[];
   phonEnd=0;
+}
+// a whole word on its own: the grown-up's recording if there is one, else the voice
+function sayWord(w, end){
+  const b=MYVOICE['w:'+w];
+  if(b instanceof AudioBuffer){ stopPhon(); playBuf(b, 0); } else say(w.toLowerCase()+(end||'!'));
 }
 // sound one unit of a word and light it up while it plays; returns seconds until it ends
 function soundUnit(box, units, k, gap){
@@ -758,7 +774,7 @@ function playUnitsThenWord(box, units, w){
   let end=0; units.forEach((u,k)=>{ end=soundUnit(box, units, k, .32); });
   phonT.push(setTimeout(()=>{
     box.querySelectorAll('.unit').forEach(el=>el.classList.add('lit'));
-    say(w.toLowerCase()+'!');
+    sayWord(w, '!');
     setTimeout(()=>box.querySelectorAll('.unit').forEach(el=>el.classList.remove('lit')),700);
   }, end*1000+350));
   return end+1;
@@ -2415,6 +2431,7 @@ function pickWordSet(set){
   S.wordSet=set; save(); wordRecent=[];
   $('wordChooser').style.display='none'; sPop(); renderWordRule();
   if($('scr-read').classList.contains('active')) return startRead();
+  if($('scr-review').classList.contains('active')) return renderReview();
   if(set.type==='pat') teachPattern(); else nextWord();
 }
 function renderWordRule(){
@@ -2539,7 +2556,7 @@ function attachSwipe(box, get){
       const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+350;
       phonT.push(setTimeout(()=>{
         box.querySelectorAll('.unit').forEach(el=>el.classList.add('lit'));
-        say(st.word.toLowerCase()+'!'); sDing();
+        sayWord(st.word, '!'); sDing();
         setTimeout(()=>box.querySelectorAll('.unit').forEach(el=>el.classList.remove('lit')),700);
         st.onBlend&&st.onBlend();
       }, wait));
@@ -2558,12 +2575,19 @@ attachSwipe($('wordSlots'), ()=>({units:wordUnitsCur, word:wordCur.w, ready:unit
 const READ_LEN=10;
 let rd={list:[], i:0, mode:'read', units:[], sounds:false, hints:0, rec:null, stream:null, chunks:[], recording:false, last:null, practice:[]};
 let recDB=null;
-function recOpen(){ return new Promise((res,rej)=>{ if(recDB) return res(recDB);
-  const r=indexedDB.open('starHuntersRec',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('recs',{keyPath:'id',autoIncrement:true});
-  r.onsuccess=()=>{ recDB=r.result; res(recDB); }; r.onerror=()=>rej(r.error); }); }
-async function recTx(mode, fn){ const db=await recOpen(); return new Promise((res,rej)=>{
-  const tx=db.transaction('recs',mode), req=fn(tx.objectStore('recs'));
+// stores never change version (an old open tab would block an upgrade); each opener
+// also gives up after a few seconds rather than hang
+function idbOpen(name, store, opts){ return new Promise((res,rej)=>{
+  const r=indexedDB.open(name,1);
+  const dead=setTimeout(()=>rej(new Error('storage busy: close other Star Hunters tabs')), 4000);
+  r.onupgradeneeded=()=>r.result.createObjectStore(store, opts);
+  r.onsuccess=()=>{ clearTimeout(dead); const db=r.result; db.onversionchange=()=>db.close(); res(db); };
+  r.onerror=()=>{ clearTimeout(dead); rej(r.error); }; }); }
+let voiceDB=null;
+async function recOpen(){ return recDB || (recDB=await idbOpen('starHuntersRec','recs',{keyPath:'id',autoIncrement:true})); }
+async function voiceOpen(){ return voiceDB || (voiceDB=await idbOpen('starHuntersVoice','voice',{keyPath:'key'})); }
+async function recTx(mode, fn, store){ const db=await (store==='voice'?voiceOpen():recOpen()); return new Promise((res,rej)=>{
+  const tx=db.transaction(store||'recs',mode), req=fn(tx.objectStore(store||'recs'));
   tx.oncomplete=()=>res(req&&req.result); tx.onerror=()=>rej(tx.error); }); }
 const recPut=o=>recTx('readwrite',st=>st.put(o));
 const recAll=()=>recTx('readonly',st=>st.getAll());
@@ -2614,7 +2638,7 @@ function readHint(){
   rd.hints++; sPop();
   rd.sounds=true; $('readWord').classList.remove('quiet');
   if(rd.hints===1){ stopPhon(); let t=0; rd.units.forEach((u,k)=>{ t=soundUnit($('readWord'), rd.units, k, .3); }); $('readStatus').textContent='💡 Slide your finger under the word to sound it out.'; }
-  else { say(w.toLowerCase()+'.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
+  else { sayWord(w, '.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
 }
 function readHear(){ const w=rd.list[rd.i]; if(!w) return; stopPhon(); playUnitsThenWord($('readWord'), rd.units, w); }
 attachSwipe($('readWord'), ()=>({units:rd.units, word:rd.list[rd.i]||'', ready:()=>rd.sounds, complete:rd.sounds}));
@@ -2651,7 +2675,8 @@ async function readSaveRec(){
   rd.last=blob;
   if(rd.mode==='read'){
     const buf=await blob.arrayBuffer();   // store bytes: older Safari can't keep Blobs in IndexedDB
-    try{ await recPut({word:rd.list[rd.i], at:Date.now(), buf, type, status:'new', hints:rd.hints}); }catch(e){}
+    try{ await recPut({word:rd.list[rd.i], at:Date.now(), buf, type, status:'new', hints:rd.hints}); }
+    catch(e){ $('readStatus').textContent='⚠️ Couldn’t save that one. Close any other Star Hunters tabs and try again.'; return renderReadBtns(); }
   }
   sDing(); $('readStatus').textContent='🌟 Great reading! Tap ▶ to listen, or go to the next word.';
   renderReadBtns();
@@ -2701,10 +2726,11 @@ function parentGateCheck(){
 let rvTab='new';
 function startReview(tab){ rvTab=tab||'new'; go('review'); renderReview(); }
 async function renderReview(){
+  if(rvTab==='voice') return renderVoice();
   let all=[]; try{ all=await recAll(); }catch(e){}
   const by={new:all.filter(r=>r.status==='new'), again:all.filter(r=>r.status==='again'), ok:all.filter(r=>r.status==='ok')};
   const tabs=[['new','To check'],['again','Practise'],['ok','Correct']];
-  $('rvTabs').innerHTML=tabs.map(([k,l])=>`<button class="${rvTab===k?'sel':''}" onclick="rvTab='${k}';renderReview()">${l} (${by[k].length})</button>`).join('');
+  $('rvTabs').innerHTML=tabs.map(([k,l])=>`<button class="${rvTab===k?'sel':''}" onclick="rvTab='${k}';renderReview()">${l} (${by[k].length})</button>`).join('')+voiceTabBtn();
   const list=by[rvTab].sort((a,b)=>b.at-a.at);
   const when=t=>new Date(t).toLocaleDateString(undefined,{day:'numeric',month:'short'})+' '+new Date(t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
   const head = rvTab==='again' && list.length ? `<button class="bigbtn gold" onclick="startPractice()">🤝 Practise these together</button>`
@@ -2719,6 +2745,104 @@ async function renderReview(){
         : `<button class="rvBtn" onclick="rvDelete(${r.id})">🗑️</button>`}
     </div>`).join('') : `<p class="sub">${empty}</p>`);
 }
+/* ---- Your voice: the grown-up records the letter sounds (and words) ----
+   Saved on this device; trimmed and used everywhere in place of the built-in sounds. */
+const SOUND_GUIDE = [
+  ['a','apple'],['e','egg'],['i','igloo'],['o','octopus'],['u','umbrella'],
+  ['s','sun'],['m','mum'],['f','fish'],['n','net'],['l','leg'],['r','rat'],['z','zoo'],['v','van'],
+  ['b','bat'],['k','cat, kite, duck'],['d','dog'],['g','goat'],['p','pig'],['t','tap'],['j','jam'],['h','hat'],['w','web'],['y','yes'],['x','box'],['qu','queen'],
+  ['sh','ship'],['ch','chip'],['th','thin'],['ing','king'],
+  ['ee','bee, sea'],['oo','moon'],['ar','car'],['or','fork, ball'],['er','bird'],['oh','boat, snow'],['ay','rain, cake'],['eye','kite'],['you','cube'],
+];
+const SOUND_SHOWN = {k:'c / k / ck', qu:'qu', x:'x', ay:'ai  a_e', eye:'i_e', oh:'oa  o_e', you:'u_e', ee:'ee  ea', er:'ir'};
+const MYVOICE={};        // 's:sh' / 'w:CAT' -> trimmed AudioBuffer
+let myVoiceKeys=new Set(), rvVoiceMode='sounds';
+const voiceAll=()=>recTx('readonly',st=>st.getAll(),'voice');
+const voicePut=o=>recTx('readwrite',st=>st.put(o),'voice');
+const voiceDel=k=>recTx('readwrite',st=>st.delete(k),'voice');
+function decodeTo(buf){ return new Promise((res,rej)=>{ try{ ac().decodeAudioData(buf.slice(0), res, rej); }catch(e){ rej(e); } }); }
+// cut the silence off both ends and even out the volume
+function trimBuf(b){
+  const d=b.getChannelData(0); let mx=0; for(let i=0;i<d.length;i++){ const v=Math.abs(d[i]); if(v>mx) mx=v; }
+  if(!mx) return b;
+  const th=mx*.1; let s=0, e=d.length-1;
+  while(s<d.length && Math.abs(d[s])<th) s++;
+  while(e>s && Math.abs(d[e])<th) e--;
+  s=Math.max(0, s-Math.floor(b.sampleRate*.03)); e=Math.min(d.length, e+Math.floor(b.sampleRate*.08));
+  const out=AC.createBuffer(1, Math.max(1,e-s), b.sampleRate), o=out.getChannelData(0), k=.85/mx;
+  for(let i=s;i<e;i++) o[i-s]=d[i]*k;
+  const f=Math.min(400, o.length>>2); for(let i=0;i<f;i++){ o[i]*=i/f; o[o.length-1-i]*=i/f; }
+  return out;
+}
+async function loadMyVoice(){
+  if(!ac()) return;
+  let all=[]; try{ all=await voiceAll(); }catch(e){ return; }
+  myVoiceKeys=new Set(all.map(r=>r.key));
+  for(const r of all){ if(MYVOICE[r.key]) continue; try{ MYVOICE[r.key]=trimBuf(await decodeTo(r.buf)); }catch(e){} }
+}
+document.addEventListener('pointerdown', function once(){ document.removeEventListener('pointerdown', once); loadMyVoice(); });
+function voiceTabBtn(){ return `<button class="${rvTab==='voice'?'sel':''}" onclick="rvTab='voice';renderReview()">🎙️ Your voice</button>`; }
+async function renderVoice(){
+  let all=[]; try{ all=await recAll(); }catch(e){}
+  const n=st=>all.filter(r=>r.status===st).length;
+  $('rvTabs').innerHTML=[['new','To check'],['again','Practise'],['ok','Correct']].map(([k,l])=>
+    `<button onclick="rvTab='${k}';renderReview()">${l} (${n(k)})</button>`).join('')+voiceTabBtn();
+  await loadMyVoice();
+  const row=(key,big,small,pic)=>{ const mine=myVoiceKeys.has(key), on=VR.key===key;
+    return `<div class="rvCard ${on?'recOn':''}">
+      ${pic?`<div class="rvPic">${pic}</div>`:''}
+      <div class="rvWord"><b>${big}</b><small>${small}${mine?' · <span class="mine">your voice</span>':''}</small></div>
+      <button class="rvBtn" onclick="voicePlay('${key}')">▶</button>
+      <button class="rvBtn rec ${on?'on':''}" onclick="voiceRec('${key}')">${on?'⏹':'🎤'}</button>
+      ${mine?`<button class="rvBtn" onclick="voiceReset('${key}')" title="Back to the built-in sound">↺</button>`:''}
+    </div>`; };
+  const intro = rvVoiceMode==='sounds'
+    ? `<p class="sub">Tap 🎤, say <b>just the sound</b> (“mmm”, not “em”; a short “b”, not “buh”), then tap ⏹. Silence is trimmed off automatically. Your recording replaces the built-in sound everywhere.</p>`
+    : `<p class="sub">Record whole words in your voice. They're used when the game says a word on its own, like after sounding it out.</p>`;
+  const list = rvVoiceMode==='sounds'
+    ? SOUND_GUIDE.map(([k,ex])=>row('s:'+k, SOUND_SHOWN[k]||k, 'as in '+ex)).join('')
+    : wordPool().map(x=>row('w:'+x.w, x.w.toLowerCase(), '', wordPicHTML(x.w))).join('');
+  $('rvList').innerHTML=`<div id="rvVoiceMode">
+      <button class="${rvVoiceMode==='sounds'?'sel':''}" onclick="rvVoiceMode='sounds';renderVoice()">Letter sounds (${[...myVoiceKeys].filter(k=>k[0]==='s').length}/${SOUND_GUIDE.length})</button>
+      <button class="${rvVoiceMode==='words'?'sel':''}" onclick="rvVoiceMode='words';renderVoice()">Words (${[...myVoiceKeys].filter(k=>k[0]==='w').length})</button>
+    </div>${intro}${rvVoiceMode==='words'?`<button class="wordSetBtn" onclick="openWordChooser()">📚 ${wordSetLabel()} ▾</button>`:''}${list}`;
+}
+function voicePlay(key){
+  stopPhon();
+  if(key[0]==='w') return sayWord(key.slice(2), '!');
+  const b=MYVOICE[key] || PHON_BUF[key.slice(2)];
+  if(b instanceof AudioBuffer) playBuf(b, 0);
+}
+const VR={key:null, rec:null, stream:null, chunks:[], t:null, music:false};
+async function voiceRec(key){
+  if(VR.rec && VR.rec.state==='recording'){ const same=VR.key===key; VR.rec.stop(); if(same) return; await new Promise(r=>setTimeout(r,250)); }
+  if(!navigator.mediaDevices || !window.MediaRecorder){ alert('This browser can’t record. Try Safari or Chrome.'); return; }
+  speechSynthesis.cancel(); stopPhon();
+  try{ VR.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
+  catch(e){ alert('The microphone is blocked. Allow it for this site in the browser settings.'); return; }
+  VR.music=musicOn; stopMusic();
+  const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'';
+  VR.key=key; VR.chunks=[]; VR.rec=new MediaRecorder(VR.stream, mime?{mimeType:mime}:undefined);
+  VR.rec.ondataavailable=e=>{ if(e.data&&e.data.size) VR.chunks.push(e.data); };
+  VR.rec.onstop=async ()=>{
+    clearTimeout(VR.t); VR.stream.getTracks().forEach(t=>t.stop());
+    if(VR.music) startMusic();
+    const type=VR.rec.mimeType||mime||'audio/mp4', blob=new Blob(VR.chunks,{type}), k=VR.key;
+    VR.key=null; VR.rec=null;
+    if(blob.size>800){
+      const buf=await blob.arrayBuffer();
+      try{
+        MYVOICE[k]=trimBuf(await decodeTo(buf));
+        await voicePut({key:k, buf, type, at:Date.now()}); myVoiceKeys.add(k);
+        setTimeout(()=>voicePlay(k), 150);
+      }catch(e){ alert('That recording couldn’t be read. Try again.'); }
+    }
+    renderVoice();
+  };
+  VR.rec.start(); VR.t=setTimeout(()=>{ if(VR.rec&&VR.rec.state==='recording') VR.rec.stop(); }, key[0]==='s'?3000:4000);
+  renderVoice();
+}
+async function voiceReset(key){ await voiceDel(key); delete MYVOICE[key]; myVoiceKeys.delete(key); sPop(); renderVoice(); }
 async function rvPlay(id){ const r=(await recAll()).find(r=>r.id===id); if(r) playRecBlob(new Blob([r.buf],{type:r.type})); }
 async function rvMark(id, status){
   await recSet(id,{status, checkedAt:Date.now()});
