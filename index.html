@@ -694,7 +694,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.32', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.33', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -802,15 +802,15 @@ function loadPhon(){
 /* Recordings made in the Voice Studio live in the repo under voice/ (listed in
    voice/manifest.json) and reach every device. Order of preference for any
    sound or word: this device's own recording > the studio recording > built-in. */
-let REPO_VOICE={words:{}, sounds:{}};
+let REPO_VOICE={words:{}, sounds:{}, phrases:{}};
 const REPO_BUF={};   // 's:a' / 'w:CAT' -> AudioBuffer, or a Promise while loading
 fetch('voice/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(m=>{
-  if(!m) return; REPO_VOICE={words:m.words||{}, sounds:m.sounds||{}};
+  if(!m) return; REPO_VOICE={words:m.words||{}, sounds:m.sounds||{}, phrases:m.phrases||{}};
   if(AC) Object.keys(REPO_VOICE.sounds).forEach(k=>repoBuf('s',k));
 }).catch(()=>{});
 function repoBuf(kind, k){
   const key=kind+':'+k; if(REPO_BUF[key]) return Promise.resolve(REPO_BUF[key]);
-  const path=REPO_VOICE[kind==='s'?'sounds':'words'][k]; if(!path || !ac()) return Promise.resolve(null);
+  const path=REPO_VOICE[{s:'sounds',w:'words',p:'phrases'}[kind]][k]; if(!path || !ac()) return Promise.resolve(null);
   return REPO_BUF[key]=fetch('voice/'+path).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
     .then(decodeTo).then(b=>REPO_BUF[key]=b).catch(()=>{ delete REPO_BUF[key]; return null; });
 }
@@ -1092,6 +1092,8 @@ function speakPart(text, opts, gen, last){
 let TTSM={phrases:{}, words:{}};
 fetch('voice/tts/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(m=>{ if(m) TTSM={phrases:m.phrases||{}, words:m.words||{}}; }).catch(()=>{});
 const ttsKey=t=>t.trim().replace(/\s+/g,' ').toLowerCase();
+// a sentence recorded in the Voice Studio (the explanations): voice/p/<slug>.mp3
+const phraseSlug=t=>ttsKey(t).replace(/[^a-z]+/g,'-').replace(/^-+|-+$/g,'');
 const TTS_CACHE=new Map();   // path -> AudioBuffer (or Promise while loading), last ~150 kept
 function ttsBuf(path){
   if(TTS_CACHE.has(path)){ const v=TTS_CACHE.get(path); TTS_CACHE.delete(path); TTS_CACHE.set(path,v); return Promise.resolve(v); }
@@ -1117,8 +1119,9 @@ async function sayRecorded(parts, opts, gen){
   speaking=true; duckMusic(true);
   for(const p of parts){
     if(gen!==sayGen) return;
-    const path=TTSM.phrases[ttsKey(p)];
-    const b = path ? await Promise.race([ttsBuf(path), new Promise(r=>setTimeout(()=>r(null),2500))]) : null;
+    const path=TTSM.phrases[ttsKey(p)], slug=phraseSlug(p), mine=REPO_VOICE.phrases[slug];
+    const src = mine ? repoBuf('p', slug) : path ? ttsBuf(path) : null;   // the grown-up's recording first
+    const b = src ? await Promise.race([src, new Promise(r=>setTimeout(()=>r(null),2500))]) : null;
     if(gen!==sayGen) return;
     if(ready(b)) await playOnce(b); else await speakOnce(p, opts);
   }
@@ -1132,7 +1135,7 @@ function say(text, opts){
     stopSay();
     const gen=++sayGen;
     const all=(String(text).match(/[^.!?]+[.!?]*\s*/g)||[String(text)]).map(p=>p.trim()).filter(Boolean);
-    if(!opts.device && AC && all.some(p=>TTSM.phrases[ttsKey(p)])) return void sayRecorded(all, opts, gen);
+    if(!opts.device && AC && all.some(p=>TTSM.phrases[ttsKey(p)] || REPO_VOICE.phrases[phraseSlug(p)])) return void sayRecorded(all, opts, gen);
     // one breath per sentence: sounds less like a robot and dodges Chrome's
     // habit of cutting long utterances off
     const parts=String(text).match(/[^.!?]+[.!?]*\s*/g)||[String(text)];
