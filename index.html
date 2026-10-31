@@ -253,6 +253,10 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .wcRow { display:flex; flex-wrap:wrap; gap:7px; }
 .wchip { border:2px solid transparent; border-radius:14px; padding:8px 12px; font-size:18px; font-weight:900; color:#fff; background:rgba(255,255,255,.14); display:flex; flex-direction:column; align-items:center; min-width:52px; }
 .wchip small { font-size:11px; font-weight:700; opacity:.75; }
+.wcNext { display:block; width:100%; margin:10px 0 4px; border:none; border-radius:16px; padding:12px; font-size:17px; font-weight:900; color:#fff; background:linear-gradient(135deg,#4ade80,#0ea5e9); box-shadow:0 4px 0 rgba(0,0,0,.25); }
+.wcAll { text-align:center; font-weight:900; color:#fde047; }
+.lvProg { float:right; font-size:13px; font-weight:900; background:rgba(255,255,255,.14); border-radius:999px; padding:1px 9px; }
+.lvProg.done { background:rgba(253,224,71,.3); color:#fde047; }
 .wchip.sel { border-color:#fde047; background:rgba(253,224,71,.25); }
 #readMain { display:flex; flex-direction:column; align-items:center; width:100%; }
 #readProg { font-size:13px; font-weight:800; opacity:.75; }
@@ -560,7 +564,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div id="wordHint"></div>
     <div class="grid" id="wordGrid"></div>
     <div id="feedback5"></div>
-    <button class="bigbtn green" id="wordNext" onclick="nextWord()">Next word ▶</button>
+    <button class="bigbtn green" id="wordNext" onclick="wordNextClick()">Next word ▶</button>
   </div>
 
   <!-- READ TO ME -->
@@ -2540,6 +2544,44 @@ const FAMILIES=Object.entries(WORDS.reduce((m,x)=>{ if(x.fam) (m[x.fam]=m[x.fam]
   .filter(([,ws])=>ws.length>=3).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([f])=>f);
 const START_LETTERS=LETTERS.filter(l=>WORDS.filter(x=>x.w[0]===l).length>=3);
 
+// patterns in teaching order; a pattern is mastered after MASTER different words
+// with it are finished (built in Word Magic, or read right in Read to Me)
+const LEVELS=[
+  {n:1, name:'Short sounds',          p:['a','e','i','o','u']},
+  {n:2, name:'Two letters, one sound', p:['sh','ch','th','ck','double','ing','ng','nk','wh']},
+  {n:3, name:'Blends',                p:['blend','endblend']},
+  {n:4, name:'Long vowel teams',      p:['ee','ea','ai','ay','oa','igh']},
+  {n:5, name:'Magic e',               p:['a_e','i_e','o_e','u_e']},
+  {n:6, name:'Bossy r',               p:['ar','or','ur','ir','er','ear','air']},
+  {n:7, name:'More vowel teams',      p:['oo','oo2','ow','ow2','ou','oi','oy','ew','aw']},
+];
+const MASTER=5;
+S.wordsRead = S.wordsRead || {};
+const levelPats=L=>L.p.filter(p=>PATTERNS[p] && WORDS.filter(x=>x.tags.includes(p)).length>=3);
+const levelOf=p=>LEVELS.find(L=>L.p.includes(p));
+function patProgress(p){
+  const pool=WORDS.filter(x=>x.tags.includes(p)), need=Math.min(MASTER,pool.length);
+  const done=pool.filter(x=>S.wordsRead[x.w]).length;
+  return {done:Math.min(done,need), need, ok:done>=need};
+}
+function nextPattern(){ for(const L of LEVELS) for(const p of levelPats(L)) if(!patProgress(p).ok) return p; return null; }
+// record a finished word; returns {pats:[newly mastered], level: level newly finished or null}
+function markWordRead(w){
+  const x=WORDS.find(x=>x.w===w); if(!x || S.wordsRead[w]) return {pats:[], level:null};
+  const before=x.tags.filter(p=>patProgress(p).ok);
+  S.wordsRead[w]=1; save();
+  const pats=x.tags.filter(p=>levelOf(p) && !before.includes(p) && patProgress(p).ok);
+  const level=pats.map(levelOf).find(L=>levelPats(L).every(p=>patProgress(p).ok)) || null;
+  return {pats, level};
+}
+function celebrateMastery(r, el){
+  if(!r.pats.length) return false;
+  const names=r.pats.map(p=>PATTERNS[p].label).join(' and ');
+  addStars(r.level?10:3); confettiBurst(); sWin();
+  if(el) el.textContent = r.level ? `🏆 Level ${r.level.n} complete! +10 ⭐` : `🏅 You mastered ${names}! +3 ⭐`;
+  return true;
+}
+
 if(!S.wordSet || typeof S.wordSet!=='object') S.wordSet={type:'len', v:'mix'};
 let wordCur, wordIdx, wordUnitsCur=[], wordRecent=[], wordDone=false, wordSwiped=false, wordDemoT=[], wordHints=0;
 function wordPool(set){
@@ -2553,11 +2595,17 @@ function wordPool(set){
 function wordSetLabel(set){
   set=set||S.wordSet;
   if(set.type==='len') return set.v==='mix'?'All words':set.v+'-letter words';
-  if(set.type==='pat') return 'Sound: '+PATTERNS[set.v].label;
+  if(set.type==='pat'){ const L=levelOf(set.v); return (L?'Level '+L.n+' · ':'Sound: ')+PATTERNS[set.v].label; }
   if(set.type==='fam') return 'Rhymes: -'+set.v;
   return 'Starts with '+set.v;
 }
 function spellOut(w){ return w.toLowerCase().split('').join(', '); }
+let wordNextPat=null;   // set when a pattern was just mastered: Next moves on to the next one
+function wordNextClick(){
+  $('wordNext').textContent='Next word ▶';
+  if(wordNextPat){ const p=wordNextPat; wordNextPat=null; return pickWordSet({type:'pat',v:p}); }
+  nextWord();
+}
 function startWord(){ go('word'); $('wordChooser').style.display='none'; renderWordRule(); nextWord(); }
 function openWordChooser(){
   sPop(); clearWordDemo();
@@ -2566,7 +2614,11 @@ function openWordChooser(){
   $('wordChooser').innerHTML=`
     <div class="wcHead"><b>Choose your words</b><button class="wcClose" onclick="closeWordChooser()">✕</button></div>
     <h4>How long?</h4><div class="wcRow">${chip({type:'len',v:'3'},'3 letters')}${chip({type:'len',v:'4'},'4 letters')}${chip({type:'len',v:'mix'},'Mix')}</div>
-    <h4>Sound patterns</h4><div class="wcRow">${Object.keys(PATTERNS).filter(p=>wordPool({type:'pat',v:p}).length>=3).map(p=>chip({type:'pat',v:p},PATTERNS[p].label,PATTERNS[p].ex)).join('')}</div>
+    ${(()=>{ const np=nextPattern(); return np ? `<button class="wcNext" onclick='pickWordSet(${JSON.stringify({type:'pat',v:np})})'>▶ Keep going: Level ${levelOf(np).n} · ${PATTERNS[np].label}</button>` : '<p class="wcAll">🏆 Every pattern mastered!</p>'; })()}
+    ${LEVELS.map(L=>{ const ps=levelPats(L), m=ps.filter(p=>patProgress(p).ok).length;
+      return `<h4>Level ${L.n} · ${L.name} <span class="lvProg ${m===ps.length?'done':''}">${m}/${ps.length} ${m===ps.length?'🏆':'⭐'}</span></h4>
+        <div class="wcRow">${ps.map(p=>{ const g=patProgress(p);
+          return chip({type:'pat',v:p}, PATTERNS[p].label+(g.ok?' ⭐':''), `${PATTERNS[p].ex} · ${g.done}/${g.need}`); }).join('')}</div>`; }).join('')}
     <h4>Rhyming words</h4><div class="wcRow">${FAMILIES.map(f=>chip({type:'fam',v:f},'-'+f, wordPool({type:'fam',v:f}).slice(0,2).map(x=>x.w.toLowerCase()).join(' '))).join('')}</div>
     <h4>Starts with…</h4><div class="wcRow">${START_LETTERS.map(l=>chip({type:'start',v:l},l)).join('')}</div>`;
   $('wordChooser').style.display='block';
@@ -2674,6 +2726,11 @@ function pickWordLetter(btn,l){
       $('feedback5').textContent=cheer()+' '+wordCur.w+'!';
       $('wordHintBtn').disabled=true;
       addStars(wordHints?1:2);
+      const m=markWordRead(wordCur.w);
+      if(celebrateMastery(m, $('feedback5')) && S.wordSet.type==='pat' && patProgress(S.wordSet.v).ok){
+        const np=nextPattern(); wordNextPat=np;
+        $('wordNext').textContent = np ? 'Next: Level '+levelOf(np).n+' · '+PATTERNS[np].label+' ▶' : 'Next word ▶';
+      }
       wordDemoT.push(setTimeout(()=>{ say("Let's sound it out!"); }, 1100));
       wordDemoT.push(setTimeout(()=>{
         const end=playUnitsThenWord($('wordSlots'), wordUnitsCur, wordCur.w);
@@ -2844,6 +2901,7 @@ async function readPracticeMark(ok){
   const w=rd.list[rd.i];
   if(ok){
     for(const r of rd.practice.filter(r=>r.word===w)) await recSet(r.id,{status:'ok', fixedAt:Date.now()});
+    celebrateMastery(markWordRead(w), $('readStatus'));
     addStars(1); cheer();
   } else { sPop(); say("That's okay! We'll practise it again next time."); }
   rd.i++; setTimeout(showReadWord, ok?900:400);
@@ -2999,7 +3057,7 @@ async function voiceReset(key){ await voiceDel(key); delete MYVOICE[key]; myVoic
 async function rvPlay(id){ const r=(await recAll()).find(r=>r.id===id); if(r) playRecBlob(new Blob([r.buf],{type:r.type})); }
 async function rvMark(id, status){
   await recSet(id,{status, checkedAt:Date.now()});
-  if(status==='ok'){ addStars(1); sDing(); } else sPop();
+  if(status==='ok'){ addStars(1); sDing(); const r=(await recAll()).find(r=>r.id===id); if(r) celebrateMastery(markWordRead(r.word)); } else sPop();
   renderReview();
 }
 async function rvDelete(id){ await recDel(id); renderReview(); }
