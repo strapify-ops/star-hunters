@@ -256,6 +256,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #wordHintBtn:disabled { opacity:.35; }
 .tile.hintMe { animation:hintGlow 1s ease-in-out 3; box-shadow:0 0 0 4px #fde047, 0 5px 0 rgba(0,0,0,.28); }
 @keyframes hintGlow { 50%{ transform:scale(1.15) rotate(-4deg); } }
+i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; letter-spacing:.5px; background:rgba(134,239,172,.16); border-radius:6px; padding:0 4px; }
 #wordExplain, #readExplain { display:none; width:100%; background:rgba(56,189,248,.16); border:2px solid rgba(56,189,248,.55); border-radius:16px; padding:8px 12px; margin:4px 0 6px; font-size:14px; font-weight:700; line-height:1.35; }
 .exHead { display:flex; justify-content:space-between; align-items:center; font-weight:900; color:#7dd3fc; margin-bottom:4px; }
 .exHead button { border:none; background:rgba(255,255,255,.18); color:#fff; border-radius:10px; padding:3px 9px; font-size:15px; }
@@ -694,7 +695,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.33', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.34', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -1130,7 +1131,7 @@ async function sayRecorded(parts, opts, gen){
   if(opts.onend){ const f=opts.onend; opts.onend=null; f(); }
 }
 function say(text, opts){
-  opts=opts||{};
+  opts=opts||{}; text=String(text).replace(/\*/g,'');   // *sound* marks are for the screen only
   try{
     stopSay();
     const gen=++sayGen;
@@ -2865,75 +2866,75 @@ function wordUnits(w){
 // the sound patterns, with the rule in plain words (two letters, one sound;
 // split vowels shown with a line joining the two letters, which the child traces)
 const PATTERNS = {
-  'a':  {label:'a', ex:'cat',  rule:"Short a says ah, like in apple, cat and hat."},
-  'e':  {label:'e', ex:'bed',  rule:"Short e says eh, like in egg, bed and hen."},
-  'i':  {label:'i', ex:'pig',  rule:"Short i says ih, like in igloo, pig and pin."},
-  'o':  {label:'o', ex:'dog',  rule:"Short o says o, like in octopus, dog and box."},
-  'u':  {label:'u', ex:'bug',  rule:"Short u says uh, like in umbrella, bug and sun."},
-  'sh': {label:'sh', ex:'fish', tip:'sh: two letters, one sound', rule:"S and h are best friends. Two letters, one sound: shh! Like fish and ship."},
-  'ch': {label:'ch', ex:'chip', tip:'ch: two letters, one sound', rule:"C and h together say ch, like a choo choo train! Two letters, one sound. Like chip and chin."},
-  'th': {label:'th', ex:'bath', tip:'th: pop your tongue out', rule:"T and h together say th. Pop your tongue out a little bit! Like bath and moth."},
-  'ck': {label:'ck', ex:'duck', tip:'ck: two letters, one k sound', rule:"C and k together make just one sound: k. You find c k at the end of words, like duck and sock."},
+  'a':  {label:'a', ex:'cat',  rule:"Short A says *ah*, like in apple, cat and hat."},
+  'e':  {label:'e', ex:'bed',  rule:"Short E says *eh*, like in egg, bed and hen."},
+  'i':  {label:'i', ex:'pig',  rule:"Short I says *ih*, like in igloo, pig and pin."},
+  'o':  {label:'o', ex:'dog',  rule:"Short O says *o*, like in octopus, dog and box."},
+  'u':  {label:'u', ex:'bug',  rule:"Short U says *uh*, like in umbrella, bug and sun."},
+  'sh': {label:'sh', ex:'fish', tip:'S and H: two letters, one sound, *shh*', rule:"S and H are best friends. Two letters, one sound: *shh*! Like fish and ship."},
+  'ch': {label:'ch', ex:'chip', tip:'C and H: two letters, one sound, *ch*', rule:"C and H together say *ch*, like a choo choo train! Two letters, one sound. Like chip and chin."},
+  'th': {label:'th', ex:'bath', tip:'T and H say *th*: pop your tongue out', rule:"T and H together say *th*. Pop your tongue out a little bit! Like bath and moth."},
+  'ck': {label:'ck', ex:'duck', tip:'C and K: two letters, one *k* sound', rule:"C and K together make just one sound: *k*. You find C K at the end of words, like duck and sock."},
   'double': {label:'ll ss ff zz', ex:'bell', tip:'Two the same: one sound', rule:"Two letters the same, side by side, make just one sound. Like bell, kiss, puff and buzz."},
-  'qu': {label:'qu', ex:'queen', tip:'qu says kw', rule:"Q always has u as its best friend. Together they say kw. Like queen, quilt and quack!"},
-  'x':  {label:'x', ex:'box', tip:'x says ks', rule:"X says ks, two sounds squashed together. Like box, fox and six."},
-  'ing':{label:'ing', ex:'king', tip:'ing: three letters, one sound', rule:"I, n and g stick together and say ing. Like king, ring and sing."},
-  'ee': {label:'ee', ex:'bee',  tip:'ee says the name of e', rule:"Two e's together say the name of the letter e: ee! Two letters, one sound. Like bee and tree."},
-  'ea': {label:'ea', ex:'leaf', tip:'ea says ee, just like double e', rule:"E and a together say ee too, just like double e! Like sea, tea and leaf."},
-  'oo': {label:'oo', ex:'moon', tip:'oo: a long oooo sound', rule:"Two o's together make a long, stretchy sound: oooo, like a ghost! Like moon, zoo and cool."},
-  'ar': {label:'ar', ex:'car',  tip:'ar: like a pirate!', rule:"A and r together say ar, like a pirate! Like car and star."},
-  'or': {label:'or', ex:'fork', tip:'or: two letters, one sound', rule:"O and r together say or. Like fork and corn."},
-  'oa': {label:'oa', ex:'boat', tip:'oa says the name of o', rule:"O and a together say oh, the name of the letter o. Like boat and goat."},
-  'ai': {label:'ai', ex:'rain', tip:'ai says the name of a', rule:"A and i together say ay, the name of the letter a. Like rain and snail."},
-  'a_e':{label:'a_e', ex:'cake', pair:['CAP','CAPE'], tip:'a_e: the e makes a say its name', rule:"A, gap, e. The e at the end makes no sound, but it reaches back over one letter and makes the a say its name: ay! Cap becomes cape. Trace the line from the a to the e with your finger."},
-  'i_e':{label:'i_e', ex:'kite', pair:['KIT','KITE'], tip:'i_e: the e makes i say its name', rule:"I, gap, e. The e at the end is quiet, but it makes the i say its name: eye! Kit becomes kite."},
-  'o_e':{label:'o_e', ex:'bone', pair:['HOP','HOPE'], tip:'o_e: the e makes o say its name', rule:"O, gap, e. The e at the end is quiet, but it makes the o say its name: oh! Hop becomes hope."},
-  'u_e':{label:'u_e', ex:'cube', pair:['CUB','CUBE'], tip:'u_e: the e makes u say its name', rule:"U, gap, e. The e at the end is quiet, but it makes the u say its name: you! Cub becomes cube."},
-  'ay': {label:'ay', ex:'day',  tip:'ay says the name of a', rule:"A and y together say ay, the name of the letter a. You often find a y at the end of a word, like day and play."},
-  'ow': {label:'ow', ex:'cow',  tip:'ow, like when you bump your toe!', rule:"O and w together can say ow, like when you bump your toe: ow! Like cow, owl and town."},
-  'ow2':{label:'ow (snow)', ex:'snow', tip:'ow can say oh, the name of o', rule:"O and w can also say oh, the name of the letter o. Like snow, bow and grow. If one sound doesn't make a word, try the other one!"},
-  'ou': {label:'ou', ex:'out',  tip:'ou says ow, just like in cow', rule:"O and u together say ow, just like in cow. Like out, loud and ouch!"},
-  'oi': {label:'oi', ex:'coin', tip:'oi says oy', rule:"O and i together say oy. Like oil and coin. Two letters, one sound."},
-  'oy': {label:'oy', ex:'boy',  tip:'oy says oy, often at the end', rule:"O and y together say oy too, usually at the end of a word. Like boy and toy."},
-  'ur': {label:'ur', ex:'fur',  tip:'ur says er', rule:"U and r together say er. Like fur and turn."},
-  'ir': {label:'ir', ex:'bird', tip:'ir says er', rule:"I and r together say er too. Like bird and girl."},
-  'er': {label:'er', ex:'her',  tip:'er says er', rule:"E and r together say er as well. Like her and fern. That's three ways to write the same sound: ur, ir and er!"},
-  'igh':{label:'igh', ex:'high', tip:'igh says the name of i', rule:"I, g and h together say eye, the name of the letter i. The g and h are quiet helpers. Like high and night."},
-  'ear':{label:'ear', ex:'ear',  tip:'ear says ear', rule:"E, a and r together say ear, like the ear on your head! Like hear and year."},
-  'air':{label:'air', ex:'hair', tip:'air says air', rule:"A, i and r together say air, like the air we breathe. Like hair and pair."},
-  'oo2':{label:'oo (book)', ex:'book', tip:'a short oo, like in book', rule:"Sometimes two o's make a short oo sound, like in book, look and foot. Moon has the long oo; book has the short one."},
-  'ew': {label:'ew', ex:'chew', tip:'ew says oo', rule:"E and w together say oo, like in chew and grew. In new and few they say you!"},
-  'aw': {label:'aw', ex:'paw',  tip:'aw says or', rule:"A and w together say or, like a cat's paw. Like jaw and claw."},
-  'wh': {label:'wh', ex:'whale', tip:'wh just says w', rule:"W and h together just say w. The h is quiet. Like whip and wheel."},
-  'nk': {label:'nk', ex:'pink', tip:'nk: say n and k quickly together', rule:"N and k together say nk, like at the end of pink and sink."},
-  'ng': {label:'ng', ex:'song', tip:'ng: one sound at the back of your mouth', rule:"N and g together make one sound, ng, at the end of a word. Like long and song."},
-  'blend':{label:'fr cr st', ex:'frog', tip:'say the first two sounds quickly together', rule:"Two letters side by side that each keep their own sound, like f and r in frog. Say them quickly together: fr! Like crab, star and swim."},
-  'blend3':{label:'str spl thr', ex:'string', tip:'three sounds at the start, said quickly together', rule:"Three sounds at the start of a word, said quickly together. Like s t r in string, s p l in splash, and th r in three."},
-  'ie': {label:'ie', ex:'pie', tip:'ie says the name of i', rule:"I and e together say eye, the name of the letter i. Like pie and tie."},
-  'oe': {label:'oe', ex:'toe', tip:'oe says the name of o', rule:"O and e together say oh, the name of the letter o. Like toe and hoe."},
-  'ey': {label:'ey', ex:'key', tip:'ey says ee', rule:"E and y together at the end of a word say ee. Like key, donkey and monkey."},
-  'y_ee':{label:'y (puppy)', ex:'puppy', tip:'y at the end of a long word says ee', rule:"When y comes at the end of a longer word, it says ee. Like puppy, bunny and jelly."},
-  'y_eye':{label:'y (fly)', ex:'fly', tip:'y at the end of a short word says eye', rule:"When y is the only vowel at the end of a short word, it says eye, the name of the letter i. Like fly, sky and cry."},
-  'e_e':{label:'e_e', ex:'these', pair:['PET','PETE'], tip:'e_e: the e makes e say its name', rule:"E, gap, e. The e at the end is quiet, but it makes the first e say its name: ee! Pet becomes Pete."},
-  'are':{label:'are', ex:'hare', tip:'are says air', rule:"A, r and e together say air. The e is quiet. Like hare, care and share."},
-  'ore':{label:'ore', ex:'snore', tip:'ore says or', rule:"O, r and e together say or. The e is quiet. Like snore, store and core."},
-  'eer':{label:'eer ere', ex:'deer', tip:'eer and ere say ear', rule:"E, e and r together say ear, like deer and cheer. E, r and e can say ear too, like here!"},
-  'ure':{label:'ure', ex:'cure', tip:'ure says yoor', rule:"U, r and e together say yoor, like cure and pure. The e is quiet."},
-  'ue': {label:'ue', ex:'glue', tip:'ue says oo', rule:"U and e together say oo. Like blue, glue and true."},
-  'au': {label:'au', ex:'saucer', tip:'au says or', rule:"A and u together say or. Like sauce and astronaut."},
-  'al': {label:'al', ex:'ball', tip:'a before l can say or', rule:"Sometimes a says or when an l comes after it. Like ball, tall and walk. In walk and chalk, the l is quiet!"},
-  'ea2':{label:'ea (head)', ex:'head', tip:'ea can say a short eh', rule:"Sometimes e and a say a short eh, like in head, bread and feather. If ee doesn't make a word, try eh!"},
-  'softc':{label:'soft c', ex:'ice', tip:'c before e, i or y says s', rule:"When c comes before e, i or y, it goes soft and says s. Like ice, face and city."},
-  'softg':{label:'soft g', ex:'cage', tip:'g before e can say j', rule:"When g comes before e, it often goes soft and says j. Like cage, page and gem."},
-  'tch':{label:'tch', ex:'watch', tip:'tch says ch', rule:"T, c and h together say ch. The t is quiet. You find it after a short vowel, like match, witch and watch."},
-  'dge':{label:'dge', ex:'badge', tip:'dge says j', rule:"D, g and e together say j. Like badge, fudge and bridge."},
-  'kn': {label:'kn', ex:'knot', tip:'kn: the k is quiet', rule:"In k n, the k is quiet. It just says n. Like knot, knee and knife."},
-  'wr': {label:'wr', ex:'wrap', tip:'wr: the w is quiet', rule:"In w r, the w is quiet. It just says r. Like wrap, wrist and write."},
-  'mb': {label:'mb', ex:'lamb', tip:'mb: the b is quiet', rule:"When m and b come at the end of a word, the b is quiet. It just says m. Like lamb, thumb and comb."},
-  'ph': {label:'ph', ex:'phone', tip:'ph says f', rule:"P and h together say f. Like phone, dolphin and elephant."},
-  'le': {label:'le', ex:'apple', tip:'le at the end says ul', rule:"L and e at the end of a word say ul. Like apple, candle and turtle."},
+  'qu': {label:'qu', ex:'queen', tip:'Q and U say *kw*', rule:"Q always has U as its best friend. Together they say *kw*. Like queen, quilt and quack!"},
+  'x':  {label:'x', ex:'box', tip:'X says *ks*', rule:"X says *ks*, two sounds squashed together. Like box, fox and six."},
+  'ing':{label:'ing', ex:'king', tip:'I, N and G: three letters, one sound, *ing*', rule:"I, N and G stick together and say *ing*. Like king, ring and sing."},
+  'ee': {label:'ee', ex:'bee',  tip:'E and E say *ee*, the name of E', rule:"Two E's together say the name of the letter E: *ee*! Two letters, one sound. Like bee and tree."},
+  'ea': {label:'ea', ex:'leaf', tip:'E and A say *ee*, just like double E', rule:"E and A together say *ee* too, just like double E! Like sea, tea and leaf."},
+  'oo': {label:'oo', ex:'moon', tip:'O and O: a long *oooo* sound', rule:"Two O's together make a long, stretchy sound: *oooo*, like a ghost! Like moon, zoo and cool."},
+  'ar': {label:'ar', ex:'car',  tip:'A and R say *ar*, like a pirate!', rule:"A and R together say *ar*, like a pirate! Like car and star."},
+  'or': {label:'or', ex:'fork', tip:'O and R: two letters, one sound, *or*', rule:"O and R together say *or*. Like fork and corn."},
+  'oa': {label:'oa', ex:'boat', tip:'O and A say *oh*, the name of O', rule:"O and A together say *oh*, the name of the letter O. Like boat and goat."},
+  'ai': {label:'ai', ex:'rain', tip:'A and I say *ay*, the name of A', rule:"A and I together say *ay*, the name of the letter A. Like rain and snail."},
+  'a_e':{label:'a_e', ex:'cake', pair:['CAP','CAPE'], tip:'A, gap, E: the E makes A say its name, *ay*', rule:"A, gap, E. The E at the end makes no sound, but it reaches back over one letter and makes the A say its name: *ay*! Cap becomes cape. Trace the line from the A to the E with your finger."},
+  'i_e':{label:'i_e', ex:'kite', pair:['KIT','KITE'], tip:'I, gap, E: the E makes I say its name, *eye*', rule:"I, gap, E. The E at the end is silent, but it makes the I say its name: *eye*! Kit becomes kite."},
+  'o_e':{label:'o_e', ex:'bone', pair:['HOP','HOPE'], tip:'O, gap, E: the E makes O say its name, *oh*', rule:"O, gap, E. The E at the end is silent, but it makes the O say its name: *oh*! Hop becomes hope."},
+  'u_e':{label:'u_e', ex:'cube', pair:['CUB','CUBE'], tip:'U, gap, E: the E makes U say its name, *you*', rule:"U, gap, E. The E at the end is silent, but it makes the U say its name: *you*! Cub becomes cube."},
+  'ay': {label:'ay', ex:'day',  tip:'A and Y say *ay*, the name of A', rule:"A and Y together say *ay*, the name of the letter A. You often find a Y at the end of a word, like day and play."},
+  'ow': {label:'ow', ex:'cow',  tip:'O and W say *ow*, like when you bump your toe!', rule:"O and W together can say *ow*, like when you bump your toe: *ow*! Like cow, owl and town."},
+  'ow2':{label:'ow (snow)', ex:'snow', tip:'O and W can say *oh*, the name of O', rule:"O and W can also say *oh*, the name of the letter O. Like snow, bow and grow. If one sound doesn't make a word, try the other one!"},
+  'ou': {label:'ou', ex:'out',  tip:'O and U say *ow*, just like in cow', rule:"O and U together say *ow*, just like in cow. Like out, loud and ouch!"},
+  'oi': {label:'oi', ex:'coin', tip:'O and I say *oy*', rule:"O and I together say *oy*. Like oil and coin. Two letters, one sound."},
+  'oy': {label:'oy', ex:'boy',  tip:'O and Y say *oy*, often at the end', rule:"O and Y together say *oy* too, usually at the end of a word. Like boy and toy."},
+  'ur': {label:'ur', ex:'fur',  tip:'U and R say *er*', rule:"U and R together say *er*. Like fur and turn."},
+  'ir': {label:'ir', ex:'bird', tip:'I and R say *er*', rule:"I and R together say *er* too. Like bird and girl."},
+  'er': {label:'er', ex:'her',  tip:'E and R say *er*', rule:"E and R together say *er* as well. Like her and fern. That's three ways to write the same sound: U R, I R and E R!"},
+  'igh':{label:'igh', ex:'high', tip:'I, G and H say *eye*, the name of I', rule:"I, G and H together say *eye*, the name of the letter I. The G and H are silent helpers. Like high and night."},
+  'ear':{label:'ear', ex:'ear',  tip:'E, A and R say *ear*', rule:"E, A and R together say *ear*, like the ear on your head! Like hear and year."},
+  'air':{label:'air', ex:'hair', tip:'A, I and R say *air*', rule:"A, I and R together say *air*, like the air we breathe. Like hair and pair."},
+  'oo2':{label:'oo (book)', ex:'book', tip:'a short *oo*, like in book', rule:"Sometimes two O's make a short *oo* sound, like in book, look and foot. Moon has the long *oo*; book has the short one."},
+  'ew': {label:'ew', ex:'chew', tip:'E and W say *oo*', rule:"E and W together say *oo*, like in chew and grew. In new and few they say *you*!"},
+  'aw': {label:'aw', ex:'paw',  tip:'A and W say *or*', rule:"A and W together say *or*, like a cat's paw. Like jaw and claw."},
+  'wh': {label:'wh', ex:'whale', tip:'W and H just say *w*', rule:"W and H together just say *w*. The H is silent. Like whip and wheel."},
+  'nk': {label:'nk', ex:'pink', tip:'N and K: say *nk* quickly together', rule:"N and K together say *nk*, like at the end of pink and sink."},
+  'ng': {label:'ng', ex:'song', tip:'N and G: one sound at the back of your mouth, *ng*', rule:"N and G together make one sound, *ng*, at the end of a word. Like long and song."},
+  'blend':{label:'fr cr st', ex:'frog', tip:'say the first two sounds quickly together', rule:"Two letters side by side that each keep their own sound, like F and R in frog. Say them quickly together: *fr*! Like crab, star and swim."},
+  'blend3':{label:'str spl thr', ex:'string', tip:'three sounds at the start, said quickly together', rule:"Three sounds at the start of a word, said quickly together. Like S T R in string, S P L in splash, and T H R in three."},
+  'ie': {label:'ie', ex:'pie', tip:'I and E say *eye*, the name of I', rule:"I and E together say *eye*, the name of the letter I. Like pie and tie."},
+  'oe': {label:'oe', ex:'toe', tip:'O and E say *oh*, the name of O', rule:"O and E together say *oh*, the name of the letter O. Like toe and hoe."},
+  'ey': {label:'ey', ex:'key', tip:'E and Y say *ee*', rule:"E and Y together at the end of a word say *ee*. Like key, donkey and monkey."},
+  'y_ee':{label:'y (puppy)', ex:'puppy', tip:'Y at the end of a long word says *ee*', rule:"When Y comes at the end of a longer word, it says *ee*. Like puppy, bunny and jelly."},
+  'y_eye':{label:'y (fly)', ex:'fly', tip:'Y at the end of a short word says *eye*', rule:"When Y is the only vowel at the end of a short word, it says *eye*, the name of the letter I. Like fly, sky and cry."},
+  'e_e':{label:'e_e', ex:'these', pair:['PET','PETE'], tip:'E, gap, E: the E makes E say its name, *ee*', rule:"E, gap, E. The E at the end is silent, but it makes the first E say its name: *ee*! Pet becomes Pete."},
+  'are':{label:'are', ex:'hare', tip:'A, R and E say *air*', rule:"A, R and E together say *air*. The E is silent. Like hare, care and share."},
+  'ore':{label:'ore', ex:'snore', tip:'O, R and E say *or*', rule:"O, R and E together say *or*. The E is silent. Like snore, store and core."},
+  'eer':{label:'eer ere', ex:'deer', tip:'E E R and E R E say *ear*', rule:"E, E and R together say *ear*, like deer and cheer. E, R and E can say *ear* too, like here!"},
+  'ure':{label:'ure', ex:'cure', tip:'U, R and E say *yoor*', rule:"U, R and E together say *yoor*, like cure and pure. The E is silent."},
+  'ue': {label:'ue', ex:'glue', tip:'U and E say *oo*', rule:"U and E together say *oo*. Like blue, glue and true."},
+  'au': {label:'au', ex:'saucer', tip:'A and U say *or*', rule:"A and U together say *or*. Like sauce and astronaut."},
+  'al': {label:'al', ex:'ball', tip:'A before L can say *or*', rule:"Sometimes A says *or* when an L comes after it. Like ball, tall and walk. In walk and chalk, the L is silent!"},
+  'ea2':{label:'ea (head)', ex:'head', tip:'E and A can say a short *eh*', rule:"Sometimes E and A say a short *eh*, like in head, bread and feather. If *ee* doesn't make a word, try *eh*!"},
+  'softc':{label:'soft c', ex:'ice', tip:'C before E, I or Y says *sss*', rule:"When C comes before E, I or Y, it goes soft and says *sss*. Like ice, face and city."},
+  'softg':{label:'soft g', ex:'cage', tip:'G before E can say *j*', rule:"When G comes before E, it often goes soft and says *j*. Like cage, page and gem."},
+  'tch':{label:'tch', ex:'watch', tip:'T, C and H say *ch*', rule:"T, C and H together say *ch*. The T is silent. You find it after a short vowel, like match, witch and watch."},
+  'dge':{label:'dge', ex:'badge', tip:'D, G and E say *j*', rule:"D, G and E together say *j*. Like badge, fudge and bridge."},
+  'kn': {label:'kn', ex:'knot', tip:'K N: the K is silent', rule:"In K N, the K is silent. It just says *nnn*. Like knot, knee and knife."},
+  'wr': {label:'wr', ex:'wrap', tip:'W R: the W is silent', rule:"In W R, the W is silent. It just says *rrr*. Like wrap, wrist and write."},
+  'mb': {label:'mb', ex:'lamb', tip:'M B: the B is silent', rule:"When M and B come at the end of a word, the B is silent. It just says *mmm*. Like lamb, thumb and comb."},
+  'ph': {label:'ph', ex:'phone', tip:'P and H say *fff*', rule:"P and H together say *fff*. Like phone, dolphin and elephant."},
+  'le': {label:'le', ex:'apple', tip:'L and E at the end say *ul*', rule:"L and E at the end of a word say *ul*. Like apple, candle and turtle."},
   'tricky':{label:'tricky words', ex:'the', tip:'a tricky word: learn it by heart', rule:"Tricky words don't follow the rules, so we learn them by heart! Like the, said and was. Look at it, say it, and remember it."},
-  'endblend':{label:'nd mp st', ex:'hand', tip:'two sounds at the end, said quickly together', rule:"Two sounds at the end of a word, said quickly together. Like n and d in hand, and m and p in jump."},
+  'endblend':{label:'nd mp st', ex:'hand', tip:'two sounds at the end, said quickly together', rule:"Two sounds at the end of a word, said quickly together. Like N and D in hand, and M and P in jump."},
 };
 const ODD_TAG={'oo:uu':'oo2', 'ow:oh':'ow2', 'ew:you':'ew', 'a:or':'al', 'al:or':'al', 'ea:e':'ea2', 'g:j':'softg', 'ure:oo+er':'ure'};   // overridden sounds that still teach a pattern
 const VOWEL_PATS=new Set(['ee','ea','oo','oo2','oa','ai','ay','ar','or','ir','ur','er','aw','ue','ew','ow','ow2','ou','oi','oy','igh','ear','air','a_e','i_e','o_e','u_e',
@@ -2962,94 +2963,95 @@ function wordTags(w){
 /* How to read each tricky bit of a word: one sentence per sound that isn't a
    plain letter saying its usual sound, keyed 'letters|sound|split/quiet'.
    Every sentence is pre-recorded (voice/tts), so keep them one sentence each,
-   ending in a full stop, with no ! or ? inside. */
+   ending in a full stop, with no ! or ? inside. A letter on its own is a capital (C and K);
+   a sound is *starred*, shown in italics and colour and never read out with the stars. */
 const EXPLAIN = {
-  'ck|k|':'C and k together make just one sound, like the start of kite.',
-  'x|x|':'X says ks, two sounds squashed together, like in box.',
-  'sh|sh|':'S and h together say shh.',
-  'ch|ch|':'C and h together say ch, like a choo choo train.',
-  'th|th|':'T and h together say th, so pop your tongue out a little bit.',
-  'ng|ng|':'N and g together make one sound at the back of your mouth, ng.',
-  'nk|nk|':'N and k together say nk, like at the end of pink.',
-  'ing|ing|':'I, n and g stick together and say ing.',
-  'qu|qu|':'Q and u together say kw, like in queen.',
-  'wh|w|':'W and h together just say w, and the h is quiet.',
-  'ph|f|':'P and h together say fff, like in phone.',
-  'tch|ch|':'T, c and h together say ch, and the t is quiet.',
-  'dge|j|':'D, g and e together say j, like in jam.',
-  'kn|n|':'The k is quiet, so k and n just say nnn.',
-  'wr|r|':'The w is quiet, so w and r just say rrr.',
-  'mb|m|':'The b is quiet, so m and b just say mmm.',
-  'le|l|':'L and e at the end of a word say ul, like in apple.',
-  'c|s|':'The c says sss, because an e, i or y comes after it.',
-  'g|j|':'The g says j, like in jam, because an e comes after it.',
-  'a|ay|split':'The e at the end is quiet, but it makes the a say its name, ay.',
-  'i|eye|split':'The e at the end is quiet, but it makes the i say its name, eye.',
-  'o|oh|split':'The e at the end is quiet, but it makes the o say its name, oh.',
-  'u|you|split':'The e at the end is quiet, but it makes the u say its name, you.',
-  'e|ee|split':'The e at the end is quiet, but it makes the first e say its name, ee.',
-  'e||quiet':'The e at the end is quiet.',
-  'ee|ee|':'Two e\'s together say ee, the name of the letter e.',
-  'ea|ee|':'E and a together say ee, like in sea.',
-  'ea|e|':'Here e and a say a short eh, like in head.',
-  'oo|oo|':'Two o\'s together make a long oooo sound, like in moon.',
-  'oo|uu|':'Here the two o\'s make a short oo, like in book.',
-  'oa|oh|':'O and a together say oh, the name of the letter o.',
-  'ai|ay|':'A and i together say ay, the name of the letter a.',
-  'ay|ay|':'A and y together say ay, like in day.',
-  'ar|ar|':'A and r together say ar, like a pirate.',
-  'or|or|':'O and r together say or, like in fork.',
-  'or|er|':'After a w, o and r say er, like in worm.',
-  'ir|er|':'I and r together say er, like in bird.',
-  'ur|er|':'U and r together say er, like in fur.',
-  'er|er|':'E and r together say er, like in her.',
-  'aw|or|':'A and w together say or, like a cat\'s paw.',
-  'au|or|':'A and u together say or, like in sauce.',
-  'a|or|':'Here the a says or, because an l comes after it.',
-  'al|or|':'A and l say or here, and the l is quiet, like in walk.',
-  'a|o|':'After a w, the a often says o, like in watch.',
-  'ue|oo|':'U and e together say oo, like in blue.',
-  'ew|oo|':'E and w together say oo, like in chew.',
-  'ew|you|':'Here e and w say you, like in new.',
-  'ow|ow|':'O and w together say ow, like when you bump your toe.',
-  'ow|oh|':'Here o and w say oh, like in snow.',
-  'ou|ow|':'O and u together say ow, like in out.',
-  'oi|oy|':'O and i together say oy, like in coin.',
-  'oy|oy|':'O and y together say oy, like in boy.',
-  'igh|eye|':'I, g and h together say eye, and the g and h are quiet.',
-  'ie|eye|':'I and e together say eye, the name of the letter i.',
-  'oe|oh|':'O and e together say oh, the name of the letter o.',
-  'ey|ee|':'E and y at the end of a word say ee, like in key.',
-  'ey|ay|':'Here e and y say ay.',
-  'y|ee|':'The y at the end of a longer word says ee.',
-  'y|eye|':'The y at the end of a short word says eye.',
-  'o|oh|':'Here the o says its name, oh.',
-  'i|eye|':'Here the i says its name, eye.',
-  'e|ee|':'Here the e says its name, ee.',
-  'o|u|':'Here the o says uh, like in mum.',
-  'o|oo|':'Here the o says oo, like in moon.',
-  'u|uu|':'Here the u says a short oo, like in book.',
-  'e|u|':'Here the e says uh.',
-  'ai|e|':'Here a and i say a short eh.',
-  's|z|':'Here the s says zzz, like a buzzing bee.',
-  'f|v|':'Here the f says vvv, like in van.',
-  'ou|oo|':'Here o and u say oo.',
-  'wo|oo|':'Here the w is quiet, and the o says oo.',
-  'wh|h|':'Here w and h just say h, like the start of hat.',
-  'one|w+u+n|':'The letters o, n and e say wun.',
-  'eer|ear|':'E, e and r together say ear, like in deer.',
-  'ear|ear|':'E, a and r together say ear, like the ear on your head.',
-  'ere|ear|':'E, r and e together say ear, like in here.',
-  'ere|air|':'Here e, r and e say air, like in where.',
-  'air|air|':'A, i and r together say air.',
-  'are|air|':'A, r and e together say air, and the e is quiet.',
-  'ore|or|':'O, r and e together say or, and the e is quiet.',
-  'ure|you+er|':'U, r and e together say yoor, like in cure.',
-  'ure|oo+er|':'Here u, r and e say oor, like in lure.',
+  'ck|k|':'C and K together make just one sound, like the start of kite.',
+  'x|x|':'X says *ks*, two sounds squashed together, like in box.',
+  'sh|sh|':'S and H together say *shh*.',
+  'ch|ch|':'C and H together say *ch*, like a choo choo train.',
+  'th|th|':'T and H together say *th*, so pop your tongue out a little bit.',
+  'ng|ng|':'N and G together make one sound at the back of your mouth, *ng*.',
+  'nk|nk|':'N and K together say *nk*, like at the end of pink.',
+  'ing|ing|':'I, N and G stick together and say *ing*.',
+  'qu|qu|':'Q and U together say *kw*, like in queen.',
+  'wh|w|':'W and H together just say *w*, and the H is silent.',
+  'ph|f|':'P and H together say *fff*, like in phone.',
+  'tch|ch|':'T, C and H together say *ch*, and the T is silent.',
+  'dge|j|':'D, G and E together say *j*, like in jam.',
+  'kn|n|':'The K is silent, so K and N just say *nnn*.',
+  'wr|r|':'The W is silent, so W and R just say *rrr*.',
+  'mb|m|':'The B is silent, so M and B just say *mmm*.',
+  'le|l|':'L and E at the end of a word say *ul*, like in apple.',
+  'c|s|':'The C says *sss*, because an E, I or Y comes after it.',
+  'g|j|':'The G says *j*, like in jam, because an E comes after it.',
+  'a|ay|split':'The E at the end is silent, but it makes the A say its name, *ay*.',
+  'i|eye|split':'The E at the end is silent, but it makes the I say its name, *eye*.',
+  'o|oh|split':'The E at the end is silent, but it makes the O say its name, *oh*.',
+  'u|you|split':'The E at the end is silent, but it makes the U say its name, *you*.',
+  'e|ee|split':'The E at the end is silent, but it makes the first E say its name, *ee*.',
+  'e||quiet':'The E at the end is silent.',
+  'ee|ee|':'Two E\'s together say *ee*, the name of the letter E.',
+  'ea|ee|':'E and A together say *ee*, like in sea.',
+  'ea|e|':'Here E and A say a short *eh*, like in head.',
+  'oo|oo|':'Two O\'s together make a long *oooo* sound, like in moon.',
+  'oo|uu|':'Here the two O\'s make a short *oo*, like in book.',
+  'oa|oh|':'O and A together say *oh*, the name of the letter O.',
+  'ai|ay|':'A and I together say *ay*, the name of the letter A.',
+  'ay|ay|':'A and Y together say *ay*, like in day.',
+  'ar|ar|':'A and R together say *ar*, like a pirate.',
+  'or|or|':'O and R together say *or*, like in fork.',
+  'or|er|':'When there is an O and R after a W, say *er*, like in worm.',
+  'ir|er|':'I and R together say *er*, like in bird.',
+  'ur|er|':'U and R together say *er*, like in fur.',
+  'er|er|':'E and R together say *er*, like in her.',
+  'aw|or|':'A and W together say *or*, like a cat\'s paw.',
+  'au|or|':'A and U together say *or*, like in sauce.',
+  'a|or|':'Here the A says *or*, because an L comes after it.',
+  'al|or|':'A and L say *or* here, and the L is silent, like in walk.',
+  'a|o|':'After a W, the A often says *o*, like in watch.',
+  'ue|oo|':'U and E together say *oo*, like in blue.',
+  'ew|oo|':'E and W together say *oo*, like in chew.',
+  'ew|you|':'Here E and W say *you*, like in new.',
+  'ow|ow|':'O and W together say *ow*, like when you bump your toe.',
+  'ow|oh|':'Here O and W say *oh*, like in snow.',
+  'ou|ow|':'O and U together say *ow*, like in out.',
+  'oi|oy|':'O and I together say *oy*, like in coin.',
+  'oy|oy|':'O and Y together say *oy*, like in boy.',
+  'igh|eye|':'I, G and H together say *eye*, and the G and H are silent.',
+  'ie|eye|':'I and E together say *eye*, the name of the letter I.',
+  'oe|oh|':'O and E together say *oh*, the name of the letter O.',
+  'ey|ee|':'E and Y at the end of a word say *ee*, like in key.',
+  'ey|ay|':'Here E and Y say *ay*.',
+  'y|ee|':'The Y at the end of a longer word says *ee*.',
+  'y|eye|':'The Y at the end of a short word says *eye*.',
+  'o|oh|':'Here the O says its name, *oh*.',
+  'i|eye|':'Here the I says its name, *eye*.',
+  'e|ee|':'Here the E says its name, *ee*.',
+  'o|u|':'Here the O says *uh*, like in mum.',
+  'o|oo|':'Here the O says *oo*, like in moon.',
+  'u|uu|':'Here the U says a short *oo*, like in book.',
+  'e|u|':'Here the E says *uh*.',
+  'ai|e|':'Here A and I say a short *eh*.',
+  's|z|':'Here the S says *zzz*, like a buzzing bee.',
+  'f|v|':'Here the F says *vvv*, like in van.',
+  'ou|oo|':'Here O and U say *oo*.',
+  'wo|oo|':'Here the W is silent, and the O says *oo*.',
+  'wh|h|':'Here W and H just say *h*, like the start of hat.',
+  'one|w+u+n|':'The letters O, N and E say *wun*.',
+  'eer|ear|':'E, E and R together say *ear*, like in deer.',
+  'ear|ear|':'E, A and R together say *ear*, like the ear on your head.',
+  'ere|ear|':'E, R and E together say *ear*, like in here.',
+  'ere|air|':'Here E, R and E say *air*, like in where.',
+  'air|air|':'A, I and R together say *air*.',
+  'are|air|':'A, R and E together say *air*, and the E is silent.',
+  'ore|or|':'O, R and E together say *or*, and the E is silent.',
+  'ure|you+er|':'U, R and E together say *yoor*, like in cure.',
+  'ure|oo+er|':'Here U, R and E say *oor*, like in lure.',
 };
 // two the same, side by side (bell, kiss, buzz): one sound, like the start of a word
 [['ll','leg'],['ss','sun'],['ff','fish'],['zz','zip'],['pp','pig'],['tt','top'],['dd','dog'],['gg','go'],['nn','nut'],['mm','map'],['rr','red'],['bb','bed']]
-  .forEach(([d,ex])=>{ EXPLAIN[d+'|'+d[0]+'|']=`Two ${d[0]}'s side by side make just one sound, like the start of ${ex}.`; });
+  .forEach(([d,ex])=>{ EXPLAIN[d+'|'+d[0]+'|']=`Two ${d[0].toUpperCase()}'s side by side make just one sound, like the start of ${ex}.`; });
 const TRICKY_LINE='This is a tricky word, so we learn it by heart.';
 const explainKey=u=>u.t.toLowerCase()+'|'+u.s+'|'+(u.split?'split':u.quiet?'quiet':'');
 // [{u, letters, text}] for the word's tricky bits, in reading order
@@ -3059,14 +3061,16 @@ function wordExplain(w, units){
   units.forEach(u=>{
     if(u.split && u.s==='') return;            // the quiet e of a_e is told with its vowel
     const text=EXPLAIN[explainKey(u)]; if(!text) return;
-    const letters=u.split ? u.t+'_e' : u.quiet ? 'e' : u.t;
-    if(!out.some(o=>o.text===text)) out.push({u, letters:letters.toLowerCase(), text});
+    const letters=(u.split ? u.t+'_e' : u.quiet ? 'e' : u.t).toLowerCase();
+    if(!out.some(o=>o.text===text)) out.push({u, letters:letters.length===1?letters.toUpperCase():letters, text});
   });
   return out;
 }
 const explainText=ex=>ex.map(o=>o.text).join(' ');
+// *sh* -> the sound in italics and colour (the text is the game's own, never typed in)
+const soundsHTML=t=>String(t).replace(/\*([^*]+)\*/g,'<i class="sd">$1</i>');
 function explainHTML(ex){
-  return ex.map(o=>`<div class="exLine"><b>${o.letters}</b><span>${o.text}</span></div>`).join('');
+  return ex.map(o=>`<div class="exLine"><b>${o.letters}</b><span>${soundsHTML(o.text)}</span></div>`).join('');
 }
 // "similar words": the bit from the first vowel sound on (c-at, h-at, b-at)
 function wordFamily(w){ const us=wordUnits(w); const k=us.findIndex(u=>/[aeiou]/.test(u.t)); return k<0?null:w.slice(us[k].i0).toLowerCase(); }
@@ -3207,7 +3211,7 @@ function renderWordRule(){
   const p=S.wordSet.type==='pat' && PATTERNS[S.wordSet.v];
   if(!p){ $('wordRule').style.display='none'; return; }
   const pair=p.pair?`<div class="wrPair">${p.pair[0].toLowerCase()} <span>➜</span> ${p.pair[1].toLowerCase().replace(/e$/,'<em>e</em>')}</div>`:'';
-  $('wordRule').innerHTML=`<div class="wrTop"><b>${p.label}</b><button class="wrSay" onclick="teachPattern()">🔊</button></div><div>${p.rule}</div>${pair}`;
+  $('wordRule').innerHTML=`<div class="wrTop"><b>${p.label}</b><button class="wrSay" onclick="teachPattern()">🔊</button></div><div>${soundsHTML(p.rule)}</div>${pair}`;
   $('wordRule').style.display='block';
 }
 function teachPattern(){
@@ -3259,13 +3263,13 @@ function wordGiveHint(){
   wordHints++; sPop();
   const l=wordCur.w[wordIdx];
   const tip=wordCur.tags.map(t=>PATTERNS[t]&&PATTERNS[t].tip).find(Boolean);
-  if(tip && wordHints===1) $('wordHint').textContent='💡 '+tip;
+  if(tip && wordHints===1) $('wordHint').innerHTML='💡 '+soundsHTML(tip);
   const b=[...document.querySelectorAll('#wordGrid .tile')].find(b=>!b.disabled && b.textContent===l);
   if(b){ b.classList.remove('hintMe'); void b.offsetWidth; b.classList.add('hintMe'); setTimeout(()=>b.classList.remove('hintMe'),3000); }
   const u=wordUnitsCur.find(u=>wordIdx>=u.i0 && wordIdx<u.i0+u.n);
   // at the start of a tricky bit (sh, a_e, soft c...), say how that bit is read
   const ex=u && wordIdx===u.i0 && wordExplain(wordCur.w, wordUnitsCur).find(o=>o.u===u);
-  if(ex){ $('wordHint').textContent='💡 '+ex.text; return say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'. '+ex.text); }
+  if(ex){ $('wordHint').innerHTML='💡 '+soundsHTML(ex.text); return say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'. '+ex.text); }
   const clip = u && u.n===1 && u.s ? u.s : null;
   say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'.'+(clip?' It says':''),
       {onend: clip ? ()=>playPhon(clip, .15) : null});
