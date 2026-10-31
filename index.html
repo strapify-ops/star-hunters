@@ -18,16 +18,16 @@ body { background:#1a0b3d; color:#fff; }
 .spark { position:fixed; color:#fff; opacity:.7; pointer-events:none; z-index:1; animation:sparkfloat linear infinite; }
 @keyframes sparkfloat { 0%{transform:translateY(105vh) scale(.5);opacity:0} 10%{opacity:.8} 90%{opacity:.6} 100%{transform:translateY(-10vh) scale(1.2);opacity:0} }
 
-#app { height:100%; display:flex; flex-direction:column; max-width:520px; margin:0 auto; position:relative; z-index:2; }
+#app { height:100%; display:flex; flex-direction:column; position:relative; z-index:2; }
 
-#topbar { display:flex; align-items:center; gap:6px; padding:calc(env(safe-area-inset-top) + 8px) 12px 6px; }
+#topbar { display:flex; align-items:center; gap:6px; padding:calc(env(safe-area-inset-top) + 8px) 12px 6px; width:100%; max-width:520px; margin:0 auto; }
 #topbar .title { flex:1; font-size:16px; font-weight:900; letter-spacing:.5px; text-shadow:0 0 12px #f0f; text-align:center; }
 .tbtn { background:rgba(255,255,255,.18); border:none; color:#fff; font-size:18px; border-radius:14px; padding:7px 11px; }
 .tbtn:active { transform:scale(.9); }
 #stars { background:linear-gradient(135deg,#fbbf24,#f97316); border-radius:20px; padding:6px 12px; font-weight:900; font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,.4); transition:transform .2s; }
 #stars.pulse { transform:scale(1.35); }
 
-.screen { flex:1; display:none; flex-direction:column; align-items:center; padding:6px 14px calc(env(safe-area-inset-bottom) + 18px); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.screen { flex:1; display:none; flex-direction:column; align-items:center; padding:6px max(14px, calc((100% - 492px) / 2)) calc(env(safe-area-inset-bottom) + 18px); overflow-y:auto; -webkit-overflow-scrolling:touch; }
 .screen.active { display:flex; animation:screenIn .35s cubic-bezier(.2,1.4,.4,1); }
 @keyframes screenIn { from{opacity:0; transform:translateY(24px) scale(.96)} to{opacity:1; transform:none} }
 
@@ -52,10 +52,15 @@ h2 { font-size:20px; text-align:center; margin:4px 0; text-shadow:0 2px 6px rgba
 .note { position:absolute; font-size:16px; animation:noteup 2.4s ease-out infinite; opacity:0; pointer-events:none; }
 @keyframes noteup { 0%{transform:translateY(0);opacity:0} 15%{opacity:1} 100%{transform:translateY(-46px) rotate(20deg);opacity:0} }
 
-#menuGrid { display:grid; grid-template-columns:1fr 1fr; gap:9px; width:100%; }
+#menuGrid { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:minmax(64px,118px); align-content:center; gap:8px; width:100%; flex:1; min-height:0; }
+#scr-home { padding-bottom:calc(env(safe-area-inset-bottom) + 8px); }
+#scr-home .mcard { padding:6px 4px; font-size:12px; line-height:1.15; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+#scr-home .mcard .mi { font-size:26px; margin-bottom:2px; } #scr-home .mcard .mi svg { width:30px; height:30px; }
+#scr-home .appVer { margin:6px 0 0; }
+#homeGirls { max-width:420px; }
+@media (min-aspect-ratio: 1/1) { #menuGrid { grid-template-columns:repeat(5,1fr); } #homeGirls { max-width:300px; } }
 .mcard { border:none; border-radius:20px; padding:12px 6px 10px; color:#fff; font-weight:900; font-size:14px;
   box-shadow:0 6px 0 rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.25); position:relative; overflow:hidden; }
-.mcard:last-child:nth-child(odd) { grid-column:1 / -1; }
 .mcard:active { transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.3); }
 .mcard .mi { font-size:32px; display:block; margin-bottom:1px; animation:wiggle 3s ease-in-out infinite; }
 .mcard .mi svg { width:40px; height:40px; }
@@ -406,7 +411,6 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 
   <!-- HOME -->
   <div class="screen active" id="scr-home">
-    <h1>STAR HUNTERS</h1>
     <div id="homeGirls" class="girlWrap"></div>
     <div id="menuGrid">
       <button class="mcard c1" onclick="startDressup()"><span class="mi">👗</span>Dress Up</button>
@@ -646,7 +650,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 <div id="parentGate"></div>
 <script>
 // shown at the bottom of the home and settings screens; bump on every release
-const APP_VERSION='2.22', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.23', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
