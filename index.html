@@ -421,9 +421,11 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .gateMsg.ready { background:linear-gradient(135deg,#4ade80,#0ea5e9); }
 .gateDots { letter-spacing:2px; color:#fde047; margin-left:4px; }
 #gateBar.nudge .gateMsg { animation:shake .4s; outline:3px solid #fde047; }
-.mcard.locked { filter:grayscale(.65) brightness(.75); }
-.mcard.locked::before { content:'🔒'; position:absolute; top:4px; right:6px; font-size:15px; z-index:2; }
-.unlockToast { position:fixed; left:50%; top:30%; transform:translateX(-50%); z-index:99; background:linear-gradient(135deg,#fbbf24,#f97316); color:#fff; font-weight:900; font-size:24px; padding:14px 22px; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,.4); animation:popin .4s; pointer-events:none; }
+#menuGrid.mode-learn [data-fun], #menuGrid.mode-game [data-learn] { display:none; }
+#menuGrid.mode-learn, #menuGrid.mode-game { grid-auto-rows:minmax(64px,150px); }
+#menuGrid.mode-learn .mcard, #menuGrid.mode-game .mcard { font-size:15px; } #menuGrid.mode-learn .mcard .mi, #menuGrid.mode-game .mcard .mi { font-size:34px; }
+#menuGrid.mode-learn .mcard .mi svg, #menuGrid.mode-game .mcard .mi svg { width:40px; height:40px; }
+.unlockToast { white-space:nowrap; position:fixed; left:50%; top:30%; transform:translateX(-50%); z-index:99; background:linear-gradient(135deg,#fbbf24,#f97316); color:#fff; font-weight:900; font-size:24px; padding:14px 22px; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,.4); animation:popin .4s; pointer-events:none; }
 #gateSetting { width:100%; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; background:rgba(255,255,255,.1); border-radius:16px; padding:10px; margin-bottom:10px; text-align:center; }
 #gateSetting small { width:100%; opacity:.7; font-size:12px; }
 .pmBtn { border:2px solid rgba(255,255,255,.3); border-radius:999px; padding:8px 14px; font-weight:900; font-size:14px; color:#fff; background:rgba(255,255,255,.1); }
@@ -450,21 +452,21 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div id="homeGirls" class="girlWrap"></div>
     <div id="gateBar"></div>
     <div id="menuGrid">
-      <button class="mcard c1" data-gated onclick="gateGame(()=>startDressup())"><span class="mi">👗</span>Dress Up</button>
-      <button class="mcard c6" data-gated onclick="gateGame(()=>startMixer())"><span class="mi">✨</span>Princess Mixer</button>
-      <button class="mcard c8" data-gated onclick="gateGame(()=>startPaint())"><span class="mi">🎨</span>Painting</button>
-      <button class="mcard c9" data-gated onclick="gateGame(()=>startFace())"><span class="mi">🥸</span>Funny Face</button>
-      <button class="mcard c3" data-gated onclick="gateGame(()=>startKitchen('ramen'))"><span class="mi" id="miRamen"></span>Ramen Shop</button>
-      <button class="mcard c4" data-gated onclick="gateGame(()=>startKitchen('sushi'))"><span class="mi" id="miSushi"></span>Sushi Bar</button>
-      <button class="mcard c2" onclick="startLetters()"><span class="mi">🔤</span>Letter Zap</button>
-      <button class="mcard c5" onclick="startCount()"><span class="mi">🔢</span>Counting</button>
-      <button class="mcard c4" onclick="startDots()"><span class="mi">🔘</span>Dot to Dot</button>
-      <button class="mcard c6" onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
-      <button class="mcard c2" data-gated onclick="gateGame(()=>startJump())"><span class="mi">🦘</span>Jump &amp; Run</button>
-      <button class="mcard c8" onclick="startRead()"><span class="mi">🎤</span>Read to Me</button>
-      <button class="mcard c3" onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
-      <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
-      <button class="mcard c7" onclick="go('pet')"><span class="mi" id="miPet"></span>Boba Buddy</button>
+      <button class="mcard c1" data-fun onclick="gateGame(()=>startDressup())"><span class="mi">👗</span>Dress Up</button>
+      <button class="mcard c6" data-fun onclick="gateGame(()=>startMixer())"><span class="mi">✨</span>Princess Mixer</button>
+      <button class="mcard c8" data-fun onclick="gateGame(()=>startPaint())"><span class="mi">🎨</span>Painting</button>
+      <button class="mcard c9" data-fun onclick="gateGame(()=>startFace())"><span class="mi">🥸</span>Funny Face</button>
+      <button class="mcard c3" data-fun onclick="gateGame(()=>startKitchen('ramen'))"><span class="mi" id="miRamen"></span>Ramen Shop</button>
+      <button class="mcard c4" data-fun onclick="gateGame(()=>startKitchen('sushi'))"><span class="mi" id="miSushi"></span>Sushi Bar</button>
+      <button class="mcard c2" data-learn onclick="startLetters()"><span class="mi">🔤</span>Letter Zap</button>
+      <button class="mcard c5" data-learn onclick="startCount()"><span class="mi">🔢</span>Counting</button>
+      <button class="mcard c4" data-learn onclick="startDots()"><span class="mi">🔘</span>Dot to Dot</button>
+      <button class="mcard c6" data-learn onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
+      <button class="mcard c2" data-fun onclick="gateGame(()=>startJump())"><span class="mi">🦘</span>Jump &amp; Run</button>
+      <button class="mcard c8" data-learn onclick="startRead()"><span class="mi">🎤</span>Read to Me</button>
+      <button class="mcard c3" data-learn onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
+      <button class="mcard c9" data-fun onclick="gateGame(()=>startShop())"><span class="mi">🎁</span>Sticker Shop</button>
+      <button class="mcard c7" data-fun onclick="gateGame(()=>go('pet'))"><span class="mi" id="miPet"></span>Boba Buddy</button>
     </div>
     <div class="appVer" data-ver></div>
   </div>
@@ -692,7 +694,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.27', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.28', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -2439,7 +2441,7 @@ function pickLetter(btn,l){
     $('zapFlash').classList.remove('go'); void $('zapFlash').offsetWidth; $('zapFlash').classList.add('go');
     btn.querySelector('.timp').innerHTML=poofSVG();
     $('feedback').textContent=cheer()+' Demon zapped! ⚡';
-    addStars(1); setTimeout(nextLetter,1500);
+    addStars(1); addReadCredit(); setTimeout(nextLetter,1500);
   } else { btn.classList.add('wrong'); sNo(); say('That one is '+l.toLowerCase()+'. Find '+letTarget.toLowerCase()+'!'); setTimeout(()=>btn.classList.remove('wrong'),500); }
 }
 
@@ -2458,7 +2460,7 @@ function nextCount(){
 function pickCount(btn,n){
   if(n===countTarget){ btn.classList.add('right'); sZap();
     document.querySelectorAll('.cdemon').forEach((el,i)=>setTimeout(()=>{el.innerHTML=poofSVG(); setTimeout(()=>el.style.opacity=0,250);}, i*120));
-    $('feedback2').textContent=cheer()+' '+n+' demons zapped! ⚡'; addStars(1); setTimeout(nextCount,1900);
+    $('feedback2').textContent=cheer()+' '+n+' demons zapped! ⚡'; addStars(1); addReadCredit(); setTimeout(nextCount,1900);
   } else { btn.classList.add('wrong'); sNo(); say('Try counting again! Point to each demon!'); setTimeout(()=>btn.classList.remove('wrong'),500); }
 }
 
@@ -2642,7 +2644,7 @@ function dotsTap(num, fromDrag){
   if(num!==dtNext){ sNo(); say('Look for number '+dtNext+'!'); return; }
   dtNext++; sPop();
   if(dtNext > pic.pts.length){
-    dtDone=true; cheer(); addStars(3); S.dotsDone[pic.label]=1; save(); dotsPicRow();
+    dtDone=true; cheer(); addStars(3); addReadCredit(); S.dotsDone[pic.label]=1; save(); dotsPicRow();
     setTimeout(()=>say(pic.label+' is all done! Great connecting!'),700);
   }
   renderDots();
@@ -3167,34 +3169,38 @@ let recWasMusic=false;
 /* ---- games unlock with reading: every S.gate.per words read earns one go at a fun game ---- */
 S.gate = S.gate || {per:5};
 S.readCredit = S.readCredit || 0;
-// parent mode (switched on behind the grown-up check) opens every game without reading first
+/* ---- learning first, then game time ----
+   Home shows only the word and number activities. Every S.gate.per of them finished
+   (a word built or read, a letter zapped, demons counted, a dot picture, a phone call)
+   turns home into "game time": the fun games appear and the child picks ONE. Starting
+   it uses the game time up, and home goes back to the learning activities.
+   Parent mode (behind the grown-up check) shows everything. */
 const gateOn=()=>S.gate.per>0 && !S.parentMode;
+const gameTime=()=>gateOn() && S.readCredit>=S.gate.per;
 function setParentMode(on){ S.parentMode=!!on; save(); sPop(); renderGateSetting(); renderGate(); }
 function addReadCredit(){
-  if(!gateOn()) return;
-  const before=Math.floor(S.readCredit/S.gate.per);
+  if(!gateOn() || S.readCredit>=S.gate.per) return;
   S.readCredit++; save();
-  if(Math.floor(S.readCredit/S.gate.per)>before){ sWin(); confettiBurst(); setTimeout(()=>say('You unlocked a game!'), 900); flashUnlock(); }
+  if(S.readCredit>=S.gate.per){ sWin(); confettiBurst(); setTimeout(()=>say('Game time! Pick a game!'), 900); flashUnlock(); }
 }
 function flashUnlock(){
-  const b=document.createElement('div'); b.className='unlockToast'; b.textContent='🎮 Game unlocked!';
+  const b=document.createElement('div'); b.className='unlockToast'; b.textContent='🎮 Game time!';
   document.body.appendChild(b); setTimeout(()=>b.remove(), 2600);
 }
 function renderGate(){
-  const el=$('gateBar'); if(!el) return;
-  document.querySelectorAll('[data-gated]').forEach(b=>b.classList.toggle('locked', gateOn() && S.readCredit<S.gate.per));
+  const el=$('gateBar'), grid=$('menuGrid'); if(!el || !grid) return;
+  const mode = !gateOn() ? 'all' : gameTime() ? 'game' : 'learn';
+  grid.className = 'mode-'+mode;
   if(S.parentMode){ el.innerHTML=`<div class="gateMsg parent">👨‍👩‍👧 Parent mode: all games open <button onclick="setParentMode(false)">Turn off</button></div>`; return; }
-  if(!gateOn()){ el.innerHTML=''; return; }
-  const per=S.gate.per, plays=Math.floor(S.readCredit/per), have=S.readCredit%per;
-  el.innerHTML = plays
-    ? `<div class="gateMsg ready">🎮 You can play ${plays>1?plays+' games':'a game'}!</div>`
-    : `<div class="gateMsg">📖 Read ${per-have} more word${per-have===1?'':'s'} to unlock a game <span class="gateDots">${'●'.repeat(have)}${'○'.repeat(per-have)}</span></div>`;
+  if(mode==='all'){ el.innerHTML=''; return; }
+  const per=S.gate.per, have=S.readCredit;
+  el.innerHTML = mode==='game'
+    ? `<div class="gateMsg ready">🎮 Game time! Pick one game</div>`
+    : `<div class="gateMsg">⭐ ${per-have} more to go until game time <span class="gateDots">${'●'.repeat(have)}${'○'.repeat(per-have)}</span></div>`;
 }
 function gateGame(start){
-  if(!gateOn() || S.readCredit>=S.gate.per){ if(gateOn()){ S.readCredit-=S.gate.per; save(); } return start(); }
-  const left=S.gate.per - S.readCredit%S.gate.per;
-  sNo(); say(left===1 ? 'Read one more word to unlock a game!' : 'Read '+left+' more words to unlock a game!');
-  const g=$('gateBar'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge');
+  if(gameTime()){ S.readCredit=0; save(); }   // one game per game time
+  start();
 }
 function stepGate(d){
   const opts=[0,3,5,10,15,20]; let i=opts.indexOf(S.gate.per); if(i<0) i=2;
@@ -3202,8 +3208,8 @@ function stepGate(d){
 }
 function renderGateSetting(){
   const el=$('gateSetting'); if(!el) return;
-  el.innerHTML=`<b>🎮 Fun games unlock after</b><div class="goal"><button onclick="stepGate(-1)">−</button><span>${S.gate.per?S.gate.per+' words':'off'}</span><button onclick="stepGate(1)">+</button></div>
-    <small>Dress Up, Mixer, Painting, Funny Face, Ramen, Sushi and Jump & Run. Words read so far: ${S.readCredit}.</small>
+  el.innerHTML=`<b>🎮 Game time after every</b><div class="goal"><button onclick="stepGate(-1)">−</button><span>${S.gate.per?S.gate.per+' activities':'off'}</span><button onclick="stepGate(1)">+</button></div>
+    <small>Home shows the word and number activities; after this many are done the fun games appear for one game. Done so far: ${Math.min(S.readCredit,S.gate.per)}.</small>
     <button class="pmBtn ${S.parentMode?'on':''}" onclick="setParentMode(${!S.parentMode})">👨‍👩‍👧 Parent mode: ${S.parentMode?'ON — all games open':'off'}</button>`;
 }
 const MIC_OPTS={audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1}};
@@ -3695,7 +3701,7 @@ function phoneWinCall(){
   $('phoneNumber').innerHTML = phoneNumberHTML();
   $('phoneAvatar').className='ring';
   $('feedbackP').textContent='📞 Ring ring... calling '+p.label+'!';
-  say('Ring, ring! Ring, ring!');
+  say('Ring, ring! Ring, ring!'); addReadCredit();
   sDing();
   const fromMemory = !phoneShow;
   const earned = fromMemory ? 5 : 3;
