@@ -358,11 +358,6 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #petMsg { min-height:22px; text-align:center; font-size:15px; font-weight:900; color:#fde047; margin-top:6px; }
 
 /* settings */
-#voiceList { width:100%; display:flex; flex-direction:column; gap:7px; margin-top:6px; }
-.voiceRow { border:3px solid transparent; border-radius:16px; padding:10px 14px; background:rgba(255,255,255,.13);
-  color:#fff; font-weight:800; font-size:14px; text-align:left; display:flex; justify-content:space-between; align-items:center; }
-.voiceRow.sel { border-color:#fde047; background:rgba(253,224,71,.22); }
-.voiceRow .vl { opacity:.7; font-size:12px; }
 
 /* shop */
 #shopGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
@@ -676,10 +671,8 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- SETTINGS -->
   <div class="screen" id="scr-settings">
     <h2>⚙️ Grown-up Settings</h2>
-    <p class="sub">The game speaks with a recorded natural voice (and your own recordings). The voice you pick here is only a backup for anything that isn't recorded — tap one to hear it.</p>
     <button class="bigbtn gold" onclick="parentGate()">👨‍👩‍👧 Grown-up reading check</button>
     <button class="bigbtn" onclick="toggleMusic()" id="musicBtn2">🎵 Music on/off</button>
-    <div id="voiceList"></div>
     <div class="appVer" data-ver></div>
   </div>
 </div>
@@ -694,7 +687,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.30', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.31', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -737,7 +730,7 @@ S.pet = S.pet ?? { hunger:70, happy:70, clean:70, last:Date.now() };
 S.outfits = S.outfits ?? [];
 while(S.outfits.length < GIRLS.length) S.outfits.push(JSON.parse(JSON.stringify(DEF_OUTFITS[S.outfits.length])));
 S.music = S.music ?? true;
-S.voiceURI = S.voiceURI ?? null;
+delete S.voiceURI;   // the old device-voice picker is gone; the best device voice is chosen automatically
 S.owned = S.owned ?? {};
 S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs','stripes'];
 S.owned.acc = S.owned.acc ?? ['crown','bow','catEars','starPin','glasses','necklace','mic','sword','wings'];
@@ -1067,7 +1060,6 @@ function voiceScore(v){
 }
 function bestVoice(){
   if(!VOICES.length) loadVoices();
-  if(S.voiceURI){ const v=VOICES.find(v=>v.voiceURI===S.voiceURI); if(v) return v; }
   return VOICES.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0] || null;
 }
 let speaking=false, sayGen=0;
@@ -1143,16 +1135,6 @@ function say(text, opts){
 }
 function renderSettings(){
   renderMusicBtns();
-  if(!VOICES.length) loadVoices();
-  const cur = bestVoice();
-  $('voiceList').innerHTML = VOICES.length ? VOICES.slice().sort((a,b)=>voiceScore(b)-voiceScore(a)).map(v=>
-    `<button class="voiceRow ${cur&&v.voiceURI===cur.voiceURI?'sel':''}" onclick="pickVoice('${encodeURIComponent(v.voiceURI)}')">
-      <span>${isNatural(v)?'⭐ ':''}${v.name}</span><span class="vl">${v.lang}</span></button>`).join('')
-    : '<p class="sub">Voices are still loading — tap the screen once, then come back here.</p>';
-}
-function pickVoice(uri){
-  S.voiceURI=decodeURIComponent(uri); save(); renderSettings();
-  say("Hi! I'm your new voice! Let's play Star Hunters!", {device:true});
 }
 const CHEERS = ['Amazing!','Super star!','You got it!','Woo hoo!','Incredible!','Pop star power!'];
 function cheer(){ const t=CHEERS[Math.floor(Math.random()*CHEERS.length)]; say(t); confettiBurst(); sWin(); return t; }
