@@ -726,10 +726,28 @@ function loadPhon(){
     for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
     a.decodeAudioData(u8.buffer, b=>{ PHON_BUF[k]=b; }, ()=>{ delete PHON_BUF[k]; });
   });
+  Object.keys(REPO_VOICE.sounds).forEach(k=>repoBuf('s',k));
 }
+/* Recordings made in the Voice Studio live in the repo under voice/ (listed in
+   voice/manifest.json) and reach every device. Order of preference for any
+   sound or word: this device's own recording > the studio recording > built-in. */
+let REPO_VOICE={words:{}, sounds:{}};
+const REPO_BUF={};   // 's:a' / 'w:CAT' -> AudioBuffer, or a Promise while loading
+fetch('voice/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(m=>{
+  if(!m) return; REPO_VOICE={words:m.words||{}, sounds:m.sounds||{}};
+  if(AC) Object.keys(REPO_VOICE.sounds).forEach(k=>repoBuf('s',k));
+}).catch(()=>{});
+function repoBuf(kind, k){
+  const key=kind+':'+k; if(REPO_BUF[key]) return Promise.resolve(REPO_BUF[key]);
+  const path=REPO_VOICE[kind==='s'?'sounds':'words'][k]; if(!path || !ac()) return Promise.resolve(null);
+  return REPO_BUF[key]=fetch('voice/'+path).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(decodeTo).then(b=>REPO_BUF[key]=b).catch(()=>{ delete REPO_BUF[key]; return null; });
+}
+const ready=x=>x instanceof AudioBuffer ? x : null;
+const hasRecordedWord=w=>!!(ready(MYVOICE['w:'+w]) || REPO_VOICE.words[w]);
 // play clip k after whatever is already playing (+gap); returns seconds until it starts
 function playPhon(k, gap){
-  const a=ac(), b=MYVOICE['s:'+k] || PHON_BUF[k];
+  const a=ac(), b=ready(MYVOICE['s:'+k]) || ready(REPO_BUF['s:'+k]) || PHON_BUF[k];
   if(!a || !(b instanceof AudioBuffer)){ loadPhon(); return 0; }
   return playBuf(b, gap);
 }
@@ -748,10 +766,16 @@ function stopPhon(){
   phonSrc.forEach(s=>{ try{ s.stop(); }catch(e){} }); phonSrc=[]; phonT.forEach(clearTimeout); phonT=[];
   phonEnd=0;
 }
-// a whole word on its own: the grown-up's recording if there is one, else the voice
+// a whole word on its own: a recording if there is one, else the voice
+let sayWordGen=0;
 function sayWord(w, end){
-  const b=MYVOICE['w:'+w];
-  if(b instanceof AudioBuffer){ stopPhon(); playBuf(b, 0); } else say(w.toLowerCase()+(end||'!'));
+  const gen=++sayWordGen, mine=ready(MYVOICE['w:'+w]);
+  if(mine){ stopPhon(); playBuf(mine, 0); return; }
+  if(!REPO_VOICE.words[w]) return say(w.toLowerCase()+(end||'!'));
+  Promise.race([repoBuf('w',w), new Promise(r=>setTimeout(()=>r(null),1500))]).then(b=>{
+    if(gen!==sayWordGen) return;
+    if(ready(b)){ stopPhon(); playBuf(b, 0); } else say(w.toLowerCase()+(end||'!'));
+  });
 }
 // sound one unit of a word and light it up while it plays; returns seconds until it ends
 function soundUnit(box, units, k, gap){
@@ -2464,10 +2488,16 @@ function nextWord(quiet){
   const letters=wordCur.w.split('');
   const extras=shuffle(LETTERS.filter(l=>!letters.includes(l))).slice(0, letters.length>3?2:3);
   $('wordGrid').innerHTML=shuffle([...letters,...extras]).map(l=>`<button class="tile" onclick="pickWordLetter(this,'${l}')">${l}</button>`).join('');
-  if(!quiet) say('Can you build the word '+wordCur.w.toLowerCase()+'?');
+  repoBuf('w', wordCur.w);
+  const w=wordCur.w;
+  if(!quiet){
+    if(hasRecordedWord(w)) say('Can you build the word', {onend:()=>{ if(wordCur.w===w) sayWord(w,'?'); }});
+    else say('Can you build the word '+w.toLowerCase()+'?');
+  }
 }
 function sayWordAgain(){
   if(wordDone) return demoSoundOut();
+  if(hasRecordedWord(wordCur.w)) return sayWord(wordCur.w);
   say(wordCur.w.toLowerCase()+'. Can you build '+wordCur.w.toLowerCase()+'?');
 }
 // answers only come from here: each press shows the next letter (and the pattern tip once)
@@ -2616,7 +2646,7 @@ function showReadWord(){
   if(!w) return readFinished();
   rd.units=wordUnits(w); rd.sounds=rd.mode==='practice'; rd.hints=0; rd.last=null;
   $('readProg').textContent=(rd.mode==='practice'?'Practice ':'Word ')+(rd.i+1)+' of '+rd.list.length;
-  $('readPic').innerHTML=wordPicHTML(w);
+  $('readPic').innerHTML=wordPicHTML(w); repoBuf('w', w);
   const box=$('readWord'); box.innerHTML=unitsHTML(w, rd.units, w.length); drawSplitArc(box, rd.units);
   box.classList.toggle('quiet', !rd.sounds);
   $('readStatus').textContent = rd.mode==='practice' ? 'Slide your finger under the word to sound it out.' : 'Tap 🎤 and read the word out loud.';
