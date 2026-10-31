@@ -694,7 +694,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.29', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.30', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -3241,13 +3241,14 @@ function attachSwipe(box, get){
   const up=()=>{
     if(!down) return; down=false;
     const st=get(), n=st.units.length;
-    // swiped every sound, left to right → blend the whole word, once the sounds have finished
+    // swiped every sound, left to right → light the word up, once the sounds have finished.
+    // The child says the blended word themselves, so it isn't read out for them.
     const inOrder = n>1 && st.units.every((_,k)=>seen.includes(k)) && seen.indexOf(0)<seen.lastIndexOf(n-1);
     if(inOrder && st.complete){
       const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+350;
       phonT.push(setTimeout(()=>{
         box.querySelectorAll('.unit').forEach(el=>el.classList.add('lit'));
-        sayWord(st.word, '!'); sDing();
+        sDing();
         setTimeout(()=>box.querySelectorAll('.unit').forEach(el=>el.classList.remove('lit')),700);
         st.onBlend&&st.onBlend();
       }, wait));
