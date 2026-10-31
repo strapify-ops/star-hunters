@@ -629,7 +629,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- SETTINGS -->
   <div class="screen" id="scr-settings">
     <h2>⚙️ Grown-up Settings</h2>
-    <p class="sub">Pick the voice you like best — tap one to hear it. Tip: on iPhone you can download nicer voices in Settings → Accessibility → Spoken Content → Voices → English, and they'll show up here.</p>
+    <p class="sub">The game speaks with a recorded natural voice (and your own recordings). The voice you pick here is only a backup for anything that isn't recorded — tap one to hear it.</p>
     <button class="bigbtn gold" onclick="parentGate()">👨‍👩‍👧 Grown-up reading check</button>
     <button class="bigbtn" onclick="toggleMusic()" id="musicBtn2">🎵 Music on/off</button>
     <div id="voiceList"></div>
@@ -759,7 +759,7 @@ function repoBuf(kind, k){
     .then(decodeTo).then(b=>REPO_BUF[key]=b).catch(()=>{ delete REPO_BUF[key]; return null; });
 }
 const ready=x=>x instanceof AudioBuffer ? x : null;
-const hasRecordedWord=w=>!!(ready(MYVOICE['w:'+w]) || REPO_VOICE.words[w]);
+const hasRecordedWord=w=>!!(ready(MYVOICE['w:'+w]) || REPO_VOICE.words[w] || TTSM.words[w]);
 // play clip k after whatever is already playing (+gap); returns seconds until it starts
 function playPhon(k, gap){
   const a=ac(), b=ready(MYVOICE['s:'+k]) || ready(REPO_BUF['s:'+k]) || PHON_BUF[k];
@@ -786,8 +786,10 @@ let sayWordGen=0;
 function sayWord(w, end){
   const gen=++sayWordGen, mine=ready(MYVOICE['w:'+w]);
   if(mine){ stopPhon(); playBuf(mine, 0); return; }
-  if(!REPO_VOICE.words[w]) return say(w.toLowerCase()+(end||'!'));
-  Promise.race([repoBuf('w',w), new Promise(r=>setTimeout(()=>r(null),1500))]).then(b=>{
+  // studio recording first, then the built-in natural voice, then the device voice
+  const src = REPO_VOICE.words[w] ? repoBuf('w',w) : TTSM.words[w] ? ttsBuf(TTSM.words[w]) : null;
+  if(!src) return say(w.toLowerCase()+(end||'!'));
+  Promise.race([src, new Promise(r=>setTimeout(()=>r(null),1500))]).then(b=>{
     if(gen!==sayWordGen) return;
     if(ready(b)){ stopPhon(); playBuf(b, 0); } else say(w.toLowerCase()+(end||'!'));
   });
@@ -1027,11 +1029,54 @@ function speakPart(text, opts, gen, last){
   u.onend=done; u.onerror=done;
   speechSynthesis.speak(u);
 }
+/* Every sentence the game says is pre-recorded with a natural voice (voice/tts/,
+   made by the build script from the game's own phrases). say() plays those one
+   sentence at a time and only falls back to the device voice for a sentence
+   that isn't recorded (a name typed in, say). */
+let TTSM={phrases:{}, words:{}};
+fetch('voice/tts/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(m=>{ if(m) TTSM={phrases:m.phrases||{}, words:m.words||{}}; }).catch(()=>{});
+const ttsKey=t=>t.trim().replace(/\s+/g,' ').toLowerCase();
+const TTS_CACHE=new Map();   // path -> AudioBuffer (or Promise while loading), last ~150 kept
+function ttsBuf(path){
+  if(TTS_CACHE.has(path)){ const v=TTS_CACHE.get(path); TTS_CACHE.delete(path); TTS_CACHE.set(path,v); return Promise.resolve(v); }
+  if(!ac()) return Promise.resolve(null);
+  const p=fetch('voice/tts/'+path).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(decodeTo)
+    .then(b=>{ TTS_CACHE.set(path,b); while(TTS_CACHE.size>150) TTS_CACHE.delete(TTS_CACHE.keys().next().value); return b; })
+    .catch(()=>{ TTS_CACHE.delete(path); return null; });
+  TTS_CACHE.set(path,p); return p;
+}
+let saySrc=null;
+function stopSay(){ sayGen++; speechSynthesis.cancel(); if(saySrc){ try{ saySrc.stop(); }catch(e){} saySrc=null; } speaking=false; }
+function playOnce(b){ return new Promise(res=>{
+  const s=AC.createBufferSource(), g=AC.createGain(); g.gain.value=1.15; s.buffer=b; s.connect(g); g.connect(AC.destination);
+  saySrc=s; s.onended=()=>{ if(saySrc===s) saySrc=null; res(); }; s.start();
+  setTimeout(res, b.duration*1000+600);   // never hang on a lost 'ended'
+}); }
+function speakOnce(text, opts){ return new Promise(res=>{
+  const gen=sayGen; speakPart(text, Object.assign({}, opts, {onend:null}), gen, false);
+  const u=speechSynthesis; const t0=Date.now();
+  const iv=setInterval(()=>{ if(!u.speaking && !u.pending || Date.now()-t0>1500+text.length*120){ clearInterval(iv); res(); } }, 120);
+}); }
+async function sayRecorded(parts, opts, gen){
+  speaking=true; duckMusic(true);
+  for(const p of parts){
+    if(gen!==sayGen) return;
+    const path=TTSM.phrases[ttsKey(p)];
+    const b = path ? await Promise.race([ttsBuf(path), new Promise(r=>setTimeout(()=>r(null),2500))]) : null;
+    if(gen!==sayGen) return;
+    if(ready(b)) await playOnce(b); else await speakOnce(p, opts);
+  }
+  if(gen!==sayGen) return;
+  speaking=false; duckMusic(false);
+  if(opts.onend){ const f=opts.onend; opts.onend=null; f(); }
+}
 function say(text, opts){
   opts=opts||{};
   try{
-    speechSynthesis.cancel();
+    stopSay();
     const gen=++sayGen;
+    const all=(String(text).match(/[^.!?]+[.!?]*\s*/g)||[String(text)]).map(p=>p.trim()).filter(Boolean);
+    if(!opts.device && AC && all.some(p=>TTSM.phrases[ttsKey(p)])) return void sayRecorded(all, opts, gen);
     // one breath per sentence: sounds less like a robot and dodges Chrome's
     // habit of cutting long utterances off
     const parts=String(text).match(/[^.!?]+[.!?]*\s*/g)||[String(text)];
@@ -1050,7 +1095,7 @@ function renderSettings(){
 }
 function pickVoice(uri){
   S.voiceURI=decodeURIComponent(uri); save(); renderSettings();
-  say("Hi! I'm your new voice! Let's play Star Hunters!");
+  say("Hi! I'm your new voice! Let's play Star Hunters!", {device:true});
 }
 const CHEERS = ['Amazing!','Super star!','You got it!','Woo hoo!','Incredible!','Pop star power!'];
 function cheer(){ const t=CHEERS[Math.floor(Math.random()*CHEERS.length)]; say(t); confettiBurst(); sWin(); return t; }
@@ -1821,7 +1866,7 @@ function go(name){
   if(name!=='jump') stopJump();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $('scr-'+name).classList.add('active');
-  speechSynthesis.cancel(); stopPhon(); if(name!=='read' && typeof readStopRec==='function') readStopRec(true);
+  stopSay(); stopPhon(); if(name!=='read' && typeof readStopRec==='function') readStopRec(true);
   if(name==='home') renderHome();
   if(name==='pet') renderPet();
   if(name==='settings') renderSettings();
@@ -2252,7 +2297,7 @@ function newOrder(){
   $('bubble').innerHTML = `${n} × ${FOODS[ing].svg} please!`;
   renderKitGirl('smile');
   renderCounter();
-  say(GIRLS[S.char].nm+' says: Can I have '+n+' '+FOODS[ing].name+(n>1?'s':'')+' in my '+kit.dish+' please?');
+  say('Can I have '+n+' '+FOODS[ing].name+(n>1?'s':'')+' in my '+kit.dish+' please?');
 }
 function renderCounter(){
   const counts={};
