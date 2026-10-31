@@ -256,6 +256,11 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #wordHintBtn:disabled { opacity:.35; }
 .tile.hintMe { animation:hintGlow 1s ease-in-out 3; box-shadow:0 0 0 4px #fde047, 0 5px 0 rgba(0,0,0,.28); }
 @keyframes hintGlow { 50%{ transform:scale(1.15) rotate(-4deg); } }
+#wordExplain, #readExplain { display:none; width:100%; background:rgba(56,189,248,.16); border:2px solid rgba(56,189,248,.55); border-radius:16px; padding:8px 12px; margin:4px 0 6px; font-size:14px; font-weight:700; line-height:1.35; }
+.exHead { display:flex; justify-content:space-between; align-items:center; font-weight:900; color:#7dd3fc; margin-bottom:4px; }
+.exHead button { border:none; background:rgba(255,255,255,.18); color:#fff; border-radius:10px; padding:3px 9px; font-size:15px; }
+.exLine { display:flex; gap:8px; align-items:baseline; margin:3px 0; }
+.exLine b { flex:none; min-width:42px; text-align:center; background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; font-size:16px; }
 #wordHint { font-size:14px; font-weight:800; text-align:center; min-height:20px; opacity:.9; margin:2px 0; }
 .setRow { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin:0 0 6px; }
 .setRow .wordSetBtn { margin:0; }
@@ -615,6 +620,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <div class="wordBtns"><button class="speakBtn" onclick="sayWordAgain()">🔊</button><button id="wordHintBtn" onclick="wordGiveHint()">💡 Hint</button></div>
     <div id="wordSlots"></div>
     <div id="wordHint"></div>
+    <div id="wordExplain"></div>
     <div class="grid" id="wordGrid"></div>
     <div id="feedback5"></div>
     <button class="bigbtn green" id="wordNext" onclick="wordNextClick()">Next word ▶</button>
@@ -629,6 +635,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <div id="readPic"></div>
       <div id="readWord" class="quiet"></div>
       <div id="readStatus"></div>
+      <div id="readExplain"></div>
       <div class="readBtns">
         <button id="readHintBtn" onclick="readHint()">💡 Hint</button>
         <button id="readHearBtn" onclick="readHear()">🔊 Hear it</button>
@@ -687,7 +694,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.31', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.32', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -2949,6 +2956,115 @@ function wordTags(w){
   if(![...tags].some(t=>VOWEL_PATS.has(t)) && vowels.length===1 && us.every(u=>!u.odd)) tags.add(vowels[0].t);
   return [...tags];
 }
+/* How to read each tricky bit of a word: one sentence per sound that isn't a
+   plain letter saying its usual sound, keyed 'letters|sound|split/quiet'.
+   Every sentence is pre-recorded (voice/tts), so keep them one sentence each,
+   ending in a full stop, with no ! or ? inside. */
+const EXPLAIN = {
+  'ck|k|':'C and k together make just one sound, like the start of kite.',
+  'x|x|':'X says ks, two sounds squashed together, like in box.',
+  'sh|sh|':'S and h together say shh.',
+  'ch|ch|':'C and h together say ch, like a choo choo train.',
+  'th|th|':'T and h together say th, so pop your tongue out a little bit.',
+  'ng|ng|':'N and g together make one sound at the back of your mouth, ng.',
+  'nk|nk|':'N and k together say nk, like at the end of pink.',
+  'ing|ing|':'I, n and g stick together and say ing.',
+  'qu|qu|':'Q and u together say kw, like in queen.',
+  'wh|w|':'W and h together just say w, and the h is quiet.',
+  'ph|f|':'P and h together say fff, like in phone.',
+  'tch|ch|':'T, c and h together say ch, and the t is quiet.',
+  'dge|j|':'D, g and e together say j, like in jam.',
+  'kn|n|':'The k is quiet, so k and n just say nnn.',
+  'wr|r|':'The w is quiet, so w and r just say rrr.',
+  'mb|m|':'The b is quiet, so m and b just say mmm.',
+  'le|l|':'L and e at the end of a word say ul, like in apple.',
+  'c|s|':'The c says sss, because an e, i or y comes after it.',
+  'g|j|':'The g says j, like in jam, because an e comes after it.',
+  'a|ay|split':'The e at the end is quiet, but it makes the a say its name, ay.',
+  'i|eye|split':'The e at the end is quiet, but it makes the i say its name, eye.',
+  'o|oh|split':'The e at the end is quiet, but it makes the o say its name, oh.',
+  'u|you|split':'The e at the end is quiet, but it makes the u say its name, you.',
+  'e|ee|split':'The e at the end is quiet, but it makes the first e say its name, ee.',
+  'e||quiet':'The e at the end is quiet.',
+  'ee|ee|':'Two e\'s together say ee, the name of the letter e.',
+  'ea|ee|':'E and a together say ee, like in sea.',
+  'ea|e|':'Here e and a say a short eh, like in head.',
+  'oo|oo|':'Two o\'s together make a long oooo sound, like in moon.',
+  'oo|uu|':'Here the two o\'s make a short oo, like in book.',
+  'oa|oh|':'O and a together say oh, the name of the letter o.',
+  'ai|ay|':'A and i together say ay, the name of the letter a.',
+  'ay|ay|':'A and y together say ay, like in day.',
+  'ar|ar|':'A and r together say ar, like a pirate.',
+  'or|or|':'O and r together say or, like in fork.',
+  'or|er|':'After a w, o and r say er, like in worm.',
+  'ir|er|':'I and r together say er, like in bird.',
+  'ur|er|':'U and r together say er, like in fur.',
+  'er|er|':'E and r together say er, like in her.',
+  'aw|or|':'A and w together say or, like a cat\'s paw.',
+  'au|or|':'A and u together say or, like in sauce.',
+  'a|or|':'Here the a says or, because an l comes after it.',
+  'al|or|':'A and l say or here, and the l is quiet, like in walk.',
+  'a|o|':'After a w, the a often says o, like in watch.',
+  'ue|oo|':'U and e together say oo, like in blue.',
+  'ew|oo|':'E and w together say oo, like in chew.',
+  'ew|you|':'Here e and w say you, like in new.',
+  'ow|ow|':'O and w together say ow, like when you bump your toe.',
+  'ow|oh|':'Here o and w say oh, like in snow.',
+  'ou|ow|':'O and u together say ow, like in out.',
+  'oi|oy|':'O and i together say oy, like in coin.',
+  'oy|oy|':'O and y together say oy, like in boy.',
+  'igh|eye|':'I, g and h together say eye, and the g and h are quiet.',
+  'ie|eye|':'I and e together say eye, the name of the letter i.',
+  'oe|oh|':'O and e together say oh, the name of the letter o.',
+  'ey|ee|':'E and y at the end of a word say ee, like in key.',
+  'ey|ay|':'Here e and y say ay.',
+  'y|ee|':'The y at the end of a longer word says ee.',
+  'y|eye|':'The y at the end of a short word says eye.',
+  'o|oh|':'Here the o says its name, oh.',
+  'i|eye|':'Here the i says its name, eye.',
+  'e|ee|':'Here the e says its name, ee.',
+  'o|u|':'Here the o says uh, like in mum.',
+  'o|oo|':'Here the o says oo, like in moon.',
+  'u|uu|':'Here the u says a short oo, like in book.',
+  'e|u|':'Here the e says uh.',
+  'ai|e|':'Here a and i say a short eh.',
+  's|z|':'Here the s says zzz, like a buzzing bee.',
+  'f|v|':'Here the f says vvv, like in van.',
+  'ou|oo|':'Here o and u say oo.',
+  'wo|oo|':'Here the w is quiet, and the o says oo.',
+  'wh|h|':'Here w and h just say h, like the start of hat.',
+  'one|w+u+n|':'The letters o, n and e say wun.',
+  'eer|ear|':'E, e and r together say ear, like in deer.',
+  'ear|ear|':'E, a and r together say ear, like the ear on your head.',
+  'ere|ear|':'E, r and e together say ear, like in here.',
+  'ere|air|':'Here e, r and e say air, like in where.',
+  'air|air|':'A, i and r together say air.',
+  'are|air|':'A, r and e together say air, and the e is quiet.',
+  'ore|or|':'O, r and e together say or, and the e is quiet.',
+  'ure|you+er|':'U, r and e together say yoor, like in cure.',
+  'ure|oo+er|':'Here u, r and e say oor, like in lure.',
+};
+// two the same, side by side (bell, kiss, buzz): one sound, like the start of a word
+[['ll','leg'],['ss','sun'],['ff','fish'],['zz','zip'],['pp','pig'],['tt','top'],['dd','dog'],['gg','go'],['nn','nut'],['mm','map'],['rr','red'],['bb','bed']]
+  .forEach(([d,ex])=>{ EXPLAIN[d+'|'+d[0]+'|']=`Two ${d[0]}'s side by side make just one sound, like the start of ${ex}.`; });
+const TRICKY_LINE='This is a tricky word, so we learn it by heart.';
+const explainKey=u=>u.t.toLowerCase()+'|'+u.s+'|'+(u.split?'split':u.quiet?'quiet':'');
+// [{u, letters, text}] for the word's tricky bits, in reading order
+function wordExplain(w, units){
+  units=units||wordUnits(w);
+  const out=TRICKY.has(w)?[{u:null, letters:w.toLowerCase(), text:TRICKY_LINE}]:[];
+  units.forEach(u=>{
+    if(u.split && u.s==='') return;            // the quiet e of a_e is told with its vowel
+    const text=EXPLAIN[explainKey(u)]; if(!text) return;
+    const letters=u.split ? u.t+'_e' : u.quiet ? 'e' : u.t;
+    if(!out.some(o=>o.text===text)) out.push({u, letters:letters.toLowerCase(), text});
+  });
+  return out;
+}
+const explainText=ex=>ex.map(o=>o.text).join(' ');
+function explainHTML(ex){
+  return ex.map(o=>`<div class="exLine"><b>${o.letters}</b><span>${o.text}</span></div>`).join('');
+}
 // "similar words": the bit from the first vowel sound on (c-at, h-at, b-at)
 function wordFamily(w){ const us=wordUnits(w); const k=us.findIndex(u=>/[aeiou]/.test(u.t)); return k<0?null:w.slice(us[k].i0).toLowerCase(); }
 const WORDS=[...new Set([...Object.keys(WORD_ART), ...WORD_BANK.trim().split(/\s+/)])].map(w=>({w, tags:wordTags(w), fam:wordFamily(w)}));
@@ -3109,7 +3225,7 @@ function nextWord(quiet){
   wordCur=pick; wordIdx=0; wordDone=false; wordSwiped=false; wordHints=0; $('wordHintBtn').disabled=false; wordUnitsCur=wordUnits(wordCur.w);
   $('wordPic').innerHTML=wordPicHTML(wordCur.w);
   const tip=wordCur.tags.map(t=>PATTERNS[t]&&PATTERNS[t].tip).find(Boolean);
-  $('wordHint').textContent='';
+  $('wordHint').textContent=''; $('wordExplain').style.display='none';
   renderWordSlots();
   const letters=wordCur.w.split('');
   const extras=shuffle(LETTERS.filter(l=>!letters.includes(l))).slice(0, letters.length>3?2:3);
@@ -3121,6 +3237,14 @@ function nextWord(quiet){
     else say('Can you build the word '+w.toLowerCase()+'?');
   }
 }
+function showExplain(box, w, units){
+  const ex=wordExplain(w, units);
+  if(!ex.length){ box.style.display='none'; return ex; }
+  box.innerHTML=`<div class="exHead"><span>How to read it</span><button onclick="sayExplain('${box.id}')">🔊</button></div>`+explainHTML(ex);
+  box.style.display='block'; box.dataset.say=explainText(ex);
+  return ex;
+}
+function sayExplain(id){ const t=$(id).dataset.say; if(t){ stopPhon(); say(t); } }
 function sayWordAgain(){
   if(wordDone) return demoSoundOut();
   if(hasRecordedWord(wordCur.w)) return sayWord(wordCur.w);
@@ -3136,6 +3260,9 @@ function wordGiveHint(){
   const b=[...document.querySelectorAll('#wordGrid .tile')].find(b=>!b.disabled && b.textContent===l);
   if(b){ b.classList.remove('hintMe'); void b.offsetWidth; b.classList.add('hintMe'); setTimeout(()=>b.classList.remove('hintMe'),3000); }
   const u=wordUnitsCur.find(u=>wordIdx>=u.i0 && wordIdx<u.i0+u.n);
+  // at the start of a tricky bit (sh, a_e, soft c...), say how that bit is read
+  const ex=u && wordIdx===u.i0 && wordExplain(wordCur.w, wordUnitsCur).find(o=>o.u===u);
+  if(ex){ $('wordHint').textContent='💡 '+ex.text; return say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'. '+ex.text); }
   const clip = u && u.n===1 && u.s ? u.s : null;
   say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'.'+(clip?' It says':''),
       {onend: clip ? ()=>playPhon(clip, .15) : null});
@@ -3198,11 +3325,13 @@ function pickWordLetter(btn,l){
           $('wordNext').style.display='block';
           if(S.wordGoal && wordCount>=S.wordGoal){
             wordNextPat=null; $('wordNext').textContent='🎉 All done! Play again ▶';
+            showExplain($('wordExplain'), wordCur.w, wordUnitsCur);
             $('feedback5').textContent=`🏆 You did all ${S.wordGoal} words!`; confettiBurst(); sWin();
             setTimeout(()=>say(`Amazing! You did all ${S.wordGoal} words!`), 600);
             return;
           }
-          say('Now you try! Slide your finger across the word.');
+          const ex=showExplain($('wordExplain'), wordCur.w, wordUnitsCur);
+          say((ex.length?explainText(ex)+' ':'')+'Now you try! Slide your finger across the word.');
         }, end*1000+1300));
       }, 2400));
     }
@@ -3302,7 +3431,7 @@ function showReadWord(){
   const w=rd.list[rd.i];
   $('readDone').style.display='none'; $('readMain').style.display='flex';
   if(!w) return readFinished();
-  rd.units=wordUnits(w); rd.sounds=true; rd.hints=0; rd.last=null;
+  rd.units=wordUnits(w); rd.sounds=true; rd.hints=0; rd.last=null; $('readExplain').style.display='none';
   showReadProg(); renderGoal();
   $('readPic').innerHTML = rd.mode==='practice' ? wordPicHTML(w) : '<div class="picHidden">?</div>'; repoBuf('w', w);
   const box=$('readWord'); box.innerHTML=unitsHTML(w, rd.units, w.length); drawSplitArc(box, rd.units);
@@ -3327,7 +3456,12 @@ function readHint(){
   rd.sounds=true; $('readWord').classList.remove('quiet');
   // hint 1: show the picture; 2: sound it out; 3: say the word
   if(rd.hints===1 && rd.mode!=='practice'){ $('readPic').innerHTML=wordPicHTML(w); $('readStatus').textContent='💡 Here’s a picture clue!'; }
-  else if(rd.hints<=2){ stopPhon(); rd.units.forEach((u,k)=>soundUnit($('readWord'), rd.units, k, .3)); $('readStatus').textContent='💡 Listen to the sounds, then put them together!'; }
+  else if(rd.hints<=2){
+    stopPhon(); let end=0; rd.units.forEach((u,k)=>{ end=soundUnit($('readWord'), rd.units, k, .3); });
+    $('readStatus').textContent='💡 Listen to the sounds, then put them together!';
+    const ex=showExplain($('readExplain'), w, rd.units);
+    if(ex.length) phonT.push(setTimeout(()=>{ if(rd.list[rd.i]===w) say(explainText(ex)); }, end*1000+400));
+  }
   else { sayWord(w, '.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
 }
 function readHear(){ const w=rd.list[rd.i]; if(!w) return; stopPhon(); playUnitsThenWord($('readWord'), rd.units, w); }
