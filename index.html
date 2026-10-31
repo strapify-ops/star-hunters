@@ -218,10 +218,36 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #zapFlash.go { animation:zapfl .35s; }
 @keyframes zapfl { 0%{opacity:.9} 100%{opacity:0} }
 
-#wordSlots { display:flex; gap:9px; justify-content:center; margin:8px 0; }
-.slot { width:56px; height:66px; border-radius:14px; background:rgba(255,255,255,.14); border:3px dashed rgba(255,255,255,.5);
-  font-size:36px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+#wordSlots { display:flex; gap:12px; justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
+#wordSlots .unit { display:flex; flex-direction:column; align-items:center; gap:5px; border-radius:16px; padding:3px; transition:transform .15s, background .15s; }
+#wordSlots .uSlots { display:flex; gap:3px; }
+#wordSlots .unit.lit { background:rgba(253,224,71,.35); transform:translateY(-6px) scale(1.08); }
+.snd { display:block; width:12px; height:12px; border-radius:50%; background:#fde047; box-shadow:0 0 8px #fde047; }
+.snd.line { width:calc(100% - 14px); height:6px; border-radius:4px; margin:3px 0; }
+.snd.silent { visibility:hidden; }
+.slot { width:52px; height:62px; border-radius:14px; background:rgba(255,255,255,.14); border:3px dashed rgba(255,255,255,.5);
+  font-size:34px; font-weight:900; display:flex; align-items:center; justify-content:center; }
 .slot.filled { border-style:solid; border-color:#fde047; background:rgba(253,224,71,.3); animation:popin .35s; }
+.slot.filled.split { border-color:#f472b6; background:rgba(244,114,182,.3); }
+.splitArc { position:absolute; height:14px; border:4px solid #f472b6; border-top:none; border-radius:0 0 40px 40px; pointer-events:none; box-shadow:0 4px 8px -4px #f472b6; }
+#wordHint { font-size:14px; font-weight:800; text-align:center; min-height:20px; opacity:.9; margin:2px 0; }
+#wordSetBtn { border:none; border-radius:999px; padding:7px 16px; font-size:14px; font-weight:900; color:#fff; background:rgba(255,255,255,.18); margin:0 0 6px; }
+#wordRule { display:none; width:100%; background:rgba(244,114,182,.18); border:2px solid rgba(244,114,182,.6); border-radius:16px; padding:8px 12px; font-size:14px; font-weight:700; line-height:1.35; margin-bottom:6px; }
+#wordRule .wrTop { display:flex; align-items:center; justify-content:space-between; }
+#wordRule .wrTop b { font-size:24px; color:#fde047; }
+.wrSay { border:none; background:rgba(255,255,255,.2); color:#fff; border-radius:50%; width:36px; height:36px; font-size:17px; }
+.wrPair { text-align:center; font-size:26px; font-weight:900; margin-top:4px; letter-spacing:1px; }
+.wrPair span { font-size:18px; opacity:.7; } .wrPair em { color:#f472b6; font-style:normal; }
+#wordNext { display:none; margin:8px auto 0; }
+#wordChooser { display:none; position:fixed; inset:0; z-index:80; overflow-y:auto; background:rgba(30,10,60,.97); padding:14px 16px calc(env(safe-area-inset-bottom) + 24px); }
+.wcHead { display:flex; align-items:center; justify-content:space-between; font-size:20px; position:sticky; top:-14px; background:rgba(30,10,60,.97); padding:6px 0; }
+.wcClose { border:none; background:rgba(255,255,255,.2); color:#fff; border-radius:50%; width:40px; height:40px; font-size:18px; }
+#wordChooser h4 { margin:14px 0 6px; font-size:15px; opacity:.85; }
+.wcRow { display:flex; flex-wrap:wrap; gap:7px; }
+.wchip { border:2px solid transparent; border-radius:14px; padding:8px 12px; font-size:18px; font-weight:900; color:#fff; background:rgba(255,255,255,.14); display:flex; flex-direction:column; align-items:center; min-width:52px; }
+.wchip small { font-size:11px; font-weight:700; opacity:.75; }
+.wchip.sel { border-color:#fde047; background:rgba(253,224,71,.25); }
+.wEmoji { font-size:88px; line-height:110px; text-align:center; }
 #wordPic { width:110px; height:110px; margin:0 auto; animation:wiggle 3s ease-in-out infinite; }
 #wordPic svg { width:100%; height:100%; }
 
@@ -476,11 +502,16 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- WORD -->
   <div class="screen" id="scr-word">
     <h2>📖 Word Magic</h2>
+    <button id="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button>
+    <div id="wordRule"></div>
     <div id="wordPic"></div>
     <button class="speakBtn" onclick="sayWordAgain()">🔊</button>
     <div id="wordSlots"></div>
+    <div id="wordHint"></div>
     <div class="grid" id="wordGrid"></div>
     <div id="feedback5"></div>
+    <button class="bigbtn green" id="wordNext" onclick="nextWord()">Next word ▶</button>
+    <div id="wordChooser"></div>
   </div>
 
   <!-- PET -->
@@ -595,25 +626,156 @@ function sNo(){ tone(220,0,.18,'sawtooth',.1); tone(180,.15,.22,'sawtooth',.08);
 function sMunch(){ tone(160,0,.08,'square',.12); tone(140,.12,.08,'square',.12); tone(160,.24,.08,'square',.12); }
 function sZap(){ tone(1400,0,.06,'sawtooth',.15); tone(900,.05,.06,'sawtooth',.12); tone(1600,.1,.12,'sawtooth',.1); }
 
-/* background music — cheerful pentatonic loop */
-const N={C4:262,D4:294,E4:330,G4:392,A4:440,C5:523,D5:587,E5:659,G5:784,A5:880,C6:1047,C3:131,F3:175,G3:196,A3:220};
-const MEL=[N.C5,N.E5,N.G5,N.E5, N.A5,N.G5,N.E5,N.C5, N.D5,N.E5,N.G5,N.A5, N.G5,N.E5,N.D5,N.C5,
-           N.C5,N.E5,N.G5,N.A5, N.C6,N.A5,N.G5,N.E5, N.A5,N.G5,N.E5,N.D5, N.E5,N.D5,N.C5,0];
-const BASS=[N.C3,N.A3,N.F3,N.G3, N.C3,N.A3,N.F3,N.G3];
-const STEP=.24;
-let musicTimer=null, musicUnlocked=false;
-function scheduleMusic(){
-  if(!S.music) return;
-  MEL.forEach((f,i)=>{ if(f) tone(f, i*STEP, .21, 'triangle', .05); });
-  BASS.forEach((f,i)=>{ tone(f, i*STEP*4, .4, 'sine', .07); tone(f*2, i*STEP*4+STEP*2, .18, 'sine', .03); });
+/* ================= MUSIC =================
+   A little band: soft pad chords, a plucky melody that's re-written every loop
+   (so it never repeats exactly), bass, light drums and a sparkle bell, all
+   through a shared reverb. A lookahead scheduler keeps the timing tight. */
+const MUSIC_VOL=.32, MUSIC_DUCK=.12;
+let MX=null;            // {bus, rev, noise}
+let musicTimer=null, musicUnlocked=false, musicOn=false;
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+function musicGraph(){
+  const a=ac(); if(!a) return null;
+  if(MX) return MX;
+  const bus=a.createGain(); bus.gain.value=0;
+  const comp=a.createDynamicsCompressor(); comp.threshold.value=-18; comp.ratio.value=3;
+  bus.connect(comp); comp.connect(a.destination);
+  // generated hall reverb
+  const len=a.sampleRate*2.2, ir=a.createBuffer(2,len,a.sampleRate);
+  for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3); }
+  const conv=a.createConvolver(); conv.buffer=ir;
+  const rev=a.createGain(); rev.gain.value=.9; rev.connect(conv); conv.connect(bus);
+  const nb=a.createBuffer(1,a.sampleRate,a.sampleRate), nd=nb.getChannelData(0);
+  for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+  MX={bus, rev, noise:nb};
+  return MX;
+}
+function mOut(node, wet){ node.connect(MX.bus); if(wet){ const s=AC.createGain(); s.gain.value=wet; node.connect(s); s.connect(MX.rev); } }
+function iPluck(m,t,dur,vol){
+  const o=AC.createOscillator(), o2=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain();
+  o.type='triangle'; o.frequency.value=mtof(m); o2.type='sine'; o2.frequency.value=mtof(m+12);
+  const g2=AC.createGain(); g2.gain.value=.25; o2.connect(g2); g2.connect(f);
+  f.type='lowpass'; f.frequency.setValueAtTime(4200,t); f.frequency.exponentialRampToValueAtTime(900,t+dur);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.008); g.gain.exponentialRampToValueAtTime(.0008,t+dur+.25);
+  o.connect(f); f.connect(g); mOut(g,.35);
+  o.start(t); o2.start(t); o.stop(t+dur+.3); o2.stop(t+dur+.3);
+}
+function iPad(notes,t,dur,vol){
+  const f=AC.createBiquadFilter(), g=AC.createGain();
+  f.type='lowpass'; f.frequency.value=1100; f.Q.value=.4;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.35); g.gain.setValueAtTime(vol,t+dur-.25); g.gain.linearRampToValueAtTime(0,t+dur+.4);
+  f.connect(g); mOut(g,.6);
+  notes.forEach(m=>[-7,7].forEach(det=>{
+    const o=AC.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m); o.detune.value=det;
+    const og=AC.createGain(); og.gain.value=.18/notes.length; o.connect(og); og.connect(f);
+    o.start(t); o.stop(t+dur+.5);
+  }));
+}
+function iBass(m,t,dur,vol){
+  const o=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain();
+  o.type='triangle'; o.frequency.value=mtof(m); f.type='lowpass'; f.frequency.value=600;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(f); f.connect(g); mOut(g,0); o.start(t); o.stop(t+dur+.05);
+}
+function iKick(t,vol){
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(42,t+.12);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.22);
+  o.connect(g); mOut(g,0); o.start(t); o.stop(t+.25);
+}
+function iNoise(t,dur,vol,type,freq,wet){
+  const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain();
+  s.buffer=MX.noise; f.type=type; f.frequency.value=freq;
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  s.connect(f); f.connect(g); mOut(g,wet||0); s.start(t, Math.random()*.5); s.stop(t+dur+.02);
+}
+function iBell(m,t,vol){
+  const o=AC.createOscillator(), o2=AC.createOscillator(), g=AC.createGain();
+  o.type='sine'; o.frequency.value=mtof(m); o2.type='sine'; o2.frequency.value=mtof(m)*2.76;
+  const g2=AC.createGain(); g2.gain.value=.12; o2.connect(g2); g2.connect(g);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.005); g.gain.exponentialRampToValueAtTime(.0005,t+1.6);
+  o.connect(g); mOut(g,.8); o.start(t); o2.start(t); o.stop(t+1.7); o2.stop(t+1.7);
+}
+// songs: key (MIDI root), tempo, chord progression in scale degrees
+const SONGS=[
+  {key:60,bpm:104,prog:[0,4,5,3, 0,4,3,4]},   // C: I V vi IV
+  {key:65,bpm:96, prog:[0,5,3,4, 0,5,1,4]},   // F: I vi IV V
+  {key:62,bpm:110,prog:[0,3,4,0, 5,3,1,4]},   // D
+  {key:67,bpm:100,prog:[0,2,3,4, 0,2,3,4]},   // G: I iii IV V
+];
+const MAJ=[0,2,4,5,7,9,11];
+function triad(key,deg){ return [0,2,4].map(i=>key+MAJ[(deg+i)%7]+12*Math.floor((deg+i)/7)); }
+const RHYTHMS=[ // 8 eighth-notes per bar: 1=note, 2=held, 0=rest
+  [1,0,1,1, 1,0,2,0],[1,1,1,0, 1,0,1,0],[2,0,1,1, 1,1,2,0],[1,0,0,1, 1,0,1,1],[1,1,2,0, 1,1,2,0]];
+let SONG=null, songIdx=-1, loops=0;
+function writeMelody(song){
+  // pentatonic-ish walk that leans on chord tones, phrase AA'BA
+  const pent=[0,2,4,7,9].map(x=>song.key+12+x).concat([0,2,4,7,9].map(x=>song.key+24+x));
+  let cur=pent.length>>1;
+  const bar=deg=>{
+    const ch=triad(song.key+12,deg).map(n=>n%12);
+    const r=RHYTHMS[Math.floor(Math.random()*RHYTHMS.length)];
+    return r.map((v,i)=>{
+      if(v!==1) return v===2?-1:0;
+      cur=Math.max(0,Math.min(pent.length-1,cur+[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));
+      if((i===0||i===4) && !ch.includes(pent[cur]%12)){ // land on a chord tone on strong beats
+        const near=pent.map((n,k)=>[k,Math.abs(k-cur)]).filter(([k])=>ch.includes(pent[k]%12)).sort((a,b)=>a[1]-b[1])[0];
+        if(near) cur=near[0];
+      }
+      return pent[cur];
+    });
+  };
+  const A=[0,1,2,3].map(b=>bar(song.prog[b]));
+  const B=[4,5,6,7].map(b=>bar(song.prog[b]));
+  const A2=A.slice(0,3).concat([bar(song.prog[3])]);
+  return [...A,...A2,...B,...A];   // 16 bars
+}
+let mStep=0, mNext=0, MEL=null;
+function nextSong(){
+  songIdx=(songIdx+1)%SONGS.length; SONG=SONGS[songIdx]; loops=0; MEL=writeMelody(SONG); mStep=0;
+}
+function scheduleStep(t){
+  const bars=MEL.length, b=Math.floor(mStep/8)%bars, s=mStep%8, beat=60/SONG.bpm/2;
+  const deg=SONG.prog[b%8], ch=triad(SONG.key,deg);
+  const swing = s%2 ? beat*.12 : 0; t+=swing;
+  if(s===0) iPad(ch.map(n=>n), t, beat*8, .09);
+  if(s===0||s===3||s===4||s===6) iBass(ch[0]-24 + (s===6?7:0), t, beat*1.6, .22);
+  const big=b>=8 && b<12; // the B section gets the full kit
+  if(s===0||s===4||(big&&s===5)) iKick(t,.28);
+  if(s===2||s===6) iNoise(t,.12,big?.12:.07,'bandpass',1800,.25);
+  iNoise(t,.04,s%2?.03:.05,'highpass',7500);
+  const m=MEL[b][s];
+  if(m>0){ let len=beat*.9; let k=s+1; while(k<8 && MEL[b][k]===-1){ len+=beat; k++; } iPluck(m,t,len,.085); }
+  if(s===7 && b%4===3) iBell(ch[2]+24, t, .05);
+  mStep++;
+  if(mStep>=bars*8){ mStep=0; loops++; if(loops>=2) nextSong(); else MEL=writeMelody(SONG); }
+  return beat;
+}
+function musicTick(){
+  if(!musicOn||!AC) return;
+  while(mNext < AC.currentTime+.18) mNext += scheduleStep(mNext);
 }
 function startMusic(){
-  if(musicTimer || !S.music) return;
-  if(!ac()) return;
-  scheduleMusic();
-  musicTimer = setInterval(scheduleMusic, MEL.length*STEP*1000);
+  if(musicOn || !S.music) return;
+  if(!ac() || !musicGraph()) return;
+  musicOn=true;
+  if(!SONG) nextSong();
+  mNext=AC.currentTime+.08;
+  MX.bus.gain.cancelScheduledValues(AC.currentTime);
+  MX.bus.gain.setTargetAtTime(speaking?MUSIC_DUCK:MUSIC_VOL, AC.currentTime, .4);
+  musicTimer=setInterval(musicTick, 40); musicTick();
 }
-function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
+function stopMusic(){
+  musicOn=false;
+  if(musicTimer){ clearInterval(musicTimer); musicTimer=null; }
+  if(MX&&AC){ MX.bus.gain.cancelScheduledValues(AC.currentTime); MX.bus.gain.setTargetAtTime(0, AC.currentTime, .15); }
+}
+function duckMusic(on){
+  if(!MX||!AC||!musicOn) return;
+  MX.bus.gain.cancelScheduledValues(AC.currentTime);
+  MX.bus.gain.setTargetAtTime(on?MUSIC_DUCK:MUSIC_VOL, AC.currentTime, on?.08:.5);
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopMusic(); else if(musicUnlocked) startMusic(); });
 function toggleMusic(){
   S.music=!S.music; save();
   if(S.music) startMusic(); else stopMusic();
@@ -625,21 +787,30 @@ function renderMusicBtns(){
 }
 document.addEventListener('pointerdown', ()=>{ ac(); if(!musicUnlocked){ musicUnlocked=true; startMusic(); } });
 
-/* ================= VOICE ================= */
+/* ================= VOICE =================
+   The browser's own voices. What makes them sound robotic is mostly the voice
+   picked (iPhone "compact" and novelty voices), a raised pitch, and long
+   sentences read in one breath — so: rank the natural/neural voices first,
+   hide the joke voices, keep pitch natural and speak sentence by sentence. */
 let VOICES=[];
+const JOKE_VOICES=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|pipe organ|junior|ralph|kathy|fred|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|espeak/i;
 function loadVoices(){
-  VOICES=(speechSynthesis.getVoices()||[]).filter(v=>v.lang && v.lang.toLowerCase().startsWith('en'));
+  VOICES=(speechSynthesis.getVoices()||[]).filter(v=>v.lang && v.lang.toLowerCase().startsWith('en') && !JOKE_VOICES.test(v.name));
   if($('scr-settings').classList.contains('active')) renderSettings();
 }
 try{ speechSynthesis.onvoiceschanged=loadVoices; loadVoices(); }catch(e){}
-const NICE=['samantha','ava','allison','susan','zoe','karen','catherine','matilda','martha','moira','tessa','aria','jenny','sonia','libby','google uk english female','google us english','serena','kate','stephanie'];
+const NICE=['natasha','ava','zoe','samantha','allison','susan','karen','catherine','matilda','aria','jenny','sonia','libby','emma','michelle','serena','kate','moira','tessa','google uk english female','google us english'];
+function isNatural(v){ return /premium|enhanced|natural|neural|online|siri/i.test(v.name+' '+v.voiceURI); }
 function voiceScore(v){
-  let s=0; const n=(v.name+' '+v.voiceURI).toLowerCase();
-  if(/premium|enhanced|natural|neural|siri/.test(n)) s+=4;
+  let s=0; const n=(v.name+' '+v.voiceURI).toLowerCase(), l=v.lang.toLowerCase();
+  if(/premium/.test(n)) s+=7; else if(/enhanced|neural|natural|online/.test(n)) s+=6; else if(/siri/.test(n)) s+=5;
+  if(/compact/.test(n)) s-=3;
+  if(/google/.test(n)) s+=2;
   NICE.forEach((p,i)=>{ if(n.includes(p)) s+=3-Math.min(2,i*.1); });
-  if(v.lang.toLowerCase().startsWith('en-au')) s+=2;
-  if(v.lang.toLowerCase().startsWith('en-gb')||v.lang.toLowerCase().startsWith('en-us')) s+=1;
-  if(/male|daniel|fred|alex|arthur|gordon|aaron/.test(n) && !/female/.test(n)) s-=2;
+  if(l.startsWith('en-au')) s+=2;
+  else if(l.startsWith('en-gb')||l.startsWith('en-us')) s+=1;
+  if(/\bmale\b|daniel|alex|arthur|gordon|aaron|guy|ryan|william|thomas|christopher|eric|roger|steffan|andrew|brian|liam|lee\b/.test(n) && !/female/.test(n)) s-=3;
+  if(!v.localService) s+=.5;     // cloud voices are usually the neural ones
   return s;
 }
 function bestVoice(){
@@ -647,13 +818,31 @@ function bestVoice(){
   if(S.voiceURI){ const v=VOICES.find(v=>v.voiceURI===S.voiceURI); if(v) return v; }
   return VOICES.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0] || null;
 }
-function say(text){
+let speaking=false, sayGen=0;
+function speakPart(text, opts, gen, last){
+  const u = new SpeechSynthesisUtterance(text);
+  const v = bestVoice(); if(v){ u.voice=v; u.lang=v.lang; }
+  const nat = v && isNatural(v);
+  // natural voices already have expression; the plain ones get a touch of lift
+  u.rate = opts.rate ?? (nat ? .96 : .9);
+  u.pitch = opts.pitch ?? (nat ? 1 : 1.04);
+  if(/[!]$/.test(text) && opts.pitch==null) u.pitch+=.05;
+  u.volume=1;
+  u.onstart=()=>{ if(gen===sayGen){ speaking=true; duckMusic(true); } };
+  const done=()=>{ if(gen===sayGen && last){ speaking=false; duckMusic(false); } };
+  u.onend=done; u.onerror=done;
+  speechSynthesis.speak(u);
+}
+function say(text, opts){
+  opts=opts||{};
   try{
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const v = bestVoice(); if(v) u.voice=v;
-    u.rate=.95; u.pitch=1.08;
-    speechSynthesis.speak(u);
+    const gen=++sayGen;
+    // one breath per sentence: sounds less like a robot and dodges Chrome's
+    // habit of cutting long utterances off
+    const parts=String(text).match(/[^.!?]+[.!?]*\s*/g)||[String(text)];
+    const clean=parts.map(p=>p.trim()).filter(Boolean);
+    clean.forEach((p,i)=>speakPart(p, opts, gen, i===clean.length-1));
   }catch(e){}
 }
 function renderSettings(){
@@ -662,7 +851,7 @@ function renderSettings(){
   const cur = bestVoice();
   $('voiceList').innerHTML = VOICES.length ? VOICES.slice().sort((a,b)=>voiceScore(b)-voiceScore(a)).map(v=>
     `<button class="voiceRow ${cur&&v.voiceURI===cur.voiceURI?'sel':''}" onclick="pickVoice('${encodeURIComponent(v.voiceURI)}')">
-      <span>${v.name}</span><span class="vl">${v.lang}</span></button>`).join('')
+      <span>${isNatural(v)?'⭐ ':''}${v.name}</span><span class="vl">${v.lang}</span></button>`).join('')
     : '<p class="sub">Voices are still loading — tap the screen once, then come back here.</p>';
 }
 function pickVoice(uri){
@@ -1701,36 +1890,290 @@ function dotsTap(num){
 }
 
 /* ================= WORD MAGIC ================= */
-const WORDS=Object.keys(WORD_ART).map(w=>({w}));
-let wordCur, wordIdx;
+// every word the game knows; pictures come from WORD_ART (drawn) or WORD_EMOJI,
+// words with neither still play (the picture becomes "listen")
+const WORD_BANK = `
+CAT BAT HAT RAT MAT SAT PAT FAT VAN CAN PAN FAN MAN TAP MAP CAP NAP BAG TAG RAG JAM HAM DAD LAP CAB ANT
+BED RED PEN TEN HEN NET WET JET LEG WEB PEG BEG MEN VET EGG
+PIG DIG WIG BIG PIN BIN FIN TIN LIP HIP ZIP SIT KIT SIX WIN
+DOG LOG FOG HOG POT HOT DOT COT BOX FOX TOP HOP MOP ROD COG
+BUG HUG MUG RUG JUG BUS SUN RUN FUN BUN NUT CUT HUT TUB CUP PUP MUM CUB
+BEE SEE ZOO CAR JAR ARM TEA SEA PEA SAW KEY
+FISH SHIP SHOP DISH SHED WISH CASH SHUT CHIP CHOP CHIN MUCH RICH CHAT BATH MOTH THIN WITH PATH MATH
+DUCK SOCK ROCK LOCK KICK BACK NECK SACK PACK LUCK BELL BALL DOLL HILL FILL WELL KISS MESS PUFF CUFF
+KING RING WING SING LONG SONG
+TREE FEET DEER SEED WEED JEEP BEEP KEEP NEED PEEL LEAF SEAL BEAN MEAT
+MOON COOL POOL TOOL BOOT ROOF FOOD HOOP SOON ROOM NOON BOOK
+STAR CART FARM YARN PARK BARN DART FORK CORN HORN BORN PORT SORT
+BOAT GOAT COAT ROAD SOAP TOAD LOAF RAIN TAIL MAIL NAIL PAIN WAIT SAIL
+CAKE GATE LAKE GAME NAME TAPE CAPE MAKE BAKE WAVE KITE BIKE LIME FIVE HIDE RIDE TIME PINE LINE
+ROSE BONE HOME NOSE HOLE ROPE CONE NOTE HOPE CUBE TUNE RULE
+FROG CRAB DRUM FLAG NEST TENT LAMP GIFT HAND PLUG CLAP SWIM SLED MASK MILK SALT GOLF SAND SPIN JUMP
+BIRD WORM BLUE GOLD PINK SNOW`;
+const WORD_EMOJI = {
+  ANT:'🐜',HEN:'🐔',RAT:'🐀',MAP:'🗺️',PEN:'🖊️',VAN:'🚐',JET:'✈️',BOX:'📦',PAN:'🍳',NUT:'🥜',MUG:'☕',LOG:'🪵',
+  WEB:'🕸️',NET:'🥅',LEG:'🦵',LIP:'👄',PIN:'📌',HUT:'🛖',ELF:'🧝',TAP:'🚰',CAN:'🥫',FAN:'🪭',BAG:'👜',RED:'🔴',
+  TEN:'🔟',SIX:'6️⃣',KID:'🧒',DAD:'👨',MUM:'👩',TUB:'🛁',HUG:'🤗',RUN:'🏃',WET:'💦',HOT:'🔥',ROD:'🎣',POT:'🍲',
+  CAP:'🧢',MAT:'🧘',MAN:'👨',NAP:'😴',TAG:'🏷️',JAM:'🍓',HAM:'🍖',CAB:'🚕',VET:'🩺',PIG:'🐷',DIG:'⛏️',BIN:'🗑️',
+  FIN:'🦈',TIN:'🥫',ZIP:'🤐',SIT:'🪑',WIN:'🏆',FOG:'🌫️',HOG:'🐗',DOT:'⚫',COT:'🛏️',TOP:'🔝',HOP:'🐇',MOP:'🧹',
+  COG:'⚙️',CUT:'✂️',FUN:'🎉',BUN:'🍞',PUP:'🐶',CUB:'🐻',BIG:'🐘',
+  BEE:'🐝',SEE:'👀',ZOO:'🦁',CAR:'🚗',JAR:'🫙',ARM:'💪',TEA:'🍵',SEA:'🌊',PEA:'🫛',SAW:'🪚',KEY:'🔑',
+  FISH:'🐟',SHIP:'🚢',SHOP:'🏪',DISH:'🍽️',WISH:'🌠',CASH:'💵',CHIP:'🍟',CHOP:'🪓',BATH:'🛀',MOTH:'🦋',MATH:'➗',
+  DUCK:'🦆',SOCK:'🧦',ROCK:'🪨',LOCK:'🔒',KICK:'🦵',PACK:'🎒',BELL:'🔔',BALL:'⚽',DOLL:'🪆',HILL:'⛰️',KISS:'💋',
+  KING:'🤴',RING:'💍',WING:'🪽',SING:'🎤',SONG:'🎵',TREE:'🌳',FEET:'🦶',DEER:'🦌',SEED:'🌱',JEEP:'🚙',LEAF:'🍃',
+  SEAL:'🦭',BEAN:'🫘',MEAT:'🥩',MOON:'🌙',COOL:'😎',POOL:'🏊',TOOL:'🔧',BOOT:'👢',ROOF:'🏠',FOOD:'🍔',BOOK:'📖',
+  STAR:'⭐',CART:'🛒',FARM:'🚜',YARN:'🧶',PARK:'🛝',BARN:'🐄',DART:'🎯',FORK:'🍴',CORN:'🌽',HORN:'📯',BOAT:'⛵',
+  GOAT:'🐐',COAT:'🧥',ROAD:'🛣️',SOAP:'🧼',TOAD:'🐸',LOAF:'🍞',RAIN:'🌧️',TAIL:'🐒',MAIL:'📬',NAIL:'💅',SAIL:'⛵',
+  CAKE:'🎂',GATE:'🚧',LAKE:'🏞️',GAME:'🎮',TAPE:'📼',CAPE:'🦸',WAVE:'👋',KITE:'🪁',BIKE:'🚲',LIME:'🍋‍🟩',FIVE:'🖐️',
+  TIME:'⏰',PINE:'🌲',ROSE:'🌹',BONE:'🦴',HOME:'🏡',NOSE:'👃',ROPE:'🪢',CONE:'🍦',NOTE:'🎵',CUBE:'🧊',TUNE:'🎶',
+  FROG:'🐸',CRAB:'🦀',DRUM:'🥁',FLAG:'🚩',NEST:'🪺',TENT:'⛺',LAMP:'🪔',GIFT:'🎁',HAND:'✋',PLUG:'🔌',CLAP:'👏',
+  SWIM:'🏊',SLED:'🛷',MASK:'🎭',MILK:'🥛',SALT:'🧂',GOLF:'⛳',SAND:'🏖️',JUMP:'🦘',BIRD:'🐦',WORM:'🪱',
+  BLUE:'🔵',GOLD:'🥇',PINK:'🩷',SNOW:'❄️',
+};
+// how a word sounds out. Default: split into the chunks below (two letters,
+// one sound) and spot the split vowel a_e / i_e / o_e / u_e automatically.
+// Override with "unit:sound" when a letter doesn't make its usual sound.
+const WORD_SOUNDS = {
+  KEY:'k ey:ee', BALL:'b a:aw ll', SALT:'s a:aw l t', BIRD:'b ir d', WORM:'w or:er m', GOLD:'g o:oh l d',
+  SNOW:'s n ow:oh', BOOK:'b oo:uh k',
+};
+const CHUNKS=['ing','sh','ch','th','ck','ll','ss','ff','ee','oo','oa','ai','ar','or','ea','ir','aw','ue'];
+const PHON = {
+  a:'ah', b:'buh', c:'kuh', d:'duh', e:'eh', f:'fff', g:'guh', h:'huh', i:'ih', j:'juh', k:'kuh', l:'luh',
+  m:'mmm', n:'nuh', o:'aw', p:'puh', q:'kwuh', r:'ruh', s:'sss', t:'tuh', u:'uh', v:'vuh', w:'wuh',
+  x:'ks', y:'yuh', z:'zzz',
+  sh:'shh', ch:'chuh', th:'thuh', ck:'kuh', ll:'luh', ss:'sss', ff:'fff', ee:'ee', oo:'oo', oa:'oh',
+  ai:'ay', ar:'are', or:'or', ea:'ee', ir:'er', aw:'aw', ue:'oo', ing:'ing',
+};
+const LETTER_NAME = {a:'ay', e:'ee', i:'eye', o:'oh', u:'you'};
+const LONG_SOUNDS = ['ee','oo','oh','ay','are','or','er','aw','eye','you'];  // stretched when sounded out
+// -> [{t:'sh', s:'shh', i0, n, split?}]
+function wordUnits(w){
+  const lw=w.toLowerCase(), out=[];
+  if(WORD_SOUNDS[w]){
+    let i=0;
+    WORD_SOUNDS[w].split(' ').forEach(tok=>{
+      const [t,s]=tok.split(':');
+      out.push({t, s: s===undefined ? (PHON[t]||t) : s, i0:i, n:t.length, odd:s!==undefined}); i+=t.length;
+    });
+    return out;
+  }
+  const sp=lw.match(/^([^aeiou]*)([aeiou])([^aeiouwy])e$/);   // c-a-k-e: split vowel
+  if(sp){
+    let i=0;
+    sp[1].split('').forEach(c=>out.push({t:c, s:PHON[c], i0:i++, n:1}));
+    out.push({t:sp[2], s:LETTER_NAME[sp[2]], i0:i++, n:1, split:sp[2]+'_e'});
+    out.push({t:sp[3], s:PHON[sp[3]], i0:i++, n:1});
+    out.push({t:'e', s:'', i0:i, n:1, split:sp[2]+'_e'});
+    return out;
+  }
+  for(let i=0;i<lw.length;){
+    const c=CHUNKS.find(c=>lw.startsWith(c,i)) || lw[i];
+    out.push({t:c, s:PHON[c]||c, i0:i, n:c.length}); i+=c.length;
+  }
+  return out;
+}
+// the sound patterns, with the rule in plain words (two letters, one sound;
+// split vowels shown with a line joining the two letters, which the child traces)
+const PATTERNS = {
+  'a':  {label:'a', ex:'cat',  rule:"Short a says ah, like in apple, cat and hat."},
+  'e':  {label:'e', ex:'bed',  rule:"Short e says eh, like in egg, bed and hen."},
+  'i':  {label:'i', ex:'pig',  rule:"Short i says ih, like in igloo, pig and pin."},
+  'o':  {label:'o', ex:'dog',  rule:"Short o says o, like in octopus, dog and box."},
+  'u':  {label:'u', ex:'bug',  rule:"Short u says uh, like in umbrella, bug and sun."},
+  'sh': {label:'sh', ex:'fish', tip:'sh: two letters, one sound', rule:"S and h are best friends. Two letters, one sound: shh! Like fish and ship."},
+  'ch': {label:'ch', ex:'chip', tip:'ch: two letters, one sound', rule:"C and h together say ch, like a choo choo train! Two letters, one sound. Like chip and chin."},
+  'th': {label:'th', ex:'bath', tip:'th: pop your tongue out', rule:"T and h together say th. Pop your tongue out a little bit! Like bath and moth."},
+  'ck': {label:'ck', ex:'duck', tip:'ck: two letters, one k sound', rule:"C and k together make just one sound: k. You find c k at the end of words, like duck and sock."},
+  'double': {label:'ll ss ff', ex:'bell', tip:'Two the same: one sound', rule:"Two letters the same, side by side, make just one sound. Like bell, kiss and puff."},
+  'ing':{label:'ing', ex:'king', tip:'ing: three letters, one sound', rule:"I, n and g stick together and say ing. Like king, ring and sing."},
+  'ee': {label:'ee', ex:'bee',  tip:'ee says the name of e', rule:"Two e's together say the name of the letter e: ee! Two letters, one sound. Like bee and tree."},
+  'ea': {label:'ea', ex:'leaf', tip:'ea says ee, just like double e', rule:"E and a together say ee too, just like double e! Like sea, tea and leaf."},
+  'oo': {label:'oo', ex:'moon', tip:'oo: a long oooo sound', rule:"Two o's together make a long, stretchy sound: oooo, like a ghost! Like moon, zoo and cool."},
+  'ar': {label:'ar', ex:'car',  tip:'ar: like a pirate!', rule:"A and r together say ar, like a pirate! Like car and star."},
+  'or': {label:'or', ex:'fork', tip:'or: two letters, one sound', rule:"O and r together say or. Like fork and corn."},
+  'oa': {label:'oa', ex:'boat', tip:'oa says the name of o', rule:"O and a together say oh, the name of the letter o. Like boat and goat."},
+  'ai': {label:'ai', ex:'rain', tip:'ai says the name of a', rule:"A and i together say ay, the name of the letter a. Like rain and snail."},
+  'a_e':{label:'a_e', ex:'cake', pair:['CAP','CAPE'], tip:'a_e: the e makes a say its name', rule:"A, gap, e. The e at the end makes no sound, but it reaches back over one letter and makes the a say its name: ay! Cap becomes cape. Trace the line from the a to the e with your finger."},
+  'i_e':{label:'i_e', ex:'kite', pair:['KIT','KITE'], tip:'i_e: the e makes i say its name', rule:"I, gap, e. The e at the end is quiet, but it makes the i say its name: eye! Kit becomes kite."},
+  'o_e':{label:'o_e', ex:'bone', pair:['HOP','HOPE'], tip:'o_e: the e makes o say its name', rule:"O, gap, e. The e at the end is quiet, but it makes the o say its name: oh! Hop becomes hope."},
+  'u_e':{label:'u_e', ex:'cube', pair:['CUB','CUBE'], tip:'u_e: the e makes u say its name', rule:"U, gap, e. The e at the end is quiet, but it makes the u say its name: you! Cub becomes cube."},
+};
+function wordTags(w){
+  const us=wordUnits(w), tags=new Set();
+  us.forEach(u=>{
+    if(u.split) tags.add(u.split);
+    else if(u.odd) return;
+    else if(['ll','ss','ff'].includes(u.t)) tags.add('double');
+    else if(PATTERNS[u.t] && u.n>1) tags.add(u.t);
+  });
+  const vowels=us.filter(u=>'aeiou'.includes(u.t));
+  if(!tags.size && vowels.length===1 && !vowels[0].odd && us.every(u=>!u.odd && u.t!=='aw')) tags.add(vowels[0].t);
+  return [...tags];
+}
+// "similar words": the bit from the first vowel sound on (c-at, h-at, b-at)
+function wordFamily(w){ const us=wordUnits(w); const k=us.findIndex(u=>/[aeiou]/.test(u.t)); return k<0?null:w.slice(us[k].i0).toLowerCase(); }
+const WORDS=[...new Set([...Object.keys(WORD_ART), ...WORD_BANK.trim().split(/\s+/)])].map(w=>({w, tags:wordTags(w), fam:wordFamily(w)}));
+const FAMILIES=Object.entries(WORDS.reduce((m,x)=>{ if(x.fam) (m[x.fam]=m[x.fam]||[]).push(x.w); return m; },{}))
+  .filter(([,ws])=>ws.length>=3).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([f])=>f);
+const START_LETTERS=LETTERS.filter(l=>WORDS.filter(x=>x.w[0]===l).length>=3);
+
+if(!S.wordSet || typeof S.wordSet!=='object') S.wordSet={type:'len', v:'mix'};
+let wordCur, wordIdx, wordUnitsCur=[], wordRecent=[], wordDone=false, wordSwiped=false, wordDemoT=[];
+function wordPool(set){
+  set=set||S.wordSet;
+  if(set.type==='len') return WORDS.filter(x=>set.v==='mix' || x.w.length===+set.v);
+  if(set.type==='pat') return WORDS.filter(x=>x.tags.includes(set.v));
+  if(set.type==='fam') return WORDS.filter(x=>x.fam===set.v);
+  if(set.type==='start') return WORDS.filter(x=>x.w[0]===set.v);
+  return WORDS;
+}
+function wordSetLabel(set){
+  set=set||S.wordSet;
+  if(set.type==='len') return set.v==='mix'?'All words':set.v+'-letter words';
+  if(set.type==='pat') return 'Sound: '+PATTERNS[set.v].label;
+  if(set.type==='fam') return 'Rhymes: -'+set.v;
+  return 'Starts with '+set.v;
+}
 function spellOut(w){ return w.toLowerCase().split('').join(', '); }
-function startWord(){ go('word'); nextWord(); }
-function nextWord(){
-  $('feedback5').textContent='';
-  wordCur=WORDS[Math.floor(Math.random()*WORDS.length)]; wordIdx=0;
-  $('wordPic').innerHTML=WORD_ART[wordCur.w];
+function startWord(){ go('word'); $('wordChooser').style.display='none'; renderWordRule(); nextWord(); }
+function openWordChooser(){
+  sPop(); clearWordDemo();
+  const chip=(set,txt,extra)=>{ const on=JSON.stringify(set)===JSON.stringify(S.wordSet);
+    return `<button class="wchip ${on?'sel':''}" onclick='pickWordSet(${JSON.stringify(set)})'>${txt}${extra?`<small>${extra}</small>`:''}</button>`; };
+  $('wordChooser').innerHTML=`
+    <div class="wcHead"><b>Choose your words</b><button class="wcClose" onclick="closeWordChooser()">✕</button></div>
+    <h4>How long?</h4><div class="wcRow">${chip({type:'len',v:'3'},'3 letters')}${chip({type:'len',v:'4'},'4 letters')}${chip({type:'len',v:'mix'},'Mix')}</div>
+    <h4>Sound patterns</h4><div class="wcRow">${Object.keys(PATTERNS).filter(p=>wordPool({type:'pat',v:p}).length>=3).map(p=>chip({type:'pat',v:p},PATTERNS[p].label,PATTERNS[p].ex)).join('')}</div>
+    <h4>Rhyming words</h4><div class="wcRow">${FAMILIES.map(f=>chip({type:'fam',v:f},'-'+f, wordPool({type:'fam',v:f}).slice(0,2).map(x=>x.w.toLowerCase()).join(' '))).join('')}</div>
+    <h4>Starts with…</h4><div class="wcRow">${START_LETTERS.map(l=>chip({type:'start',v:l},l)).join('')}</div>`;
+  $('wordChooser').style.display='block';
+}
+function closeWordChooser(){ $('wordChooser').style.display='none'; sPop(); }
+function pickWordSet(set){
+  S.wordSet=set; save(); wordRecent=[];
+  $('wordChooser').style.display='none'; sPop(); renderWordRule();
+  if(set.type==='pat') teachPattern(); else nextWord();
+}
+function renderWordRule(){
+  $('wordSetBtn').textContent='📚 '+wordSetLabel()+' ▾';
+  const p=S.wordSet.type==='pat' && PATTERNS[S.wordSet.v];
+  if(!p){ $('wordRule').style.display='none'; return; }
+  const pair=p.pair?`<div class="wrPair">${p.pair[0].toLowerCase()} <span>➜</span> ${p.pair[1].toLowerCase().replace(/e$/,'<em>e</em>')}</div>`:'';
+  $('wordRule').innerHTML=`<div class="wrTop"><b>${p.label}</b><button class="wrSay" onclick="teachPattern()">🔊</button></div><div>${p.rule}</div>${pair}`;
+  $('wordRule').style.display='block';
+}
+function teachPattern(){
+  const p=PATTERNS[S.wordSet.v]; if(!p) return nextWord();
+  clearWordDemo(); say(p.rule);
+  if(!wordCur || !wordPool().some(x=>x.w===wordCur.w)) nextWord(true);
+}
+function wordPicHTML(w){ return WORD_ART[w] || `<div class="wEmoji">${WORD_EMOJI[w]||'🔊'}</div>`; }
+function clearWordDemo(){ wordDemoT.forEach(clearTimeout); wordDemoT=[]; }
+function nextWord(quiet){
+  clearWordDemo();
+  $('feedback5').textContent=''; $('wordNext').style.display='none';
+  let pool=wordPool(); if(!pool.length){ S.wordSet={type:'len',v:'mix'}; pool=wordPool(); renderWordRule(); }
+  const keep=Math.min(8, pool.length-1);
+  let pick; do{ pick=pool[Math.floor(Math.random()*pool.length)]; }while(keep>0 && wordRecent.slice(0,keep).includes(pick.w));
+  wordRecent=[pick.w,...wordRecent].slice(0,8);
+  wordCur=pick; wordIdx=0; wordDone=false; wordSwiped=false; wordUnitsCur=wordUnits(wordCur.w);
+  $('wordPic').innerHTML=wordPicHTML(wordCur.w);
+  const tip=wordCur.tags.map(t=>PATTERNS[t]&&PATTERNS[t].tip).find(Boolean);
+  $('wordHint').textContent=tip?'💡 '+tip:'';
   renderWordSlots();
   const letters=wordCur.w.split('');
-  const extras=shuffle(LETTERS.filter(l=>!letters.includes(l))).slice(0,3);
+  const extras=shuffle(LETTERS.filter(l=>!letters.includes(l))).slice(0, letters.length>3?2:3);
   $('wordGrid').innerHTML=shuffle([...letters,...extras]).map(l=>`<button class="tile" onclick="pickWordLetter(this,'${l}')">${l}</button>`).join('');
-  say('Can you build the word '+wordCur.w.toLowerCase()+'? '+spellOut(wordCur.w)+' spells '+wordCur.w.toLowerCase()+'!');
+  if(!quiet) say('Can you build the word '+wordCur.w.toLowerCase()+'? '+spellOut(wordCur.w)+'. That spells '+wordCur.w.toLowerCase()+'!');
 }
-function sayWordAgain(){ say(spellOut(wordCur.w)+' spells '+wordCur.w.toLowerCase()); }
+function sayWordAgain(){
+  if(wordDone) return demoSoundOut();
+  say(spellOut(wordCur.w)+'. That spells '+wordCur.w.toLowerCase()+'!');
+}
+// letters grouped by sound: a dot under each sound, a line under letters that
+// make one sound together, and an arch joining a split vowel (a_e) to its e
 function renderWordSlots(){
-  $('wordSlots').innerHTML=wordCur.w.split('').map((l,i)=>`<div class="slot ${i<wordIdx?'filled':''}">${i<wordIdx?l:''}</div>`).join('');
+  const box=$('wordSlots');
+  box.innerHTML=wordUnitsCur.map((u,k)=>{
+    const slots=wordCur.w.substr(u.i0,u.n).split('').map((l,j)=>{ const i=u.i0+j;
+      return `<div class="slot ${i<wordIdx?'filled':''} ${u.split?'split':''}">${i<wordIdx?l:''}</div>`; }).join('');
+    const mark = u.split ? '<i class="snd silent"></i>' : u.n>1 ? '<i class="snd line"></i>' : '<i class="snd"></i>';
+    return `<div class="unit" data-u="${k}"><div class="uSlots">${slots}</div>${mark}</div>`;
+  }).join('');
+  const sp=wordUnitsCur.map((u,k)=>u.split?k:-1).filter(k=>k>=0);
+  if(sp.length===2){
+    const a=box.querySelector(`.unit[data-u="${sp[0]}"]`), b=box.querySelector(`.unit[data-u="${sp[1]}"]`);
+    const br=box.getBoundingClientRect(), ar=a.getBoundingClientRect(), bb=b.getBoundingClientRect();
+    const arc=document.createElement('div'); arc.className='splitArc';
+    arc.style.left=(ar.left-br.left+ar.width/2)+'px'; arc.style.width=(bb.left-ar.left+bb.width/2-ar.width/2)+'px';
+    arc.style.top=(ar.top-br.top+ar.height-14)+'px';
+    box.appendChild(arc);
+  }
+}
+function unitReady(k){ const u=wordUnitsCur[k]; return u && wordIdx>=u.i0+u.n; }
+function sayUnit(k){
+  const u=wordUnitsCur[k]; if(!u) return;
+  const el=$('wordSlots').querySelector(`.unit[data-u="${k}"]`);
+  if(el){ el.classList.remove('lit'); void el.offsetWidth; el.classList.add('lit'); setTimeout(()=>el.classList.remove('lit'),600); }
+  if(u.s) say(u.s, {rate: LONG_SOUNDS.includes(u.s) ? .6 : .8});
+  else { tone(1320,0,.12,'sine',.08); tone(1760,.06,.18,'sine',.06); }   // the quiet e: a sparkle, no sound
+}
+function demoSoundOut(){
+  clearWordDemo();
+  const gap=760;
+  wordUnitsCur.forEach((u,k)=>wordDemoT.push(setTimeout(()=>sayUnit(k), k*gap)));
+  wordDemoT.push(setTimeout(()=>{
+    $('wordSlots').querySelectorAll('.unit').forEach(el=>el.classList.add('lit'));
+    say(wordCur.w.toLowerCase()+'!');
+    setTimeout(()=>$('wordSlots').querySelectorAll('.unit').forEach(el=>el.classList.remove('lit')),700);
+  }, wordUnitsCur.length*gap+150));
 }
 function pickWordLetter(btn,l){
+  if(wordDone) return;
   if(l===wordCur.w[wordIdx]){
     wordIdx++; renderWordSlots(); say(l.toLowerCase()); sPop();
     btn.disabled=true; btn.style.opacity=.25;
     if(wordIdx===wordCur.w.length){
+      wordDone=true;
       $('feedback5').textContent=cheer()+' '+wordCur.w+'!';
       addStars(2);
-      setTimeout(()=>say(wordCur.w.toLowerCase()+'! You read it!'),800);
-      setTimeout(nextWord,2600);
+      wordDemoT.push(setTimeout(()=>{ say("Let's sound it out!"); }, 1100));
+      wordDemoT.push(setTimeout(()=>{
+        demoSoundOut();
+        wordDemoT.push(setTimeout(()=>{
+          $('wordHint').textContent='👆 Slide your finger across the word to sound it out!';
+          $('wordNext').style.display='block';
+          say('Now you try! Slide your finger across the word.');
+        }, wordUnitsCur.length*760+1100));
+      }, 2400));
     }
   } else { btn.classList.add('wrong'); sNo(); say('Try another one! We need '+wordCur.w[wordIdx].toLowerCase()); setTimeout(()=>btn.classList.remove('wrong'),500); }
 }
+// tap a sound to hear it, or drag across the word to blend it
+(function wordSwipe(){
+  let down=false, last=-1, seen=[];
+  const unitAt=(x,y)=>{ const el=document.elementFromPoint(x,y); const u=el&&el.closest&&el.closest('#wordSlots .unit'); return u?+u.dataset.u:-1; };
+  const enter=k=>{ if(k<0||k===last||!unitReady(k)) return; last=k; seen.push(k); clearWordDemo(); sayUnit(k); };
+  const box=$('wordSlots');
+  box.addEventListener('pointerdown',e=>{ down=true; last=-1; seen=[]; try{ box.releasePointerCapture(e.pointerId); }catch(_){} enter(unitAt(e.clientX,e.clientY)); });
+  addEventListener('pointermove',e=>{ if(down) enter(unitAt(e.clientX,e.clientY)); });
+  const up=()=>{
+    if(!down) return; down=false;
+    const n=wordUnitsCur.length;
+    // swiped every sound, left to right → blend the whole word
+    const inOrder = n>1 && wordUnitsCur.every((_,k)=>seen.includes(k)) && seen.indexOf(0)<seen.lastIndexOf(n-1);
+    if(inOrder && wordIdx===wordCur.w.length){
+      setTimeout(()=>{
+        box.querySelectorAll('.unit').forEach(el=>el.classList.add('lit'));
+        say(wordCur.w.toLowerCase()+'!'); sDing();
+        setTimeout(()=>box.querySelectorAll('.unit').forEach(el=>el.classList.remove('lit')),700);
+        if(!wordSwiped){ wordSwiped=true; addStars(1); $('feedback5').textContent='⭐ You read '+wordCur.w+'!'; }
+      }, 550);
+    }
+  };
+  addEventListener('pointerup',up); addEventListener('pointercancel',up);
+})();
 
 /* ================= PET ================= */
 function decayPet(){
