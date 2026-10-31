@@ -282,6 +282,13 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .wcAll { text-align:center; font-weight:900; color:#fde047; }
 .lvProg { float:right; font-size:13px; font-weight:900; background:rgba(255,255,255,.14); border-radius:999px; padding:1px 9px; }
 .lvProg.done { background:rgba(253,224,71,.3); color:#fde047; }
+.wtick { display:flex; flex-direction:column; align-items:flex-start; position:relative; border:2px solid rgba(255,255,255,.25); border-radius:14px; padding:7px 12px 7px 36px; font-size:15px; font-weight:900; color:#fff; background:rgba(255,255,255,.08); text-align:left; }
+.wtick small { font-size:11px; font-weight:700; opacity:.75; }
+.wtick i { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:5px; border:2px solid #fff; }
+.wtick.on { border-color:#4ade80; background:rgba(74,222,128,.18); }
+.wtick.on i { background:#4ade80; border-color:#4ade80; } .wtick.on i::after { content:'✓'; position:absolute; inset:0; font-size:13px; line-height:15px; text-align:center; color:#14532d; font-style:normal; }
+.wcNote { font-size:11px; font-weight:700; opacity:.6; }
+.wcNext.mix { background:linear-gradient(135deg,#f472b6,#a855f7); }
 .wchip.sel { border-color:#fde047; background:rgba(253,224,71,.25); }
 #readMain { display:flex; flex-direction:column; align-items:center; width:100%; }
 #readProg { font-size:13px; font-weight:800; opacity:.75; }
@@ -409,6 +416,20 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 
 .burst { position:fixed; pointer-events:none; font-size:30px; animation:burstup 1s forwards; z-index:99; font-weight:900; }
 @keyframes burstup { 0%{transform:scale(.3);opacity:1} 100%{transform:scale(1.9) translateY(-80px);opacity:0} }
+#gateBar { width:100%; margin:0 0 6px; }
+.gateMsg { text-align:center; font-weight:900; font-size:14px; padding:7px 10px; border-radius:14px; background:rgba(255,255,255,.12); }
+.gateMsg.ready { background:linear-gradient(135deg,#4ade80,#0ea5e9); }
+.gateDots { letter-spacing:2px; color:#fde047; margin-left:4px; }
+#gateBar.nudge .gateMsg { animation:shake .4s; outline:3px solid #fde047; }
+.mcard.locked { filter:grayscale(.65) brightness(.75); }
+.mcard.locked::before { content:'🔒'; position:absolute; top:4px; right:6px; font-size:15px; z-index:2; }
+.unlockToast { position:fixed; left:50%; top:30%; transform:translateX(-50%); z-index:99; background:linear-gradient(135deg,#fbbf24,#f97316); color:#fff; font-weight:900; font-size:24px; padding:14px 22px; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,.4); animation:popin .4s; pointer-events:none; }
+#gateSetting { width:100%; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; background:rgba(255,255,255,.1); border-radius:16px; padding:10px; margin-bottom:10px; text-align:center; }
+#gateSetting small { width:100%; opacity:.7; font-size:12px; }
+.pmBtn { border:2px solid rgba(255,255,255,.3); border-radius:999px; padding:8px 14px; font-weight:900; font-size:14px; color:#fff; background:rgba(255,255,255,.1); }
+.pmBtn.on { border-color:#4ade80; background:rgba(74,222,128,.25); }
+.gateMsg.parent { background:rgba(74,222,128,.22); }
+.gateMsg button { border:none; border-radius:999px; padding:3px 10px; margin-left:6px; font-weight:900; font-size:12px; color:#fff; background:rgba(0,0,0,.25); }
 .appVer { text-align:center; font-size:12px; font-weight:700; opacity:.55; margin:16px 0 4px; }
 #confetti { position:fixed; inset:0; pointer-events:none; z-index:1; }
 </style>
@@ -427,18 +448,19 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <div id="homeGirls" class="girlWrap"></div>
+    <div id="gateBar"></div>
     <div id="menuGrid">
-      <button class="mcard c1" onclick="startDressup()"><span class="mi">👗</span>Dress Up</button>
-      <button class="mcard c6" onclick="startMixer()"><span class="mi">✨</span>Princess Mixer</button>
-      <button class="mcard c8" onclick="startPaint()"><span class="mi">🎨</span>Painting</button>
-      <button class="mcard c9" onclick="startFace()"><span class="mi">🥸</span>Funny Face</button>
-      <button class="mcard c3" onclick="startKitchen('ramen')"><span class="mi" id="miRamen"></span>Ramen Shop</button>
-      <button class="mcard c4" onclick="startKitchen('sushi')"><span class="mi" id="miSushi"></span>Sushi Bar</button>
+      <button class="mcard c1" data-gated onclick="gateGame(()=>startDressup())"><span class="mi">👗</span>Dress Up</button>
+      <button class="mcard c6" data-gated onclick="gateGame(()=>startMixer())"><span class="mi">✨</span>Princess Mixer</button>
+      <button class="mcard c8" data-gated onclick="gateGame(()=>startPaint())"><span class="mi">🎨</span>Painting</button>
+      <button class="mcard c9" data-gated onclick="gateGame(()=>startFace())"><span class="mi">🥸</span>Funny Face</button>
+      <button class="mcard c3" data-gated onclick="gateGame(()=>startKitchen('ramen'))"><span class="mi" id="miRamen"></span>Ramen Shop</button>
+      <button class="mcard c4" data-gated onclick="gateGame(()=>startKitchen('sushi'))"><span class="mi" id="miSushi"></span>Sushi Bar</button>
       <button class="mcard c2" onclick="startLetters()"><span class="mi">🔤</span>Letter Zap</button>
       <button class="mcard c5" onclick="startCount()"><span class="mi">🔢</span>Counting</button>
       <button class="mcard c4" onclick="startDots()"><span class="mi">🔘</span>Dot to Dot</button>
       <button class="mcard c6" onclick="startWord()"><span class="mi">📖</span>Word Magic</button>
-      <button class="mcard c2" onclick="startJump()"><span class="mi">🦘</span>Jump &amp; Run</button>
+      <button class="mcard c2" data-gated onclick="gateGame(()=>startJump())"><span class="mi">🦘</span>Jump &amp; Run</button>
       <button class="mcard c8" onclick="startRead()"><span class="mi">🎤</span>Read to Me</button>
       <button class="mcard c3" onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
       <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
@@ -629,6 +651,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <div class="screen" id="scr-review">
     <h2>👨‍👩‍👧 Grown-up Check</h2>
     <p class="sub">Listen to each word. ✅ if it was read right, ❌ to practise it together later.</p>
+    <div id="gateSetting"></div>
     <div id="rvTabs"></div>
     <div id="rvList"></div>
   </div>
@@ -669,7 +692,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.26', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.27', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -1910,6 +1933,7 @@ function renderHome(){
   $('miRamen').innerHTML = FOODS.naruto.svg;
   $('miSushi').innerHTML = FOODS.nigiri.svg;
   $('miPet').innerHTML = impSVG('#c084fc');
+  renderGate();
 }
 function pickChar(i){ S.char=i; save(); renderHome(); sPop(); say(GIRLS[i].greet); }
 
@@ -2808,9 +2832,25 @@ function celebrateMastery(r, el){
 
 if(!S.wordSet || typeof S.wordSet!=='object') S.wordSet={type:'len', v:'mix'};
 let wordCur, wordIdx, wordUnitsCur=[], wordRecent=[], wordDone=false, wordSwiped=false, wordDemoT=[], wordHints=0;
+// the grown-up ticks which word lengths and which levels are in play; a word's level is its hardest pattern
+S.wordLens = S.wordLens || [3,4,5];
+S.wordLevels = S.wordLevels || [1,2,3,4,5,6,7];
+if(S.wordSet && S.wordSet.type==='len' && S.wordSet.v!=='mix'){ S.wordLens=[+S.wordSet.v]; S.wordSet={type:'len',v:'mix'}; }
+function wordLevel(x){
+  if(x.lvl) return x.lvl;
+  let m=0; x.tags.forEach(t=>{ const L=levelOf(t); if(L && L.n>m) m=L.n; });
+  return x.lvl = m || 7;
+}
+const lenOk=x=>S.wordLens.includes(Math.min(5, x.w.length));
 function wordPool(set){
   set=set||S.wordSet;
-  if(set.type==='len') return WORDS.filter(x=>set.v==='mix' || x.w.length===+set.v);
+  const base=wordPoolAll(set);
+  // a pattern set is already one level: only the length ticks apply to it
+  const f=base.filter(x=>lenOk(x) && (set.type==='pat' || S.wordLevels.includes(wordLevel(x))));
+  return f.length ? f : base;   // never leave a set empty
+}
+function wordPoolAll(set){
+  if(set.type==='len') return WORDS;
   if(set.type==='pat') return WORDS.filter(x=>x.tags.includes(set.v));
   if(set.type==='fam') return WORDS.filter(x=>x.fam===set.v);
   if(set.type==='start') return WORDS.filter(x=>x.w[0]===set.v);
@@ -2818,7 +2858,7 @@ function wordPool(set){
 }
 function wordSetLabel(set){
   set=set||S.wordSet;
-  if(set.type==='len') return set.v==='mix'?'All words':set.v+'-letter words';
+  if(set.type==='len') return (S.wordLens.length===3 && S.wordLevels.length===7) ? 'All words' : 'My mix';
   if(set.type==='pat'){ const L=levelOf(set.v); return (L?'Level '+L.n+' · ':'Sound: ')+PATTERNS[set.v].label; }
   if(set.type==='fam') return 'Rhymes: -'+set.v;
   return 'Starts with '+set.v;
@@ -2840,7 +2880,11 @@ function openWordChooser(){
     return `<button class="wchip ${on?'sel':''}" onclick='pickWordSet(${JSON.stringify(set)})'>${txt}${extra?`<small>${extra}</small>`:''}</button>`; };
   $('wordChooser').innerHTML=`
     <div class="wcHead"><b>Choose your words</b><button class="wcClose" onclick="closeWordChooser()">✕</button></div>
-    <h4>How long?</h4><div class="wcRow">${chip({type:'len',v:'3'},'3 letters')}${chip({type:'len',v:'4'},'4 letters')}${chip({type:'len',v:'mix'},'Mix')}</div>
+    <h4>How many letters? <small class="wcNote">tick as many as you like</small></h4><div class="wcRow">${[3,4,5].map(n=>
+      `<button class="wtick ${S.wordLens.includes(n)?'on':''}" onclick="toggleWordLen(${n})"><i></i>${n} letters<small>${WORDS.filter(x=>Math.min(5,x.w.length)===n).length} words</small></button>`).join('')}</div>
+    <h4>How hard?</h4><div class="wcRow">${LEVELS.map(L=>
+      `<button class="wtick ${S.wordLevels.includes(L.n)?'on':''}" onclick="toggleWordLevel(${L.n})"><i></i>Level ${L.n}<small>${L.name}</small></button>`).join('')}</div>
+    <button class="wcNext mix" onclick='pickWordSet({type:"len",v:"mix"})'>🎲 Play my mix · ${wordPool({type:'len',v:'mix'}).length} words</button>
     ${(()=>{ const np=nextPattern(); return np ? `<button class="wcNext" onclick='pickWordSet(${JSON.stringify({type:'pat',v:np})})'>▶ Keep going: Level ${levelOf(np).n} · ${PATTERNS[np].label}</button>` : '<p class="wcAll">🏆 Every pattern mastered!</p>'; })()}
     ${LEVELS.map(L=>{ const ps=levelPats(L), m=ps.filter(p=>patProgress(p).ok).length;
       return `<h4>Level ${L.n} · ${L.name} <span class="lvProg ${m===ps.length?'done':''}">${m}/${ps.length} ${m===ps.length?'🏆':'⭐'}</span></h4>
@@ -2850,7 +2894,20 @@ function openWordChooser(){
     <h4>Starts with…</h4><div class="wcRow">${START_LETTERS.map(l=>chip({type:'start',v:l},l)).join('')}</div>`;
   $('wordChooser').style.display='block';
 }
-function closeWordChooser(){ $('wordChooser').style.display='none'; sPop(); }
+function closeWordChooser(){
+  $('wordChooser').style.display='none'; sPop(); renderWordRule();
+  // the ticks may have taken the current word out of play
+  if($('scr-word').classList.contains('active') && wordCur && !wordPool().some(x=>x.w===wordCur.w)) nextWord();
+  if($('scr-read').classList.contains('active') && rd.mode==='read' && !wordPool().some(x=>x.w===rd.list[rd.i])) startRead();
+}
+function toggleWordLen(n){
+  const a=S.wordLens; if(a.includes(n)){ if(a.length>1) a.splice(a.indexOf(n),1); else return sNo(); } else a.push(n);
+  save(); openWordChooser();
+}
+function toggleWordLevel(n){
+  const a=S.wordLevels; if(a.includes(n)){ if(a.length>1) a.splice(a.indexOf(n),1); else return sNo(); } else a.push(n);
+  save(); openWordChooser();
+}
 function pickWordSet(set){
   S.wordSet=set; save(); wordRecent=[];
   $('wordChooser').style.display='none'; sPop(); renderWordRule();
@@ -2958,7 +3015,7 @@ function pickWordLetter(btn,l){
       $('feedback5').textContent=cheer()+' '+wordCur.w+'!';
       $('wordHintBtn').disabled=true;
       addStars(wordHints?1:2);
-      wordCount++; renderWordProg();
+      wordCount++; renderWordProg(); addReadCredit();
       const m=markWordRead(wordCur.w);
       if(celebrateMastery(m, $('feedback5')) && S.wordSet.type==='pat' && patProgress(S.wordSet.v).ok){
         const np=nextPattern(); wordNextPat=np;
@@ -3107,6 +3164,48 @@ function readHear(){ const w=rd.list[rd.i]; if(!w) return; stopPhon(); playUnits
 attachSwipe($('readWord'), ()=>({units:rd.units, word:rd.list[rd.i]||'', ready:()=>rd.sounds, complete:rd.sounds}));
 
 let recWasMusic=false;
+/* ---- games unlock with reading: every S.gate.per words read earns one go at a fun game ---- */
+S.gate = S.gate || {per:5};
+S.readCredit = S.readCredit || 0;
+// parent mode (switched on behind the grown-up check) opens every game without reading first
+const gateOn=()=>S.gate.per>0 && !S.parentMode;
+function setParentMode(on){ S.parentMode=!!on; save(); sPop(); renderGateSetting(); renderGate(); }
+function addReadCredit(){
+  if(!gateOn()) return;
+  const before=Math.floor(S.readCredit/S.gate.per);
+  S.readCredit++; save();
+  if(Math.floor(S.readCredit/S.gate.per)>before){ sWin(); confettiBurst(); setTimeout(()=>say('You unlocked a game!'), 900); flashUnlock(); }
+}
+function flashUnlock(){
+  const b=document.createElement('div'); b.className='unlockToast'; b.textContent='🎮 Game unlocked!';
+  document.body.appendChild(b); setTimeout(()=>b.remove(), 2600);
+}
+function renderGate(){
+  const el=$('gateBar'); if(!el) return;
+  document.querySelectorAll('[data-gated]').forEach(b=>b.classList.toggle('locked', gateOn() && S.readCredit<S.gate.per));
+  if(S.parentMode){ el.innerHTML=`<div class="gateMsg parent">👨‍👩‍👧 Parent mode: all games open <button onclick="setParentMode(false)">Turn off</button></div>`; return; }
+  if(!gateOn()){ el.innerHTML=''; return; }
+  const per=S.gate.per, plays=Math.floor(S.readCredit/per), have=S.readCredit%per;
+  el.innerHTML = plays
+    ? `<div class="gateMsg ready">🎮 You can play ${plays>1?plays+' games':'a game'}!</div>`
+    : `<div class="gateMsg">📖 Read ${per-have} more word${per-have===1?'':'s'} to unlock a game <span class="gateDots">${'●'.repeat(have)}${'○'.repeat(per-have)}</span></div>`;
+}
+function gateGame(start){
+  if(!gateOn() || S.readCredit>=S.gate.per){ if(gateOn()){ S.readCredit-=S.gate.per; save(); } return start(); }
+  const left=S.gate.per - S.readCredit%S.gate.per;
+  sNo(); say(left===1 ? 'Read one more word to unlock a game!' : 'Read '+left+' more words to unlock a game!');
+  const g=$('gateBar'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge');
+}
+function stepGate(d){
+  const opts=[0,3,5,10,15,20]; let i=opts.indexOf(S.gate.per); if(i<0) i=2;
+  i=Math.max(0, Math.min(opts.length-1, i+d)); S.gate.per=opts[i]; save(); renderGateSetting(); renderGate();
+}
+function renderGateSetting(){
+  const el=$('gateSetting'); if(!el) return;
+  el.innerHTML=`<b>🎮 Fun games unlock after</b><div class="goal"><button onclick="stepGate(-1)">−</button><span>${S.gate.per?S.gate.per+' words':'off'}</span><button onclick="stepGate(1)">+</button></div>
+    <small>Dress Up, Mixer, Painting, Funny Face, Ramen, Sushi and Jump & Run. Words read so far: ${S.readCredit}.</small>
+    <button class="pmBtn ${S.parentMode?'on':''}" onclick="setParentMode(${!S.parentMode})">👨‍👩‍👧 Parent mode: ${S.parentMode?'ON — all games open':'off'}</button>`;
+}
 const MIC_OPTS={audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1}};
 const recOpts=mime=>Object.assign({audioBitsPerSecond:128000}, mime?{mimeType:mime}:{});
 // iOS 17+: after using the mic, switch the audio session back so sound comes out of the loudspeaker at full quality
@@ -3144,6 +3243,7 @@ async function readSaveRec(){
   rd.last=blob;
   if(rd.mode==='read'){
     const buf=await blob.arrayBuffer();   // store bytes: older Safari can't keep Blobs in IndexedDB
+    addReadCredit();
     try{ await recPut({word:rd.list[rd.i], at:Date.now(), buf, type, status:'new', hints:rd.hints}); }
     catch(e){ $('readStatus').textContent='⚠️ Couldn’t save that one. Close any other Star Hunters tabs and try again.'; return renderReadBtns(); }
   }
@@ -3197,7 +3297,7 @@ async function readPracticeMark(ok){
   const w=rd.list[rd.i];
   if(ok){
     for(const r of rd.practice.filter(r=>r.word===w)) await recSet(r.id,{status:'ok', fixedAt:Date.now()});
-    celebrateMastery(markWordRead(w), $('readStatus'));
+    celebrateMastery(markWordRead(w), $('readStatus')); addReadCredit();
     addStars(1); cheer();
   } else { sPop(); say("That's okay! We'll practise it again next time."); }
   rd.i++; setTimeout(showReadWord, ok?900:400);
@@ -3229,7 +3329,7 @@ function parentGateCheck(){
   else { sNo(); $('pgIn').value=''; }
 }
 let rvTab='new';
-function startReview(tab){ rvTab=tab||'new'; go('review'); renderReview(); }
+function startReview(tab){ rvTab=tab||'new'; go('review'); renderGateSetting(); renderReview(); }
 async function renderReview(){
   if(rvTab==='voice') return renderVoice();
   let all=[]; try{ all=await recAll(); }catch(e){}
