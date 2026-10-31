@@ -695,7 +695,7 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.35', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.36', APP_DATE='1 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -1413,6 +1413,13 @@ const NAME_STICKERS = {
   name_aurelia:{svg:nameStickerSVG('Aurelia','#f59e0b','#fff'), label:'Aurelia'},
   name_amelie:{svg:nameStickerSVG('Amelie','#0ea5e9','#fde047'), label:'Amelie'},
 };
+/* generated pictures (Codex) in pics/<kind>/<KEY>.webp; the hand-drawn SVGs stay as the fallback */
+const PICS_V='1';
+const PICS={w:new Set('AIR ANT APPLE ARM ASTRONAUT BACK BADGE BAG BAKE BALL BANG BARN BAT BATH BEAN BED BEE BEEP BEG BELL BIG BIKE BIN BIRD BLOW BLUE BOAT BOIL BONE BOOK BOOT BORN BOTTLE BOW BOWL BOX BOY BREAD BRIDGE BUG BUN BUNNY BURN BUS BUZZ CAB CAGE CAKE CAN CANDLE CANDY CAP CAPE CAR CARE CART CASH CAT CHAIR CHALK CHAT CHEER CHEW CHIN CHIP CHOP CITY CLAP CLAW CLAY CLIMB CLUE COAT COG COIN COMB CONE COOK COOL CORE CORN COT COW CRAB CRY CUB CUBE CUFF CUP CURE CURL CUT DAD DART DAY DEER DIG DISH DOE DOG DOLL DOLPHIN DONKEY DOT DOWN DRAW DREW DRUM DUCK EAR EGG ELEPHANT EVE FACE FAIR FAN FARM FAT FEATHER FEET FERN FEW FILL FIN FIR FISH FIVE FIZZ FLAG FLY FOG FOOD FOOT FORK FOX FRIES FROG FUDGE FUN FUR GAME GATE GEAR GEM GIFT GIRL GLUE GOAT GOLD GOLF GOOD GOWN GRAPH GREW GROW HAIR HAM HAND HANG HARE HAT HAWK HAY HEAD HEAR HEDGE HEN HER HERD HERE HIDE HIGH HILL HIP HOE HOG HOLE HOME HONEY HONK HOOK HOOP HOP HOPE HORN HOT HUG HUGE HURT HUT HUTCH ICE JAM JAR JAW JAZZ JEEP JELLY JET JOY JUG JUMP KEEP KEY KICK KING KISS KIT KITE KNEE KNIFE KNIT KNOCK KNOT LAKE LAMB LAMP LAP LAWN LEAF LEG LIGHT LIME LINE LIP LOAF LOCK LOG LONG LOOK LOUD LUCK LURE MAGPIE MAIL MAKE MAN MAP MASK MAT MATCH MATH MEAT MEN MESS MICE MILK MONKEY MOON MOP MOTH MUCH MUG MUM NAIL NAME NAP NECK NEED NEST NET NEW NIGHT NOON NOSE NOTE NUT OIL OUCH OUT OWL PACK PAGE PAIN PAIR PAN PARK PAT PATCH PATH PAW PAY PEA PEEL PEG PEN PENCIL PETE PHONE PIE PIG PIN PINE PINK PLAY PLUG POOL PORT POT PUFF PUP PUPPY PURE PURPLE QUACK QUEEN QUILT QUIZ RAG RAIN RAT RED RICE RICH RIDE RING ROAD ROCK ROD ROOF ROOM ROPE ROSE ROW RUG RULE RUN SACK SAIL SALT SAND SAT SAUCE SAUCER SAW SCARE SCREW SEA SEAL SEE SEED SHARE SHED SHIP SHOP SHORE SHRIMP SHUT SIGH SING SINK SIT SIX SKY SLED SLOW SNORE SNOW SOAP SOCK SOIL SONG SOON SORT SOUR SPHERE SPIN SPLASH SPRING SPY SQUID STAGE STAR STEER STEW STIR STORE STRAW STRING SUN SURF SWIM TAG TAIL TALL TANK TAP TAPE TEA TEAR TEDDY TEN TENT THESE THIN THREAD THREE THUMB TIE TIME TIN TOAD TOE TOOL TOP TOWN TOY TRAY TREE TRUE TUB TUNE TURKEY TURN TURTLE VAN VET WAIT WALK WALL WATCH WAVE WEB WEED WELL WET WHALE WHEEL WHIP WHISK WIG WIN WING WINK WISH WITCH WITH WOOD WOOL WORM WRAP WREN WRIST WRITE YARN YAWN YEAR ZIP ZOO'.split(' ')),f:new Set('avo corn cuke egg greens mush naruto nigiri onigiri prawn tamago tempura'.split(' ')),s:new Set('bag bfly boombox bowS bunnyS cassette catS crownS diamond dogS flower heart heel light lips micS note rainbow star uni'.split(' ')),o:new Set('cactus donut rock sushiO'.split(' '))};
+function picSrc(kind,key){ return PICS[kind].has(key) ? 'pics/'+kind+'/'+key+'.webp?v='+PICS_V : null; }
+function picSVG(kind,key,vb){ const s=picSrc(kind,key); return s && `<svg viewBox="0 0 ${vb||'60 60'}" xmlns="http://www.w3.org/2000/svg"><image href="${s}" width="100%" height="100%"/></svg>`; }
+function picImg(kind,key){ const s=picSrc(kind,key); if(!s) return null; const i=new Image(); i.src=s; return i; }
+Object.keys(STICKERS).forEach(k=>{ const p=picSVG('s',k); if(p) STICKERS[k]=p; });
 function stickerSVG(id){ return STICKERS[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].svg) || STICKERS.star; }
 function stickerLabel(id){ return STICKER_LABEL[id] || (NAME_STICKERS[id] && NAME_STICKERS[id].label) || ''; }
 
@@ -1504,6 +1511,7 @@ const FOODS = {
   onigiri:{name:'rice ball', svg:`<svg viewBox="0 0 60 60"><path d="M30 7 Q46 28 44 43 Q30 52 16 43 Q14 28 30 7 Z" fill="#fff" stroke="#e2e8f0" stroke-width="2"/><rect x="22" y="38" width="16" height="13" rx="3" fill="#1f2937"/><circle cx="25" cy="26" r="2" fill="#cbd5e1"/><circle cx="35" cy="26" r="2" fill="#cbd5e1"/><path d="M26 31 Q30 34 34 31" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`},
   tamago:{name:'egg sushi', svg:`<svg viewBox="0 0 60 60"><ellipse cx="30" cy="42" rx="21" ry="12" fill="#fff" stroke="#e2e8f0" stroke-width="2"/><rect x="10" y="18" width="40" height="18" rx="7" fill="#fde047"/><rect x="10" y="18" width="40" height="7" rx="3.5" fill="#fef08a"/><rect x="26" y="12" width="8" height="34" rx="2" fill="#1f2937" opacity=".85"/></svg>`},
 };
+Object.keys(FOODS).forEach(k=>{ const p=picSVG('f',k); if(p) FOODS[k].svg=p; });
 function foodIco(id, size){ return `<span style="display:inline-block;width:${size}px;height:${size}px;vertical-align:middle">${FOODS[id].svg}</span>`; }
 
 /* ================= WORD PICTURES ================= */
@@ -2176,7 +2184,7 @@ let pColor=PAINT_COLORS[5], pSize=14, pTool='brush', pPic='g0', pCtx=null, drawi
 const PAINT_OUTFITS=['idol','gown','hoodie','hanbok','pjs','princess','witch','mermaid','barbie', ...PRINCESS_DRESSES.map(pd=>pd.id)];
 let pOutfit={};
 const stickerImgCache={};
-function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
+function getStickerImg(id){ if(!stickerImgCache[id]) stickerImgCache[id]=picImg('s',id)||svgToImg(stickerSVG(id)); return stickerImgCache[id]; }
 function startPaint(){
   pPic='g'+S.char; pTool='brush';
   go('paint');
@@ -3220,7 +3228,7 @@ function teachPattern(){
   if(!wordCur || !wordPool().some(x=>x.w===wordCur.w)) nextWord(true);
 }
 const HEART_SVG='<svg viewBox="0 0 60 60"><path d="M30 52 C8 38 4 26 8 17 C12 8 25 7 30 18 C35 7 48 8 52 17 C56 26 52 38 30 52 Z" fill="#f472b6" stroke="#fbcfe8" stroke-width="2"/><path d="M17 20 Q19 15 24 15" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/><circle cx="23" cy="29" r="2.4" fill="#831843"/><circle cx="37" cy="29" r="2.4" fill="#831843"/><path d="M25 35 Q30 40 35 35" stroke="#831843" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
-function wordPicHTML(w){ return WORD_ART[w] || (TRICKY.has(w) && HEART_SVG) || '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="#fde047"/></svg>'; }
+function wordPicHTML(w){ return picSVG('w',w) || WORD_ART[w] || (TRICKY.has(w) && HEART_SVG) || '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="#fde047"/></svg>'; }
 function clearWordDemo(){ wordDemoT.forEach(clearTimeout); wordDemoT=[]; stopPhon(); }
 function nextWord(quiet){
   clearWordDemo();
@@ -3854,8 +3862,8 @@ function startJump(){
   go('jump');
   if(!jumpSprites){
     jumpSprites={ player:svgToImg(girlSVG(girlCfg(S.char))),
-      cactus:svgToImg(OBS_ART.cactus), rock:svgToImg(OBS_ART.rock), donut:svgToImg(OBS_ART.donut),
-      sushi:svgToImg(OBS_ART.sushiO), demon:svgToImg(demonSVG({})) };
+      cactus:picImg('o','cactus')||svgToImg(OBS_ART.cactus), rock:picImg('o','rock')||svgToImg(OBS_ART.rock), donut:picImg('o','donut')||svgToImg(OBS_ART.donut),
+      sushi:picImg('o','sushiO')||svgToImg(OBS_ART.sushiO), demon:svgToImg(demonSVG({})) };
   } else {
     jumpSprites.player=svgToImg(girlSVG(girlCfg(S.char)));
   }
