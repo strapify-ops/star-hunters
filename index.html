@@ -230,6 +230,13 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 .slot.filled { border-style:solid; border-color:#fde047; background:rgba(253,224,71,.3); animation:popin .35s; }
 .slot.filled.split { border-color:#f472b6; background:rgba(244,114,182,.3); }
 .splitArc { position:absolute; height:14px; border:4px solid #f472b6; border-top:none; border-radius:0 0 40px 40px; pointer-events:none; box-shadow:0 4px 8px -4px #f472b6; }
+.wordBtns { display:flex; gap:10px; justify-content:center; align-items:center; }
+.wordBtns .speakBtn { margin:2px 0; }
+#wordHintBtn { border:none; border-radius:999px; padding:10px 16px; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 4px 0 rgba(0,0,0,.25); }
+#wordHintBtn:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.25); }
+#wordHintBtn:disabled { opacity:.35; }
+.tile.hintMe { animation:hintGlow 1s ease-in-out 3; box-shadow:0 0 0 4px #fde047, 0 5px 0 rgba(0,0,0,.28); }
+@keyframes hintGlow { 50%{ transform:scale(1.15) rotate(-4deg); } }
 #wordHint { font-size:14px; font-weight:800; text-align:center; min-height:20px; opacity:.9; margin:2px 0; }
 #wordSetBtn { border:none; border-radius:999px; padding:7px 16px; font-size:14px; font-weight:900; color:#fff; background:rgba(255,255,255,.18); margin:0 0 6px; }
 #wordRule { display:none; width:100%; background:rgba(244,114,182,.18); border:2px solid rgba(244,114,182,.6); border-radius:16px; padding:8px 12px; font-size:14px; font-weight:700; line-height:1.35; margin-bottom:6px; }
@@ -505,7 +512,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <button id="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button>
     <div id="wordRule"></div>
     <div id="wordPic"></div>
-    <button class="speakBtn" onclick="sayWordAgain()">🔊</button>
+    <div class="wordBtns"><button class="speakBtn" onclick="sayWordAgain()">🔊</button><button id="wordHintBtn" onclick="wordGiveHint()">💡 Hint</button></div>
     <div id="wordSlots"></div>
     <div id="wordHint"></div>
     <div class="grid" id="wordGrid"></div>
@@ -2019,7 +2026,7 @@ const FAMILIES=Object.entries(WORDS.reduce((m,x)=>{ if(x.fam) (m[x.fam]=m[x.fam]
 const START_LETTERS=LETTERS.filter(l=>WORDS.filter(x=>x.w[0]===l).length>=3);
 
 if(!S.wordSet || typeof S.wordSet!=='object') S.wordSet={type:'len', v:'mix'};
-let wordCur, wordIdx, wordUnitsCur=[], wordRecent=[], wordDone=false, wordSwiped=false, wordDemoT=[];
+let wordCur, wordIdx, wordUnitsCur=[], wordRecent=[], wordDone=false, wordSwiped=false, wordDemoT=[], wordHints=0;
 function wordPool(set){
   set=set||S.wordSet;
   if(set.type==='len') return WORDS.filter(x=>set.v==='mix' || x.w.length===+set.v);
@@ -2077,19 +2084,31 @@ function nextWord(quiet){
   const keep=Math.min(8, pool.length-1);
   let pick; do{ pick=pool[Math.floor(Math.random()*pool.length)]; }while(keep>0 && wordRecent.slice(0,keep).includes(pick.w));
   wordRecent=[pick.w,...wordRecent].slice(0,8);
-  wordCur=pick; wordIdx=0; wordDone=false; wordSwiped=false; wordUnitsCur=wordUnits(wordCur.w);
+  wordCur=pick; wordIdx=0; wordDone=false; wordSwiped=false; wordHints=0; $('wordHintBtn').disabled=false; wordUnitsCur=wordUnits(wordCur.w);
   $('wordPic').innerHTML=wordPicHTML(wordCur.w);
   const tip=wordCur.tags.map(t=>PATTERNS[t]&&PATTERNS[t].tip).find(Boolean);
-  $('wordHint').textContent=tip?'💡 '+tip:'';
+  $('wordHint').textContent='';
   renderWordSlots();
   const letters=wordCur.w.split('');
   const extras=shuffle(LETTERS.filter(l=>!letters.includes(l))).slice(0, letters.length>3?2:3);
   $('wordGrid').innerHTML=shuffle([...letters,...extras]).map(l=>`<button class="tile" onclick="pickWordLetter(this,'${l}')">${l}</button>`).join('');
-  if(!quiet) say('Can you build the word '+wordCur.w.toLowerCase()+'? '+spellOut(wordCur.w)+'. That spells '+wordCur.w.toLowerCase()+'!');
+  if(!quiet) say('Can you build the word '+wordCur.w.toLowerCase()+'?');
 }
 function sayWordAgain(){
   if(wordDone) return demoSoundOut();
-  say(spellOut(wordCur.w)+'. That spells '+wordCur.w.toLowerCase()+'!');
+  say(wordCur.w.toLowerCase()+'. Can you build '+wordCur.w.toLowerCase()+'?');
+}
+// answers only come from here: each press shows the next letter (and the pattern tip once)
+function wordGiveHint(){
+  if(wordDone) return;
+  wordHints++; sPop();
+  const l=wordCur.w[wordIdx];
+  const tip=wordCur.tags.map(t=>PATTERNS[t]&&PATTERNS[t].tip).find(Boolean);
+  if(tip && wordHints===1) $('wordHint').textContent='💡 '+tip;
+  const b=[...document.querySelectorAll('#wordGrid .tile')].find(b=>!b.disabled && b.textContent===l);
+  if(b){ b.classList.remove('hintMe'); void b.offsetWidth; b.classList.add('hintMe'); setTimeout(()=>b.classList.remove('hintMe'),3000); }
+  const u=wordUnitsCur.find(u=>wordIdx>=u.i0 && wordIdx<u.i0+u.n);
+  say((wordIdx===0?'The first letter is ':'The next letter is ')+l.toLowerCase()+'.'+(u&&u.n===1&&u.s?' It says '+u.s+'.':''));
 }
 // letters grouped by sound: a dot under each sound, a line under letters that
 // make one sound together, and an arch joining a split vowel (a_e) to its e
@@ -2137,7 +2156,8 @@ function pickWordLetter(btn,l){
     if(wordIdx===wordCur.w.length){
       wordDone=true;
       $('feedback5').textContent=cheer()+' '+wordCur.w+'!';
-      addStars(2);
+      $('wordHintBtn').disabled=true;
+      addStars(wordHints?1:2);
       wordDemoT.push(setTimeout(()=>{ say("Let's sound it out!"); }, 1100));
       wordDemoT.push(setTimeout(()=>{
         demoSoundOut();
@@ -2148,7 +2168,7 @@ function pickWordLetter(btn,l){
         }, wordUnitsCur.length*760+1100));
       }, 2400));
     }
-  } else { btn.classList.add('wrong'); sNo(); say('Try another one! We need '+wordCur.w[wordIdx].toLowerCase()); setTimeout(()=>btn.classList.remove('wrong'),500); }
+  } else { btn.classList.add('wrong'); sNo(); say(['Not that one! Try again.','Oops! Have another go.','Hmm, not quite! Try another one.'][Math.floor(Math.random()*3)]); setTimeout(()=>btn.classList.remove('wrong'),500); }
 }
 // tap a sound to hear it, or drag across the word to blend it
 (function wordSwipe(){
