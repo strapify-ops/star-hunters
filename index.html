@@ -695,7 +695,7 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.34', APP_DATE='31 Oct 2026';
+const APP_VERSION='2.35', APP_DATE='31 Oct 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -3028,7 +3028,7 @@ const EXPLAIN = {
   'o|oh|':'Here the O says its name, *oh*.',
   'i|eye|':'Here the I says its name, *eye*.',
   'e|ee|':'Here the E says its name, *ee*.',
-  'o|u|':'Here the O says *uh*, like in mum.',
+  'o|u|':'Here the O makes the sound a U makes, *uh*, like in up.',
   'o|oo|':'Here the O says *oo*, like in moon.',
   'u|uu|':'Here the U says a short *oo*, like in book.',
   'e|u|':'Here the E says *uh*.',
