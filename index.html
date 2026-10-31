@@ -388,6 +388,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 
 .burst { position:fixed; pointer-events:none; font-size:30px; animation:burstup 1s forwards; z-index:99; font-weight:900; }
 @keyframes burstup { 0%{transform:scale(.3);opacity:1} 100%{transform:scale(1.9) translateY(-80px);opacity:0} }
+.appVer { text-align:center; font-size:12px; font-weight:700; opacity:.55; margin:16px 0 4px; }
 #confetti { position:fixed; inset:0; pointer-events:none; z-index:1; }
 </style>
 </head>
@@ -423,6 +424,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
       <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
       <button class="mcard c7" onclick="go('pet')"><span class="mi" id="miPet"></span>Boba Buddy</button>
     </div>
+    <div class="appVer" data-ver></div>
   </div>
 
   <!-- SHOP -->
@@ -633,6 +635,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
     <button class="bigbtn gold" onclick="parentGate()">👨‍👩‍👧 Grown-up reading check</button>
     <button class="bigbtn" onclick="toggleMusic()" id="musicBtn2">🎵 Music on/off</button>
     <div id="voiceList"></div>
+    <div class="appVer" data-ver></div>
   </div>
 </div>
 <div id="zapFlash"></div>
@@ -641,6 +644,10 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 <div id="wordChooser"></div>
 <div id="parentGate"></div>
 <script>
+// shown at the bottom of the home and settings screens; bump on every release
+const APP_VERSION='2.21', APP_DATE='31 Oct 2026';
+document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
+
 'use strict';
 /* ================= STATE ================= */
 const DEF_OUTFITS = [
