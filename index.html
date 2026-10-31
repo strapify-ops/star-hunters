@@ -133,7 +133,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #dotsPicRow button { flex:0 0 auto; border:none; border-radius:14px; padding:7px 12px; font-weight:900; font-size:13px; color:#fff; background:rgba(255,255,255,.14); white-space:nowrap; }
 #dotsPicRow button.sel { background:linear-gradient(135deg,#2dd4bf,#a855f7); }
 #dotsStage { width:100%; max-width:320px; margin:0 auto; background:rgba(255,255,255,.08); border-radius:22px; padding:10px 6px; }
-#dotsStage svg { width:100%; touch-action:manipulation; }
+#dotsStage svg { width:100%; touch-action:none; user-select:none; -webkit-user-select:none; }
 .dotPt { cursor:pointer; }
 .dotPt circle { transform-origin:center; transform-box:fill-box; }
 .dotPt.next circle { animation:dotPulse 1s ease-in-out infinite; }
@@ -555,7 +555,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   <!-- DOT TO DOT -->
   <div class="screen" id="scr-dots">
     <h2>🔘 Dot to Dot</h2>
-    <p class="sub" id="dotsHint">Tap the numbers in order to reveal the picture!</p>
+    <p class="sub" id="dotsHint">Tap or drag your finger from number to number!</p>
     <div id="dotsPicRow"></div>
     <div id="dotsStage"></div>
     <div id="dotsBtnRow">
@@ -2378,7 +2378,7 @@ const DOT_PICS = [
   {label:'Dawn Crown', cat:'disney', ico:'👑', color:'#fbbf24', pts:DOT_CROWN},
 ];
 let dtPicIdx=0, dtNext=1, dtDone=false;
-function startDots(){ dtPicIdx=0; go('dots'); dotsLoad(); say("Let's connect the dots! Tap the numbers in order to reveal a picture!"); }
+function startDots(){ dtPicIdx=0; go('dots'); dotsLoad(); say("Let's connect the dots! Tap the numbers in order, or drag your finger from dot to dot!"); }
 function dotsLoad(){ dtNext=1; dtDone=false; dotsPicRow(); renderDots(); }
 function dotsPicRow(){
   $('dotsPicRow').innerHTML = DOT_PICS.map((p,i)=>`<button class="${i===dtPicIdx?'sel':''}" onclick="dotsPick(${i})">${p.ico} ${p.label}</button>`).join('');
@@ -2399,7 +2399,32 @@ function renderDots(){
   $('dotsStage').innerHTML = `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
   $('dotsHint').textContent = dtDone ? '🎉 '+pic.label+' is finished! Tap Next Picture for another!' : 'Tap number '+dtNext+' next!';
 }
-function dotsTap(num){
+// drag a finger from dot to dot: a line follows the finger and snaps on when it reaches the next dot
+let dtDrag=false, dtSkipClick=false;
+function dtSvgPoint(e){
+  const svg=$('dotsStage').querySelector('svg'); if(!svg) return null;
+  const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function dtFollow(e){
+  if(dtDone) return;
+  const pts=DOT_PICS[dtPicIdx].pts, p=dtSvgPoint(e); if(!p) return;
+  const t=pts[dtNext-1];
+  if(t && Math.hypot(p.x-t[0], p.y-t[1])<20){ dtSkipClick=true; dotsTap(dtNext, true); }
+  const svg=$('dotsStage').querySelector('svg'); let band=svg && svg.querySelector('#dtBand');
+  if(dtDone || dtNext<2){ if(band) band.remove(); return; }
+  if(!band){ band=document.createElementNS('http://www.w3.org/2000/svg','line'); band.id='dtBand';
+    band.setAttribute('stroke', DOT_PICS[dtPicIdx].color); band.setAttribute('stroke-width','6'); band.setAttribute('stroke-linecap','round');
+    band.setAttribute('stroke-dasharray','2 10'); band.setAttribute('pointer-events','none'); svg.insertBefore(band, svg.firstChild); }
+  const f=pts[dtNext-2];
+  band.setAttribute('x1',f[0]); band.setAttribute('y1',f[1]); band.setAttribute('x2',p.x); band.setAttribute('y2',p.y);
+}
+$('dotsStage').addEventListener('pointerdown', e=>{ dtDrag=true; dtSkipClick=false; dtFollow(e); });
+addEventListener('pointermove', e=>{ if(dtDrag) dtFollow(e); });
+addEventListener('pointerup', ()=>{ if(!dtDrag) return; dtDrag=false; const b=document.getElementById('dtBand'); if(b) b.remove(); });
+addEventListener('pointercancel', ()=>{ dtDrag=false; });
+function dotsTap(num, fromDrag){
+  if(!fromDrag && dtSkipClick){ dtSkipClick=false; return; }   // the click after a drag already counted
   if(dtDone) return;
   const pic = DOT_PICS[dtPicIdx];
   if(num!==dtNext){ sNo(); say('Look for number '+dtNext+'!'); return; }
@@ -2733,7 +2758,12 @@ function demoSoundOut(){
 function pickWordLetter(btn,l){
   if(wordDone) return;
   if(l===wordCur.w[wordIdx]){
-    wordIdx++; renderWordSlots(); say(l.toLowerCase()); sPop();
+    wordIdx++; renderWordSlots(); sPop();
+    // the letter's sound, not its name; the last letter of a team (s-h, e-e) plays the team's sound
+    const k=wordUnitsCur.findIndex(u=>wordIdx-1>=u.i0 && wordIdx-1<u.i0+u.n), u=wordUnitsCur[k];
+    stopPhon();
+    if(u && wordIdx===u.i0+u.n) soundUnit($('wordSlots'), wordUnitsCur, k, 0);
+    else playPhon(PHON[l.toLowerCase()]||l.toLowerCase(), 0);
     btn.disabled=true; btn.style.opacity=.25;
     if(wordIdx===wordCur.w.length){
       wordDone=true;
@@ -3254,7 +3284,9 @@ function jumpLoop(){
     const oy = o.fly ? s.ground-70 : s.ground;
     const oL=o.x-16, oR=o.x+16, oT=oy-36, oB=oy-2;
     if(pR>oL && pL<oR && pB>oT && pT<oB){ s.over=true; s.dead=true; }
-    if(!o.scored && o.x<s.px-20){ o.scored=true; s.passed++; if(s.passed%3===0) tone(1000,0,.1,'triangle',.15); }
+    // a star only for things actually jumped over: in the air while it went under you
+    if(!o.scored && Math.abs(o.x-s.px)<34 && s.jumping) o.air=true;
+    if(!o.scored && o.x<s.px-20){ o.scored=true; s.passed++; if(o.air){ s.jumped=(s.jumped||0)+1; tone(1000,0,.1,'triangle',.15); } }
   }
   s.obs=s.obs.filter(o=>o.x>-40);
   // draw
@@ -3278,17 +3310,17 @@ function jumpLoop(){
   else { ctx.fillStyle='#a855f7'; ctx.fillRect(s.px-18, s.py-56, 36, 54); }
   // score
   ctx.fillStyle='#1e293b'; ctx.font='900 20px Arial'; ctx.textAlign='left';
-  ctx.fillText('⭐ '+s.passed, 12, 28);
+  ctx.fillText('⭐ '+(s.jumped||0), 12, 28);
   if(s.over){ jumpOver(); return; }
   jumpRAF=requestAnimationFrame(jumpLoop);
 }
 function jumpOver(){
   const s=jumpState; sNo();
-  const earned=Math.max(1, Math.floor(s.passed/2));
+  const earned=s.jumped||0;
   S.stars+=earned; save(); updStars();
   $('jumpOverlay').className='';
-  $('jumpOverlay').innerHTML=`<h3>Great running! 🦘</h3><div style="font-size:18px;font-weight:900">You dodged ${s.passed} things!</div><div style="font-size:20px">⭐ +${earned} stars!</div><button onclick="jumpInit()">▶ Play again</button><button style="background:linear-gradient(135deg,#f472b6,#a855f7)" onclick="go('home')">🏠 Home</button>`;
-  say('Great running! You earned '+earned+' stars!');
+  $('jumpOverlay').innerHTML=`<h3>Great running! 🦘</h3><div style="font-size:18px;font-weight:900">You jumped over ${earned} thing${earned===1?'':'s'}!</div><div style="font-size:20px">${earned?'⭐ +'+earned+' star'+(earned===1?'':'s')+'!':'Jump over things to earn stars!'}</div><button onclick="jumpInit()">▶ Play again</button><button style="background:linear-gradient(135deg,#f472b6,#a855f7)" onclick="go('home')">🏠 Home</button>`;
+  say(earned ? 'Great running! You earned '+earned+(earned===1?' star!':' stars!') : 'Good try! Jump over things to earn stars!');
   confettiBurst();
 }
 
