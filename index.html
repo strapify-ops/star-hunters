@@ -695,7 +695,7 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.36', APP_DATE='1 Nov 2026';
+const APP_VERSION='2.37', APP_DATE='2 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -759,7 +759,7 @@ function $(id){ return document.getElementById(id); }
 function shuffle(a){ return a.sort(()=>Math.random()-.5); }
 function girlCfg(i, extra){
   const g = GIRLS[i], o = S.outfits[i];
-  return Object.assign({hair:o.hairStyle||g.hair, skin:o.skin||g.skin, hairColor:o.hairColor,
+  return Object.assign({girl:i, hair:o.hairStyle||g.hair, skin:o.skin||g.skin, hairColor:o.hairColor,
     outfit:o.outfit, dressColor:o.dressColor, acc:o.acc.slice(), eyes:o.eyeStyle||'default', mouth:o.mouthStyle||'smile'}, extra||{});
 }
 
@@ -1192,6 +1192,8 @@ for(let i=0;i<14;i++){
 
 /* ================= GIRL SVG ================= */
 function girlSVG(c){
+  const pic = c.girl!=null && !c.lineart && picSrc('g', c.girl+'_'+c.outfit);
+  if(pic) return `<svg viewBox="0 0 200 262" xmlns="http://www.w3.org/2000/svg" class="${c.cls||''}"><image href="${pic}" width="200" height="262"/></svg>`;
   const hc=c.hairColor, sk=c.skin||'#ffe0cc', dc=c.dressColor||'#a855f7';
   const A=k=>(c.acc||[]).includes(k);
   const dark='#3a2b4f';
@@ -1415,7 +1417,7 @@ const NAME_STICKERS = {
 };
 /* generated pictures (Codex) in pics/<kind>/<KEY>.webp; the hand-drawn SVGs stay as the fallback */
 const PICS_V='1';
-const PICS={w:new Set('AIR ANT APPLE ARM ASTRONAUT BACK BADGE BAG BAKE BALL BANG BARN BAT BATH BEAN BED BEE BEEP BEG BELL BIG BIKE BIN BIRD BLOW BLUE BOAT BOIL BONE BOOK BOOT BORN BOTTLE BOW BOWL BOX BOY BREAD BRIDGE BUG BUN BUNNY BURN BUS BUZZ CAB CAGE CAKE CAN CANDLE CANDY CAP CAPE CAR CARE CART CASH CAT CHAIR CHALK CHAT CHEER CHEW CHIN CHIP CHOP CITY CLAP CLAW CLAY CLIMB CLUE COAT COG COIN COMB CONE COOK COOL CORE CORN COT COW CRAB CRY CUB CUBE CUFF CUP CURE CURL CUT DAD DART DAY DEER DIG DISH DOE DOG DOLL DOLPHIN DONKEY DOT DOWN DRAW DREW DRUM DUCK EAR EGG ELEPHANT EVE FACE FAIR FAN FARM FAT FEATHER FEET FERN FEW FILL FIN FIR FISH FIVE FIZZ FLAG FLY FOG FOOD FOOT FORK FOX FRIES FROG FUDGE FUN FUR GAME GATE GEAR GEM GIFT GIRL GLUE GOAT GOLD GOLF GOOD GOWN GRAPH GREW GROW HAIR HAM HAND HANG HARE HAT HAWK HAY HEAD HEAR HEDGE HEN HER HERD HERE HIDE HIGH HILL HIP HOE HOG HOLE HOME HONEY HONK HOOK HOOP HOP HOPE HORN HOT HUG HUGE HURT HUT HUTCH ICE JAM JAR JAW JAZZ JEEP JELLY JET JOY JUG JUMP KEEP KEY KICK KING KISS KIT KITE KNEE KNIFE KNIT KNOCK KNOT LAKE LAMB LAMP LAP LAWN LEAF LEG LIGHT LIME LINE LIP LOAF LOCK LOG LONG LOOK LOUD LUCK LURE MAGPIE MAIL MAKE MAN MAP MASK MAT MATCH MATH MEAT MEN MESS MICE MILK MONKEY MOON MOP MOTH MUCH MUG MUM NAIL NAME NAP NECK NEED NEST NET NEW NIGHT NOON NOSE NOTE NUT OIL OUCH OUT OWL PACK PAGE PAIN PAIR PAN PARK PAT PATCH PATH PAW PAY PEA PEEL PEG PEN PENCIL PETE PHONE PIE PIG PIN PINE PINK PLAY PLUG POOL PORT POT PUFF PUP PUPPY PURE PURPLE QUACK QUEEN QUILT QUIZ RAG RAIN RAT RED RICE RICH RIDE RING ROAD ROCK ROD ROOF ROOM ROPE ROSE ROW RUG RULE RUN SACK SAIL SALT SAND SAT SAUCE SAUCER SAW SCARE SCREW SEA SEAL SEE SEED SHARE SHED SHIP SHOP SHORE SHRIMP SHUT SIGH SING SINK SIT SIX SKY SLED SLOW SNORE SNOW SOAP SOCK SOIL SONG SOON SORT SOUR SPHERE SPIN SPLASH SPRING SPY SQUID STAGE STAR STEER STEW STIR STORE STRAW STRING SUN SURF SWIM TAG TAIL TALL TANK TAP TAPE TEA TEAR TEDDY TEN TENT THESE THIN THREAD THREE THUMB TIE TIME TIN TOAD TOE TOOL TOP TOWN TOY TRAY TREE TRUE TUB TUNE TURKEY TURN TURTLE VAN VET WAIT WALK WALL WATCH WAVE WEB WEED WELL WET WHALE WHEEL WHIP WHISK WIG WIN WING WINK WISH WITCH WITH WOOD WOOL WORM WRAP WREN WRIST WRITE YARN YAWN YEAR ZIP ZOO'.split(' ')),f:new Set('avo corn cuke egg greens mush naruto nigiri onigiri prawn tamago tempura'.split(' ')),s:new Set('bag bfly boombox bowS bunnyS cassette catS crownS diamond dogS flower heart heel light lips micS note rainbow star uni'.split(' ')),o:new Set('cactus donut rock sushiO'.split(' '))};
+const PICS={w:new Set('AIR ANT APPLE ARM ASTRONAUT BACK BADGE BAG BAKE BALL BANG BARN BAT BATH BEAN BED BEE BEEP BEG BELL BIG BIKE BIN BIRD BLOW BLUE BOAT BOIL BONE BOOK BOOT BORN BOTTLE BOW BOWL BOX BOY BREAD BRIDGE BUG BUN BUNNY BURN BUS BUZZ CAB CAGE CAKE CAN CANDLE CANDY CAP CAPE CAR CARE CART CASH CAT CHAIR CHALK CHAT CHEER CHEW CHIN CHIP CHOP CITY CLAP CLAW CLAY CLIMB CLUE COAT COG COIN COMB CONE COOK COOL CORE CORN COT COW CRAB CRY CUB CUBE CUFF CUP CURE CURL CUT DAD DART DAY DEER DIG DISH DOE DOG DOLL DOLPHIN DONKEY DOT DOWN DRAW DREW DRUM DUCK EAR EGG ELEPHANT EVE FACE FAIR FAN FARM FAT FEATHER FEET FERN FEW FILL FIN FIR FISH FIVE FIZZ FLAG FLY FOG FOOD FOOT FORK FOX FRIES FROG FUDGE FUN FUR GAME GATE GEAR GEM GIFT GIRL GLUE GOAT GOLD GOLF GOOD GOWN GRAPH GREW GROW HAIR HAM HAND HANG HARE HAT HAWK HAY HEAD HEAR HEDGE HEN HER HERD HERE HIDE HIGH HILL HIP HOE HOG HOLE HOME HONEY HONK HOOK HOOP HOP HOPE HORN HOT HUG HUGE HURT HUT HUTCH ICE JAM JAR JAW JAZZ JEEP JELLY JET JOY JUG JUMP KEEP KEY KICK KING KISS KIT KITE KNEE KNIFE KNIT KNOCK KNOT LAKE LAMB LAMP LAP LAWN LEAF LEG LIGHT LIME LINE LIP LOAF LOCK LOG LONG LOOK LOUD LUCK LURE MAGPIE MAIL MAKE MAN MAP MASK MAT MATCH MATH MEAT MEN MESS MICE MILK MONKEY MOON MOP MOTH MUCH MUG MUM NAIL NAME NAP NECK NEED NEST NET NEW NIGHT NOON NOSE NOTE NUT OIL OUCH OUT OWL PACK PAGE PAIN PAIR PAN PARK PAT PATCH PATH PAW PAY PEA PEEL PEG PEN PENCIL PETE PHONE PIE PIG PIN PINE PINK PLAY PLUG POOL PORT POT PUFF PUP PUPPY PURE PURPLE QUACK QUEEN QUILT QUIZ RAG RAIN RAT RED RICE RICH RIDE RING ROAD ROCK ROD ROOF ROOM ROPE ROSE ROW RUG RULE RUN SACK SAIL SALT SAND SAT SAUCE SAUCER SAW SCARE SCREW SEA SEAL SEE SEED SHARE SHED SHIP SHOP SHORE SHRIMP SHUT SIGH SING SINK SIT SIX SKY SLED SLOW SNORE SNOW SOAP SOCK SOIL SONG SOON SORT SOUR SPHERE SPIN SPLASH SPRING SPY SQUID STAGE STAR STEER STEW STIR STORE STRAW STRING SUN SURF SWIM TAG TAIL TALL TANK TAP TAPE TEA TEAR TEDDY TEN TENT THESE THIN THREAD THREE THUMB TIE TIME TIN TOAD TOE TOOL TOP TOWN TOY TRAY TREE TRUE TUB TUNE TURKEY TURN TURTLE VAN VET WAIT WALK WALL WATCH WAVE WEB WEED WELL WET WHALE WHEEL WHIP WHISK WIG WIN WING WINK WISH WITCH WITH WOOD WOOL WORM WRAP WREN WRIST WRITE YARN YAWN YEAR ZIP ZOO'.split(' ')),f:new Set('avo corn cuke egg greens mush naruto nigiri onigiri prawn tamago tempura'.split(' ')),s:new Set('bag bfly boombox bowS bunnyS cassette catS crownS diamond dogS flower heart heel light lips micS note rainbow star uni'.split(' ')),o:new Set('cactus donut rock sushiO'.split(' ')),g:new Set('0_barbie 0_gown 0_hanbok 0_hoodie 0_idol 0_mermaid 0_pd_apple 0_pd_bayou 0_pd_dawn 0_pd_desert 0_pd_glass 0_pd_ice 0_pd_island 0_pd_rose 0_pd_sea 0_pd_sunflower 0_pjs 0_princess 0_stripes 0_witch 1_barbie 1_gown 1_hanbok 1_hoodie 1_idol 1_mermaid 1_pd_apple 1_pd_bayou 1_pd_dawn 1_pd_desert 1_pd_glass 1_pd_ice 1_pd_island 1_pd_rose 1_pd_sea 1_pd_sunflower 1_pjs 1_princess 1_stripes 1_witch 2_barbie 2_gown 2_hanbok 2_hoodie 2_idol 2_mermaid 2_pd_apple 2_pd_bayou 2_pd_dawn 2_pd_desert 2_pd_glass 2_pd_ice 2_pd_island 2_pd_rose 2_pd_sea 2_pd_sunflower 2_pjs 2_princess 2_stripes 2_witch 3_barbie 3_gown 3_hanbok 3_hoodie 3_idol 3_mermaid 3_pd_apple 3_pd_bayou 3_pd_dawn 3_pd_desert 3_pd_glass 3_pd_ice 3_pd_island 3_pd_rose 3_pd_sea 3_pd_sunflower 3_pjs 3_princess 3_stripes 3_witch 4_barbie 4_gown 4_hanbok 4_hoodie 4_idol 4_mermaid 4_pd_apple 4_pd_bayou 4_pd_dawn 4_pd_desert 4_pd_glass 4_pd_ice 4_pd_island 4_pd_rose 4_pd_sea 4_pd_sunflower 4_pjs 4_princess 4_stripes 4_witch 5_barbie 5_gown 5_hanbok 5_hoodie 5_idol 5_mermaid 5_pd_apple 5_pd_bayou 5_pd_dawn 5_pd_desert 5_pd_glass 5_pd_ice 5_pd_island 5_pd_rose 5_pd_sea 5_pd_sunflower 5_pjs 5_princess 5_stripes 5_witch'.split(' '))};
 function picSrc(kind,key){ return PICS[kind].has(key) ? 'pics/'+kind+'/'+key+'.webp?v='+PICS_V : null; }
 function picSVG(kind,key,vb){ const s=picSrc(kind,key); return s && `<svg viewBox="0 0 ${vb||'60 60'}" xmlns="http://www.w3.org/2000/svg"><image href="${s}" width="100%" height="100%"/></svg>`; }
 function picImg(kind,key){ const s=picSrc(kind,key); if(!s) return null; const i=new Image(); i.src=s; return i; }
@@ -2062,12 +2064,12 @@ let duGirl=0, duTab='outfit';
 function headPreview(overrides){
   return girlSVG(girlCfg(duGirl, overrides)).replace('viewBox="0 0 200 262"','viewBox="46 44 108 104"');
 }
-function startDressup(){ duGirl=S.char; duTab='outfit'; go('dressup'); renderDU(); say("Let's dress up "+GIRLS[duGirl].nm+"! Change her clothes, hair, eyes and more!"); }
+function startDressup(){ duGirl=S.char; duTab='outfit'; go('dressup'); renderDU(); say("Let's dress up "+GIRLS[duGirl].nm+"! Pick an outfit for her!"); }
 function renderDU(pop){
   $('duSwitch').innerHTML = GIRLS.map((g,i)=>`<button class="${i===duGirl?'sel':''}" onclick="duPick(${i})">${g.nm}</button>`).join('');
   $('duStage').innerHTML = girlSVG(girlCfg(duGirl,{cls:pop?'pop':''}));
-  const tabs=[['outfit','👗'],['dcolor','🎨'],['hstyle','💇'],['hcolor','🌈'],['eyes','👁️'],['skin','✋'],['acc','✨']];
-  $('duTabs').innerHTML = tabs.map(t=>`<button class="${t[0]===duTab?'sel':''}" onclick="duTabGo('${t[0]}')">${t[1]}</button>`).join('');
+  duTab='outfit';   // the girls are drawn pictures now, one per outfit, so colours/hair/eyes/accessories can't change
+  $('duTabs').style.display='none';
   const o=S.outfits[duGirl];
   const curHair=o.hairStyle||GIRLS[duGirl].hair, curEye=o.eyeStyle||'default', curSkin=o.skin||GIRLS[duGirl].skin;
   let items='';
@@ -3858,14 +3860,15 @@ const OBS_ART = {
   donut:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="24" fill="#f9a8d4"/><circle cx="30" cy="30" r="9" fill="#1a0b3d"/><path d="M12 24 Q18 20 22 26 M40 18 Q46 22 42 28 M46 38 Q40 44 36 38" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="20" cy="34" r="2" fill="#38bdf8"/><circle cx="40" cy="40" r="2" fill="#fde047"/></svg>`,
   sushiO:`<svg viewBox="0 0 60 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="30" cy="34" rx="24" ry="14" fill="#fff"/><path d="M8 28 Q30 14 52 28 Q30 36 8 28 Z" fill="#fb923c"/><rect x="24" y="20" width="12" height="24" rx="3" fill="#1f2937" opacity=".85"/></svg>`,
 };
+function jumpPlayerImg(){ const c=girlCfg(S.char); return picImg('g', S.char+'_'+c.outfit) || svgToImg(girlSVG(Object.assign(c,{girl:null}))); }
 function startJump(){
   go('jump');
   if(!jumpSprites){
-    jumpSprites={ player:svgToImg(girlSVG(girlCfg(S.char))),
+    jumpSprites={ player:jumpPlayerImg(),
       cactus:picImg('o','cactus')||svgToImg(OBS_ART.cactus), rock:picImg('o','rock')||svgToImg(OBS_ART.rock), donut:picImg('o','donut')||svgToImg(OBS_ART.donut),
       sushi:picImg('o','sushiO')||svgToImg(OBS_ART.sushiO), demon:svgToImg(demonSVG({})) };
   } else {
-    jumpSprites.player=svgToImg(girlSVG(girlCfg(S.char)));
+    jumpSprites.player=jumpPlayerImg();
   }
   jumpInit();
 }
