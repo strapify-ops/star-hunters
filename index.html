@@ -728,7 +728,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.41', APP_DATE='3 Nov 2026';
+const APP_VERSION='2.42', APP_DATE='3 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -3661,6 +3661,15 @@ const recOpts=mime=>Object.assign({audioBitsPerSecond:128000}, mime?{mimeType:mi
 // iOS 17+: after using the mic, switch the audio session back so sound comes out of the loudspeaker at full quality
 function micStart(){ try{ if(navigator.audioSession) navigator.audioSession.type='play-and-record'; }catch(e){} }
 function micDone(){ try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){} }
+// ask for the microphone as soon as the app opens, so the question never pops up in the middle of reading.
+// Already allowed or blocked: don't ask. The mic is switched straight off again.
+async function askMicEarly(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try{ const p=await navigator.permissions.query({name:'microphone'}); if(p.state!=='prompt') return; }catch(e){}   // older Safari: can't tell, so ask
+  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true}); st.getTracks().forEach(t=>t.stop()); }catch(e){}
+  micDone();
+}
+askMicEarly();
 async function readRecord(){
   if(rd.recording) return readStopRec();
   if(!navigator.mediaDevices || !window.MediaRecorder){ $('readStatus').textContent='This browser can’t record. Try Safari or Chrome.'; return; }
