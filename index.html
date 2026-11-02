@@ -105,6 +105,14 @@ svg.happyjump { animation:hjump .5s ease-in-out 2; }
 .duItem.sel { border-color:#fde047; background:rgba(253,224,71,.25); transform:scale(1.08); }
 .duItem .lab { font-size:10px; font-weight:800; }
 .duItem.sw { border-radius:50%; }
+.duItem.pic { width:68px; height:86px; position:relative; overflow:hidden; padding:0; align-items:flex-end; }
+.duItem.pic img { position:absolute; inset:2px 2px 14px; width:calc(100% - 4px); height:calc(100% - 16px); object-fit:contain; object-position:50% 0; }
+.duItem.pic.wear img { object-fit:contain; object-position:center; inset:6px 6px 16px; width:calc(100% - 12px); height:calc(100% - 22px); }
+.duItem.pic span { position:relative; width:100%; font-size:22px; line-height:1; text-align:center; }
+.duItem.pic .lab { background:rgba(26,11,61,.75); border-radius:0 0 12px 12px; padding:1px 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#duTabs button img { display:block; height:24px; width:24px; object-fit:contain; margin:0 auto 2px; }
+.sPic { width:64px; height:64px; object-fit:contain; display:block; margin:0 auto; }
+.sPic.girl { height:84px; object-fit:cover; object-position:50% 8%; border-radius:12px; }
 .duItem.prev { padding:0; overflow:hidden; background:rgba(255,255,255,.9); }
 .duItem.prev svg { width:100%; height:100%; display:block; }
 
@@ -260,11 +268,17 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 #wordExplain, #readExplain { display:none; width:100%; background:rgba(56,189,248,.16); border:2px solid rgba(56,189,248,.55); border-radius:16px; padding:8px 12px; margin:4px 0 6px; font-size:14px; font-weight:700; line-height:1.35; }
 .exHead { display:flex; justify-content:space-between; align-items:center; font-weight:900; color:#7dd3fc; margin-bottom:4px; }
 .exHead button { border:none; background:rgba(255,255,255,.18); color:#fff; border-radius:10px; padding:3px 9px; font-size:15px; }
+.unit.hw { position:relative; }
+.unit.hw::before { content:'♥'; position:absolute; left:50%; top:-14px; transform:translateX(-50%); color:#f472b6; font-size:20px; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+#readWord .unit.hw::before { top:-16px; font-size:24px; }
+b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 .exLine { display:flex; gap:8px; align-items:baseline; margin:3px 0; }
 .exLine b { flex:none; min-width:42px; text-align:center; background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; font-size:16px; }
 #wordHint { font-size:14px; font-weight:800; text-align:center; min-height:20px; opacity:.9; margin:2px 0; }
 .setRow { display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin:0 0 6px; }
 .setRow .wordSetBtn { margin:0; }
+.micToggle { border:none; border-radius:999px; padding:6px 12px; font-weight:900; font-size:13px; color:#fff; background:linear-gradient(135deg,#f43f5e,#be123c); }
+.micToggle.off { background:rgba(255,255,255,.15); opacity:.8; }
 .goal { display:flex; align-items:center; gap:2px; background:rgba(255,255,255,.12); border-radius:999px; padding:2px; font-weight:900; font-size:14px; }
 .goal button { border:none; background:rgba(255,255,255,.18); color:#fff; width:30px; height:30px; border-radius:50%; font-size:18px; font-weight:900; line-height:1; }
 .goal span { min-width:62px; text-align:center; }
@@ -296,9 +310,15 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 .wcNote { font-size:11px; font-weight:700; opacity:.6; }
 .wcNext.mix { background:linear-gradient(135deg,#f472b6,#a855f7); }
 .wchip.sel { border-color:#fde047; background:rgba(253,224,71,.25); }
-#readMain { display:flex; flex-direction:column; align-items:center; width:100%; }
+/* everything fits one screen: the picture and the "how to read it" box give way, nothing else moves */
+#readMain { display:flex; flex-direction:column; align-items:center; width:100%; flex:1 1 0; min-height:0; }
+#readMain > * { flex-shrink:0; }
+#scr-read h2 { flex-shrink:0; }
+@media (max-height:780px){ #scr-read h2 { display:none; } }
 #readProg { font-size:13px; font-weight:800; opacity:.75; }
-#readPic { width:120px; height:120px; margin:4px auto; }
+#readPic { flex:0 1 120px !important; min-height:44px; width:auto; height:auto; aspect-ratio:1; margin:4px auto; }
+#readPic .picHidden { font-size:clamp(28px, 7vh, 64px); }
+#readExplain { flex:0 1 auto !important; min-height:52px; overflow-y:auto; }
 .picHidden { width:100%; height:100%; border-radius:24px; border:4px dashed rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center; font-size:64px; font-weight:900; color:rgba(255,255,255,.4); }
 #readPic svg { width:100%; height:100%; }
 #readWord { display:flex; gap:12px; justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
@@ -630,7 +650,7 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
   <!-- READ TO ME -->
   <div class="screen" id="scr-read">
     <h2>🎤 Read to Me</h2>
-    <div class="setRow"><button id="readSetBtn" class="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button><div class="goal" data-goal></div></div>
+    <div class="setRow"><button id="readSetBtn" class="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button><div class="goal" data-goal></div><button id="readMicBtn" class="micToggle" onclick="readToggleMic()">🎤 Record: on</button></div>
     <div id="readMain">
       <div id="readProg"></div>
       <div id="readPic"></div>
@@ -695,7 +715,7 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.37', APP_DATE='2 Nov 2026';
+const APP_VERSION='2.38', APP_DATE='3 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -720,13 +740,24 @@ const PRINCESS_DRESSES = [
   {id:'pd_apple',    name:'Snow Blossom Dress', ico:'🍎', cost:14, dress:'#3b82f6', bodice:'#fde047', trim:'#ef4444', tiara:'#fde047'},
   {id:'pd_dawn',     name:'Dawn Rose Gown',     ico:'🌸', cost:14, dress:'#f9a8d4', bodice:'#bfdbfe', trim:'#f472b6', tiara:'#fbcfe8'},
   {id:'pd_glass',    name:'Glass Slipper Gown', ico:'👠', cost:14, dress:'#93c5fd', bodice:'#eff6ff', trim:'#c0c0c0', tiara:'#e0f2fe'},
+  {id:'pd_highland', name:'Highland Archer Dress', ico:'🏹', cost:14, dress:'#166534', bodice:'#15803d', trim:'#ca8a04', tiara:'#fde68a'},
+  {id:'pd_blossom',  name:'Blossom Warrior Robe', ico:'🌸', cost:14, dress:'#93c5fd', bodice:'#f9a8d4', trim:'#be185d', tiara:'#fbcfe8'},
+  {id:'pd_avalor',   name:'Crimson Royal Gown',  ico:'💃', cost:14, dress:'#dc2626', bodice:'#b91c1c', trim:'#facc15', tiara:'#fde047'},
+  {id:'pd_dragon',   name:'Dragon Warrior Outfit', ico:'🐉', cost:14, dress:'#6b21a8', bodice:'#facc15', trim:'#a16207', tiara:'#fde047'},
+  // from China and Malaysia (no tiara on the drawn doll)
+  {id:'qipao',       name:'Qipao Dress',         ico:'🏮', cost:12, dress:'#dc2626', bodice:'#dc2626', trim:'#facc15', tiara:'', noTiara:true},
+  {id:'hanfu',       name:'Hanfu Robe',          ico:'🎐', cost:12, dress:'#fdba74', bodice:'#a7f3d0', trim:'#f472b6', tiara:'', noTiara:true},
+  {id:'tangsuit',    name:'New Year Jacket',     ico:'🧧', cost:12, dress:'#dc2626', bodice:'#b91c1c', trim:'#fde047', tiara:'', noTiara:true},
+  {id:'bajukurung',  name:'Baju Kurung',         ico:'🌺', cost:12, dress:'#f9a8d4', bodice:'#fbcfe8', trim:'#eab308', tiara:'', noTiara:true},
+  {id:'kebaya',      name:'Nyonya Kebaya',       ico:'🌼', cost:12, dress:'#2dd4bf', bodice:'#ffffff', trim:'#ec4899', tiara:'', noTiara:true},
+  {id:'batik',       name:'Batik Dress',         ico:'🌻', cost:12, dress:'#3b82f6', bodice:'#facc15', trim:'#ec4899', tiara:'', noTiara:true},
 ];
 const PD_MAP = Object.fromEntries(PRINCESS_DRESSES.map(p=>[p.id,p]));
 const GIRLS = [
   {nm:'Ruby', hair:'braid', skin:'#ffe0cc', greet:"Hi! I'm Ruby! Let's hunt some demons!"},
   {nm:'Mira', hair:'long', skin:'#ffd9c2', greet:"Hey! I'm Mira! Ready to be a star?"},
   {nm:'Zoey', hair:'buns', skin:'#ffe4d0', greet:"Yo! I'm Zoey! Let's go!"},
-  {nm:'Hazel', hair:'bob', skin:'#ffdfc0', greet:"Hi hi! I'm Hazel! Let's play together!"},
+  {nm:'Hazel', hair:'long', skin:'#ffdfc0', greet:"Hi hi! I'm Hazel! Let's play together!"},
   {nm:'Aurelia', hair:'wavy', skin:'#ffe6d4', greet:"Hello! I'm Aurelia! Sparkle time!"},
   {nm:'Amelie', hair:'pigtails', skin:'#ffe0c4', greet:"Hi! I'm Amelie! Let's shakey shake shake!"},
 ];
@@ -744,6 +775,8 @@ S.owned.outfits = S.owned.outfits ?? ['idol','gown','hoodie','hanbok','pjs','str
 S.owned.acc = S.owned.acc ?? ['crown','bow','catEars','starPin','glasses','necklace','mic','sword','wings'];
 S.owned.stickers = S.owned.stickers ?? ['heart','star','rainbow','flower'];
 if(!S.owned.outfits.includes('stripes')) S.owned.outfits.push('stripes'); // migrate older saves
+['bow_pink','bow_red','shoe_ballet','shoe_sneaker','hat_sun','hat_flowers'].forEach(k=>{ if(!S.owned.acc.includes(k)) S.owned.acc.push(k); });   // = WEAR_FREE
+if(S.outfits[3] && S.outfits[3].hairStyle==='bob') delete S.outfits[3].hairStyle;   // Hazel's hair is long now
 S.mix = S.mix ?? { hairStyle:'wavy', hairColor:'#7c3aed', skin:'#ffe0cc', outfit:'idol', dressColor:'#a855f7', acc:[], eyeStyle:'default' };
 S.gallery = S.gallery ?? [];
 function save(){ localStorage.setItem('starHunters2', JSON.stringify(S)); }
@@ -760,7 +793,8 @@ function shuffle(a){ return a.sort(()=>Math.random()-.5); }
 function girlCfg(i, extra){
   const g = GIRLS[i], o = S.outfits[i];
   return Object.assign({girl:i, hair:o.hairStyle||g.hair, skin:o.skin||g.skin, hairColor:o.hairColor,
-    outfit:o.outfit, dressColor:o.dressColor, acc:o.acc.slice(), eyes:o.eyeStyle||'default', mouth:o.mouthStyle||'smile'}, extra||{});
+    outfit:o.outfit, dressColor:o.dressColor, acc:o.acc.slice(), eyes:o.eyeStyle||'default', mouth:o.mouthStyle||'smile',
+    bow:o.bow||'', shoes:o.shoes||'', hat:o.hat||''}, extra||{});
 }
 
 /* ================= AUDIO ================= */
@@ -1190,10 +1224,43 @@ for(let i=0;i<14;i++){
   document.body.appendChild(s);
 }
 
+/* ================= BOWS, SHOES AND HATS =================
+   Drawn once each (pics/a), then put on whichever girl picture is showing:
+   GIRL_ANCHOR has her face box and feet in the 200x262 picture
+   [faceL, faceT, faceR, faceB, footL, footR, bottom] (feet null under a long skirt). */
+const WEAR = {
+  bow:  [['bow_pink','Pink'],['bow_red','Red'],['bow_dots','Spotty'],['bow_purple','Glitter'],['bow_rainbow','Rainbow'],['bow_gold','Gold']],
+  shoes:[['shoe_ballet','Ballet'],['shoe_sneaker','Sneakers'],['shoe_glass','Glass'],['shoe_red','Red'],['shoe_boot','Boots'],['shoe_sandal','Sandals']],
+  hat:  [['hat_sun','Sun hat'],['hat_flowers','Flowers'],['hat_beanie','Beanie'],['hat_cone','Princess'],['hat_cowgirl','Cowgirl'],['hat_beret','Beret'],['hat_party','Party'],['hat_crown','Crown']],
+};
+const WEAR_FREE = ['bow_pink','bow_red','shoe_ballet','shoe_sneaker','hat_sun','hat_flowers'];
+// hats: width in face-widths, and where the bottom of the hat sits (in face-heights below the top of the face)
+const HAT_FIT = {hat_sun:[2.1,.12], hat_flowers:[1.4,.06], hat_beanie:[1.4,.2], hat_cone:[1.2,0], hat_cowgirl:[2,.1], hat_beret:[1.5,.12], hat_party:[.8,-.12], hat_crown:[1.3,-.05]};
+const GIRL_ANCHOR = {"0_bajukurung":[83.1,25.7,116.4,64.0,89.7,109.3,254.9],"0_barbie":[83.1,25.7,115.4,64.0,93.2,117.1,254.4],"0_batik":[83.6,25.2,115.9,64.5,90.7,109.3,254.9],"0_gown":[84.1,25.2,115.9,64.5,null,null,254.4],"0_hanbok":[83.6,25.2,114.4,64.5,null,null,254.9],"0_hanfu":[83.1,25.2,115.9,64.0,null,null,254.4],"0_hoodie":[83.1,25.2,115.9,64.5,91.2,117.1,254.4],"0_idol":[83.6,25.2,116.4,64.0,93.2,117.4,254.9],"0_kebaya":[83.6,25.7,115.9,64.0,90.7,112.1,254.9],"0_mermaid":[84.1,25.7,116.9,62.5,null,null,254.4],"0_pd_apple":[82.6,24.7,117.9,64.5,93.2,116.4,254.4],"0_pd_avalor":[84.6,27.2,115.9,65.0,92.2,113.1,254.4],"0_pd_bayou":[81.6,25.7,113.9,64.0,91.9,114.4,254.9],"0_pd_blossom":[83.1,25.2,115.9,64.0,88.4,111.8,254.9],"0_pd_dawn":[84.1,26.7,115.9,65.0,94.5,114.1,254.9],"0_pd_desert":[83.1,28.2,114.4,65.0,93.5,115.1,254.4],"0_pd_dragon":[82.6,25.2,115.9,64.5,87.7,110.8,254.4],"0_pd_glass":[82.6,27.2,113.9,66.0,94.5,112.8,254.9],"0_pd_highland":[83.1,25.2,115.4,64.5,89.4,110.6,254.4],"0_pd_ice":[83.6,30.7,114.9,66.5,null,null,254.4],"0_pd_island":[83.6,25.2,115.9,65.0,94.2,119.6,254.4],"0_pd_rose":[83.3,26.2,115.7,65.0,90.7,113.1,254.9],"0_pd_sea":[83.6,29.2,115.9,65.5,97.0,116.9,254.4],"0_pd_sunflower":[82.6,25.2,112.8,64.0,90.9,114.9,254.4],"0_pjs":[82.6,25.2,115.4,64.5,94.7,118.1,254.9],"0_princess":[83.1,28.2,115.4,66.0,null,null,254.4],"0_qipao":[84.1,25.7,116.4,65.0,90.4,108.8,254.4],"0_stripes":[83.6,25.2,116.4,64.0,93.2,115.6,254.9],"0_tangsuit":[83.6,25.2,115.9,64.5,87.4,112.8,254.4],"0_witch":[83.1,43.8,118.9,79.1,95.5,118.9,254.4],"1_bajukurung":[84.6,25.7,115.9,62.0,null,null,254.9],"1_barbie":[84.1,26.7,116.9,62.0,92.4,114.4,254.9],"1_batik":[84.1,25.7,115.9,62.0,88.7,110.8,254.4],"1_gown":[84.6,24.7,116.4,61.5,null,null,254.9],"1_hanbok":[83.1,24.7,114.9,61.5,83.1,107.6,254.9],"1_hanfu":[83.6,24.2,116.9,62.0,null,null,254.4],"1_hoodie":[84.6,25.2,115.9,62.0,91.7,115.1,254.4],"1_idol":[85.1,24.7,115.4,62.0,91.9,116.1,254.4],"1_kebaya":[84.6,25.7,116.4,62.0,89.9,108.1,254.4],"1_mermaid":[84.6,27.2,116.9,60.5,null,null,254.4],"1_pd_apple":[84.1,25.7,116.9,61.5,91.9,116.1,254.4],"1_pd_avalor":[85.6,31.7,115.9,66.0,null,null,254.4],"1_pd_bayou":[84.1,25.7,114.9,61.5,null,null,254.4],"1_pd_blossom":[85.1,24.7,115.9,62.0,86.9,111.8,254.4],"1_pd_dawn":[84.1,31.7,116.9,67.0,95.2,114.6,254.4],"1_pd_desert":[85.3,25.7,117.2,62.0,91.9,115.6,254.4],"1_pd_dragon":[84.6,25.7,116.4,62.0,90.9,109.1,254.9],"1_pd_glass":[84.1,28.7,116.4,63.0,93.7,112.1,254.4],"1_pd_highland":[84.6,25.2,115.9,62.0,88.9,110.6,254.4],"1_pd_ice":[85.6,27.2,116.9,63.5,92.7,112.6,254.4],"1_pd_island":[84.1,26.7,115.9,61.5,91.9,116.1,254.4],"1_pd_rose":[84.8,25.7,116.7,62.0,null,null,254.4],"1_pd_sea":[84.6,25.7,116.4,62.0,91.9,115.9,254.9],"1_pd_sunflower":[84.1,25.7,115.9,62.0,91.9,116.1,254.4],"1_pjs":[84.6,25.2,115.9,62.0,91.9,116.9,254.4],"1_princess":[84.6,30.7,116.4,67.0,null,null,254.9],"1_qipao":[84.6,25.2,116.4,62.0,90.4,110.1,254.4],"1_stripes":[85.1,25.2,115.9,62.0,90.7,116.1,254.4],"1_tangsuit":[85.1,25.7,116.4,62.0,90.9,113.4,254.4],"1_witch":[84.6,38.8,115.9,70.5,92.7,116.1,254.4],"2_bajukurung":[83.1,33.3,113.9,69.0,88.7,108.1,254.4],"2_barbie":[80.1,33.3,110.3,69.0,83.6,107.1,254.4],"2_batik":[82.6,33.3,113.9,69.0,85.1,108.8,254.9],"2_gown":[81.6,32.8,110.3,68.0,null,null,254.9],"2_hanbok":[79.1,33.8,110.3,70.0,86.6,115.6,254.9],"2_hanfu":[83.6,33.8,116.4,68.5,87.2,110.3,254.4],"2_hoodie":[81.6,33.3,111.8,69.0,84.1,112.8,254.4],"2_idol":[80.1,33.3,110.3,69.0,83.1,107.3,254.4],"2_kebaya":[81.6,32.8,113.9,68.5,88.2,105.8,254.4],"2_mermaid":[80.2,35.8,110.7,71.0,null,null,254.4],"2_pd_apple":[79.6,33.3,110.8,69.0,83.4,108.1,254.4],"2_pd_avalor":[84.1,33.3,113.9,68.0,87.9,106.8,254.4],"2_pd_bayou":[81.1,33.8,110.8,67.5,null,null,254.9],"2_pd_blossom":[85.6,33.3,117.4,69.0,87.9,112.1,254.9],"2_pd_dawn":[79.6,33.3,111.3,69.0,89.7,107.6,254.4],"2_pd_desert":[80.6,34.8,111.3,67.0,85.4,109.3,254.9],"2_pd_dragon":[81.6,33.3,112.8,69.0,83.6,106.8,254.4],"2_pd_glass":[80.1,33.3,111.3,68.5,87.7,107.6,254.4],"2_pd_highland":[81.1,34.3,111.5,69.5,82.9,106.3,254.9],"2_pd_ice":[80.6,33.3,111.8,68.5,null,null,254.9],"2_pd_island":[81.0,35.3,111.4,70.5,83.4,114.1,254.4],"2_pd_rose":[80.5,36.8,110.9,72.0,null,null,254.4],"2_pd_sea":[81.0,35.8,111.4,71.0,88.4,110.3,254.4],"2_pd_sunflower":[79.6,32.8,110.8,68.5,83.6,107.6,254.4],"2_pjs":[80.6,33.3,109.8,69.0,82.4,112.6,254.4],"2_princess":[80.1,33.8,109.8,68.0,null,null,254.9],"2_qipao":[82.1,32.8,114.4,68.0,84.9,109.3,254.4],"2_stripes":[79.6,33.3,109.8,69.0,83.1,108.3,254.9],"2_tangsuit":[81.6,33.3,111.8,68.0,84.4,108.3,254.4],"2_witch":[81.6,51.9,111.8,84.1,85.9,109.6,254.9],"3_bajukurung":[85.6,25.2,117.4,65.0,90.4,107.1,254.9],"3_barbie":[85.1,26.2,118.4,64.5,91.2,109.8,254.9],"3_batik":[84.6,26.2,117.4,65.0,90.9,109.6,254.9],"3_gown":[85.6,26.2,118.4,64.5,92.2,109.3,254.4],"3_hanbok":[84.6,26.2,116.9,65.0,90.9,108.6,254.9],"3_hanfu":[84.6,25.7,117.9,64.5,89.2,108.8,254.4],"3_hoodie":[85.1,26.2,117.4,65.0,91.2,110.8,254.9],"3_idol":[85.6,25.7,117.9,65.0,91.9,112.6,254.9],"3_kebaya":[84.6,26.2,117.9,64.5,91.4,108.8,254.4],"3_mermaid":[86.1,26.2,118.4,64.5,null,null,254.4],"3_pd_apple":[86.1,26.2,118.4,65.0,92.4,112.6,254.9],"3_pd_avalor":[85.6,29.2,116.9,65.0,90.2,109.8,254.4],"3_pd_bayou":[84.6,26.2,117.4,64.5,91.4,111.6,254.9],"3_pd_blossom":[85.1,26.2,118.4,64.5,91.7,110.1,254.9],"3_pd_dawn":[85.1,27.7,117.4,65.0,90.9,109.3,254.9],"3_pd_desert":[85.6,27.2,118.4,65.5,90.9,108.8,254.4],"3_pd_dragon":[85.1,26.2,117.4,65.5,90.2,110.1,254.9],"3_pd_glass":[85.1,28.7,117.4,66.0,90.7,108.3,254.4],"3_pd_highland":[85.6,26.7,116.9,65.0,89.9,108.8,254.4],"3_pd_ice":[85.1,33.3,116.4,69.0,93.2,107.3,254.4],"3_pd_island":[85.6,25.7,116.9,64.5,91.9,112.6,254.9],"3_pd_rose":[85.6,26.2,118.4,64.0,null,null,254.9],"3_pd_sea":[85.1,30.2,117.4,67.5,91.7,109.8,254.4],"3_pd_sunflower":[85.1,26.2,117.9,65.0,91.9,112.1,254.9],"3_pjs":[85.6,26.2,117.4,64.5,89.7,111.8,254.4],"3_princess":[85.6,27.2,117.9,65.5,91.4,110.8,254.9],"3_qipao":[85.1,26.2,117.9,65.0,91.4,109.8,254.4],"3_stripes":[85.6,25.7,118.4,65.0,91.4,112.8,254.9],"3_tangsuit":[85.1,26.2,117.4,65.0,91.9,112.6,254.9],"3_witch":[86.6,45.9,114.4,78.6,91.4,110.1,254.9],"4_bajukurung":[86.1,23.2,111.8,58.9,87.9,109.1,254.4],"4_barbie":[86.1,22.9,111.3,58.4,96.7,120.4,254.9],"4_batik":[86.6,22.7,111.3,58.4,88.9,111.1,254.4],"4_gown":[86.6,22.7,111.3,57.4,null,null,254.4],"4_hanbok":[86.6,22.7,111.8,58.4,96.7,114.4,254.4],"4_hanfu":[86.6,23.7,111.8,57.9,89.2,111.8,254.4],"4_hoodie":[84.6,22.7,110.8,58.4,94.5,121.2,254.9],"4_idol":[87.2,22.7,110.8,58.4,95.2,121.2,254.4],"4_kebaya":[85.6,22.2,116.4,58.4,89.7,109.8,254.4],"4_mermaid":[86.1,22.9,111.3,58.4,null,null,254.9],"4_pd_apple":[85.6,22.2,112.3,58.4,96.2,120.7,254.4],"4_pd_avalor":[86.6,23.7,110.3,58.9,90.2,110.1,254.4],"4_pd_bayou":[85.6,24.2,109.8,57.9,95.5,120.4,254.4],"4_pd_blossom":[87.2,22.7,113.4,58.4,89.9,110.1,254.4],"4_pd_dawn":[87.2,27.2,111.3,60.5,null,null,254.4],"4_pd_desert":[86.1,25.2,110.8,58.9,96.0,119.9,254.4],"4_pd_dragon":[86.6,23.2,111.3,58.9,89.4,114.1,254.9],"4_pd_glass":[84.3,26.7,109.5,62.2,null,null,254.4],"4_pd_highland":[85.1,23.2,114.4,58.4,89.4,113.6,254.9],"4_pd_ice":[84.6,22.7,111.3,58.9,94.0,112.6,254.4],"4_pd_island":[86.1,22.7,109.8,58.4,97.0,121.2,254.9],"4_pd_rose":[86.1,22.9,111.3,58.4,102.8,124.9,254.4],"4_pd_sea":[86.1,22.9,111.3,58.4,97.0,118.4,254.4],"4_pd_sunflower":[86.1,22.7,111.3,58.2,93.2,119.1,254.4],"4_pjs":[86.1,22.2,110.8,57.9,96.2,123.7,254.4],"4_princess":[86.6,26.7,110.3,59.5,null,null,254.4],"4_qipao":[82.1,22.2,112.3,58.9,89.7,108.8,254.4],"4_stripes":[86.1,22.7,111.3,58.4,95.5,121.7,254.9],"4_tangsuit":[86.1,22.2,110.8,58.4,90.9,113.6,254.4],"4_witch":[86.1,39.8,111.3,75.2,94.5,120.2,254.4],"5_bajukurung":[77.6,37.8,122.4,67.0,88.2,110.8,254.4],"5_barbie":[76.6,37.8,122.4,67.0,85.1,110.8,254.4],"5_batik":[80.1,33.3,121.9,67.5,84.1,111.3,254.4],"5_gown":[76.6,37.8,121.9,66.5,null,null,254.4],"5_hanbok":[77.6,38.3,120.9,67.0,87.4,110.3,254.4],"5_hanfu":[77.6,37.8,122.9,67.0,83.4,110.6,254.4],"5_hoodie":[78.1,37.8,122.4,66.5,83.6,110.6,254.4],"5_idol":[77.6,37.8,121.9,67.0,81.9,112.3,254.4],"5_kebaya":[77.1,38.3,121.9,67.5,87.2,108.6,254.9],"5_mermaid":[76.6,37.8,122.4,66.5,75.6,126.4,254.4],"5_pd_apple":[77.1,37.8,122.4,67.0,81.9,113.6,254.4],"5_pd_avalor":[77.1,39.8,121.9,68.0,null,null,254.4],"5_pd_bayou":[76.6,38.3,121.9,67.5,86.6,110.6,254.4],"5_pd_blossom":[77.6,37.8,122.9,66.5,82.1,111.6,254.4],"5_pd_dawn":[77.1,40.3,121.9,68.5,85.6,109.8,254.4],"5_pd_desert":[77.1,38.3,122.4,67.0,84.1,116.4,254.4],"5_pd_dragon":[81.1,37.8,123.4,67.0,81.4,115.6,254.4],"5_pd_glass":[77.1,40.3,121.9,69.0,87.2,109.8,254.9],"5_pd_highland":[80.1,38.3,122.4,67.0,82.4,112.6,254.4],"5_pd_ice":[76.6,37.8,122.4,67.0,81.9,111.8,254.4],"5_pd_island":[76.6,37.8,119.4,67.5,80.9,112.8,254.4],"5_pd_rose":[77.1,37.8,122.4,66.5,83.9,111.1,254.4],"5_pd_sea":[77.1,39.8,122.4,68.5,88.9,109.8,254.9],"5_pd_sunflower":[77.6,37.8,122.4,67.0,81.9,112.3,254.4],"5_pjs":[78.1,34.3,122.4,67.5,81.4,117.6,254.4],"5_princess":[81.6,34.8,122.4,68.0,null,null,254.4],"5_qipao":[79.1,38.3,121.9,67.0,83.9,111.8,254.4],"5_stripes":[77.1,37.8,122.9,67.0,84.4,110.6,254.4],"5_tangsuit":[78.6,38.3,122.9,67.0,84.4,113.9,254.4],"5_witch":[81.1,60.0,120.4,84.6,85.6,113.9,254.4]};
+const WEAR_RATIO = {"bow_dots":1.655,"bow_gold":1.463,"bow_pink":1.311,"bow_purple":1.101,"bow_rainbow":1.27,"bow_red":1.224,"hat_beanie":0.912,"hat_beret":2.0,"hat_cone":0.621,"hat_cowgirl":1.805,"hat_crown":1.875,"hat_flowers":4.615,"hat_party":0.738,"hat_sun":1.875,"shoe_ballet":0.812,"shoe_boot":0.808,"shoe_glass":1.004,"shoe_red":0.883,"shoe_sandal":0.821,"shoe_sneaker":1.004};   // width / height of each drawing
+const NO_SHOES = new Set(['mermaid']), OWN_HAT = new Set(['witch']);
+function wearLayers(c){
+  const a=GIRL_ANCHOR[c.girl+'_'+c.outfit]; if(!a) return '';
+  const fw=a[2]-a[0], fh=a[3]-a[1], cx=(a[0]+a[2])/2;
+  const img=(k,x,y,w,flip)=>{ const s=picSrc('a',k); if(!s) return ''; const h=w/(WEAR_RATIO[k]||1);
+    return `<image href="${s}" x="${(flip?-x-w:x).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"${flip?' transform="scale(-1 1)"':''}/>`; };
+  let s='';
+  if(c.shoes && !NO_SHOES.has(c.outfit)){
+    const feet = a[4]!=null ? [a[4],a[5]] : [cx-fw*.3, cx+fw*.3], w=fw*.52, h=w/(WEAR_RATIO[c.shoes]||1);
+    s+=img(c.shoes, feet[0]-w/2, a[6]-h*.95, w, true)+img(c.shoes, feet[1]-w/2, a[6]-h*.95, w);
+  }
+  if(c.hat && !OWN_HAT.has(c.outfit)){
+    const [k,low]=HAT_FIT[c.hat]||[1.6,.1], w=fw*k, h=w/(WEAR_RATIO[c.hat]||1);
+    s+=img(c.hat, cx-w/2, a[1]+fh*low-h, w);
+  }
+  if(c.bow){ const w=fw*.6, h=w/(WEAR_RATIO[c.bow]||1); s+=img(c.bow, a[2]-w*.35, a[1]-h*.75, w); }
+  return s;
+}
+
 /* ================= GIRL SVG ================= */
 function girlSVG(c){
   const pic = c.girl!=null && !c.lineart && picSrc('g', c.girl+'_'+c.outfit);
-  if(pic) return `<svg viewBox="0 0 200 262" xmlns="http://www.w3.org/2000/svg" class="${c.cls||''}"><image href="${pic}" width="200" height="262"/></svg>`;
+  if(pic) return `<svg viewBox="0 0 200 262" xmlns="http://www.w3.org/2000/svg" class="${c.cls||''}"><image href="${pic}" width="200" height="262"/>${wearLayers(c)}</svg>`;
   const hc=c.hairColor, sk=c.skin||'#ffe0cc', dc=c.dressColor||'#a855f7';
   const A=k=>(c.acc||[]).includes(k);
   const dark='#3a2b4f';
@@ -1328,7 +1395,7 @@ function girlSVG(c){
   // outfit head-pieces
   if(o==='witch') s+=`<path d="M100 8 L128 62 L72 62 Z" fill="${c.lineart?'#fff':'#312e81'}"/><path d="M60 60 L140 60 L146 70 L54 70 Z" fill="${c.lineart?'#fff':'#312e81'}"/><rect x="90" y="52" width="20" height="9" rx="2" fill="#fbbf24"/><path d="M100 8 Q108 30 100 44" stroke="rgba(255,255,255,.3)" stroke-width="2" fill="none"/>`;
   if(o==='princess' && !A('crown')) s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="#fbbf24"/><circle cx="100" cy="24" r="3.4" fill="#f472b6"/><circle cx="84" cy="26" r="2.4" fill="#38bdf8"/><circle cx="116" cy="26" r="2.4" fill="#38bdf8"/>`;
-  if(PD_MAP[o] && !A('crown')){ const pd=PD_MAP[o]; s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="${pd.tiara}"/><circle cx="100" cy="24" r="3.4" fill="${pd.trim}"/><circle cx="84" cy="26" r="2.4" fill="${pd.trim}"/><circle cx="116" cy="26" r="2.4" fill="${pd.trim}"/>`; }
+  if(PD_MAP[o] && !PD_MAP[o].noTiara && !A('crown')){ const pd=PD_MAP[o]; s+=`<path d="M76 40 L84 24 L92 36 L100 20 L108 36 L116 24 L124 40 Z" fill="${pd.tiara}"/><circle cx="100" cy="24" r="3.4" fill="${pd.trim}"/><circle cx="84" cy="26" r="2.4" fill="${pd.trim}"/><circle cx="116" cy="26" r="2.4" fill="${pd.trim}"/>`; }
   // ACCESSORIES
   if(A('halo')) s+=`<ellipse cx="100" cy="18" rx="26" ry="7" fill="none" stroke="#fde047" stroke-width="4"/>`;
   if(A('horns')) s+=`<path d="M74 38 Q66 14 82 20 Q78 30 82 40 Z" fill="#ef4444"/><path d="M126 38 Q134 14 118 20 Q122 30 118 40 Z" fill="#ef4444"/>`;
@@ -1416,8 +1483,8 @@ const NAME_STICKERS = {
   name_amelie:{svg:nameStickerSVG('Amelie','#0ea5e9','#fde047'), label:'Amelie'},
 };
 /* generated pictures (Codex) in pics/<kind>/<KEY>.webp; the hand-drawn SVGs stay as the fallback */
-const PICS_V='1';
-const PICS={w:new Set('AIR ANT APPLE ARM ASTRONAUT BACK BADGE BAG BAKE BALL BANG BARN BAT BATH BEAN BED BEE BEEP BEG BELL BIG BIKE BIN BIRD BLOW BLUE BOAT BOIL BONE BOOK BOOT BORN BOTTLE BOW BOWL BOX BOY BREAD BRIDGE BUG BUN BUNNY BURN BUS BUZZ CAB CAGE CAKE CAN CANDLE CANDY CAP CAPE CAR CARE CART CASH CAT CHAIR CHALK CHAT CHEER CHEW CHIN CHIP CHOP CITY CLAP CLAW CLAY CLIMB CLUE COAT COG COIN COMB CONE COOK COOL CORE CORN COT COW CRAB CRY CUB CUBE CUFF CUP CURE CURL CUT DAD DART DAY DEER DIG DISH DOE DOG DOLL DOLPHIN DONKEY DOT DOWN DRAW DREW DRUM DUCK EAR EGG ELEPHANT EVE FACE FAIR FAN FARM FAT FEATHER FEET FERN FEW FILL FIN FIR FISH FIVE FIZZ FLAG FLY FOG FOOD FOOT FORK FOX FRIES FROG FUDGE FUN FUR GAME GATE GEAR GEM GIFT GIRL GLUE GOAT GOLD GOLF GOOD GOWN GRAPH GREW GROW HAIR HAM HAND HANG HARE HAT HAWK HAY HEAD HEAR HEDGE HEN HER HERD HERE HIDE HIGH HILL HIP HOE HOG HOLE HOME HONEY HONK HOOK HOOP HOP HOPE HORN HOT HUG HUGE HURT HUT HUTCH ICE JAM JAR JAW JAZZ JEEP JELLY JET JOY JUG JUMP KEEP KEY KICK KING KISS KIT KITE KNEE KNIFE KNIT KNOCK KNOT LAKE LAMB LAMP LAP LAWN LEAF LEG LIGHT LIME LINE LIP LOAF LOCK LOG LONG LOOK LOUD LUCK LURE MAGPIE MAIL MAKE MAN MAP MASK MAT MATCH MATH MEAT MEN MESS MICE MILK MONKEY MOON MOP MOTH MUCH MUG MUM NAIL NAME NAP NECK NEED NEST NET NEW NIGHT NOON NOSE NOTE NUT OIL OUCH OUT OWL PACK PAGE PAIN PAIR PAN PARK PAT PATCH PATH PAW PAY PEA PEEL PEG PEN PENCIL PETE PHONE PIE PIG PIN PINE PINK PLAY PLUG POOL PORT POT PUFF PUP PUPPY PURE PURPLE QUACK QUEEN QUILT QUIZ RAG RAIN RAT RED RICE RICH RIDE RING ROAD ROCK ROD ROOF ROOM ROPE ROSE ROW RUG RULE RUN SACK SAIL SALT SAND SAT SAUCE SAUCER SAW SCARE SCREW SEA SEAL SEE SEED SHARE SHED SHIP SHOP SHORE SHRIMP SHUT SIGH SING SINK SIT SIX SKY SLED SLOW SNORE SNOW SOAP SOCK SOIL SONG SOON SORT SOUR SPHERE SPIN SPLASH SPRING SPY SQUID STAGE STAR STEER STEW STIR STORE STRAW STRING SUN SURF SWIM TAG TAIL TALL TANK TAP TAPE TEA TEAR TEDDY TEN TENT THESE THIN THREAD THREE THUMB TIE TIME TIN TOAD TOE TOOL TOP TOWN TOY TRAY TREE TRUE TUB TUNE TURKEY TURN TURTLE VAN VET WAIT WALK WALL WATCH WAVE WEB WEED WELL WET WHALE WHEEL WHIP WHISK WIG WIN WING WINK WISH WITCH WITH WOOD WOOL WORM WRAP WREN WRIST WRITE YARN YAWN YEAR ZIP ZOO'.split(' ')),f:new Set('avo corn cuke egg greens mush naruto nigiri onigiri prawn tamago tempura'.split(' ')),s:new Set('bag bfly boombox bowS bunnyS cassette catS crownS diamond dogS flower heart heel light lips micS note rainbow star uni'.split(' ')),o:new Set('cactus donut rock sushiO'.split(' ')),g:new Set('0_barbie 0_gown 0_hanbok 0_hoodie 0_idol 0_mermaid 0_pd_apple 0_pd_bayou 0_pd_dawn 0_pd_desert 0_pd_glass 0_pd_ice 0_pd_island 0_pd_rose 0_pd_sea 0_pd_sunflower 0_pjs 0_princess 0_stripes 0_witch 1_barbie 1_gown 1_hanbok 1_hoodie 1_idol 1_mermaid 1_pd_apple 1_pd_bayou 1_pd_dawn 1_pd_desert 1_pd_glass 1_pd_ice 1_pd_island 1_pd_rose 1_pd_sea 1_pd_sunflower 1_pjs 1_princess 1_stripes 1_witch 2_barbie 2_gown 2_hanbok 2_hoodie 2_idol 2_mermaid 2_pd_apple 2_pd_bayou 2_pd_dawn 2_pd_desert 2_pd_glass 2_pd_ice 2_pd_island 2_pd_rose 2_pd_sea 2_pd_sunflower 2_pjs 2_princess 2_stripes 2_witch 3_barbie 3_gown 3_hanbok 3_hoodie 3_idol 3_mermaid 3_pd_apple 3_pd_bayou 3_pd_dawn 3_pd_desert 3_pd_glass 3_pd_ice 3_pd_island 3_pd_rose 3_pd_sea 3_pd_sunflower 3_pjs 3_princess 3_stripes 3_witch 4_barbie 4_gown 4_hanbok 4_hoodie 4_idol 4_mermaid 4_pd_apple 4_pd_bayou 4_pd_dawn 4_pd_desert 4_pd_glass 4_pd_ice 4_pd_island 4_pd_rose 4_pd_sea 4_pd_sunflower 4_pjs 4_princess 4_stripes 4_witch 5_barbie 5_gown 5_hanbok 5_hoodie 5_idol 5_mermaid 5_pd_apple 5_pd_bayou 5_pd_dawn 5_pd_desert 5_pd_glass 5_pd_ice 5_pd_island 5_pd_rose 5_pd_sea 5_pd_sunflower 5_pjs 5_princess 5_stripes 5_witch'.split(' '))};
+const PICS_V='4';
+const PICS={w:new Set('AIR ANT APPLE ARM ASTRONAUT BACK BADGE BAG BAKE BALL BANG BARN BAT BATH BEAN BED BEE BEEP BEG BELL BIG BIKE BIN BIRD BLOW BLUE BOAT BOIL BONE BOOK BOOT BORN BOTTLE BOW BOWL BOX BOY BREAD BRIDGE BUG BUN BUNNY BURN BUS BUZZ CAB CAGE CAKE CAN CANDLE CANDY CAP CAPE CAR CARE CART CASH CAT CHAIR CHALK CHAT CHEER CHEW CHIN CHIP CHOP CITY CLAP CLAW CLAY CLIMB CLUE COAT COG COIN COMB CONE COOK COOL CORE CORN COT COW CRAB CRY CUB CUBE CUFF CUP CURE CURL CUT DAD DART DAY DEER DIG DISH DOE DOG DOLL DOLPHIN DONKEY DOT DOWN DRAW DREW DRUM DUCK EAR EGG ELEPHANT EVE FACE FAIR FAN FARM FAT FEATHER FEET FERN FEW FILL FIN FIR FISH FIVE FIZZ FLAG FLY FOG FOOD FOOT FORK FOX FRIES FROG FUDGE FUN FUR GAME GATE GEAR GEM GIFT GIRL GLUE GOAT GOLD GOLF GOOD GOWN GRAPH GREW GROW HAIR HAM HAND HANG HARE HAT HAWK HAY HEAD HEAR HEDGE HEN HER HERD HERE HIDE HIGH HILL HIP HOE HOG HOLE HOME HONEY HONK HOOK HOOP HOP HOPE HORN HOT HUG HUGE HURT HUT HUTCH ICE JAM JAR JAW JAZZ JEEP JELLY JET JOY JUG JUMP KEEP KEY KICK KING KISS KIT KITE KNEE KNIFE KNIT KNOCK KNOT LAKE LAMB LAMP LAP LAWN LEAF LEG LIGHT LIME LINE LIP LOAF LOCK LOG LONG LOOK LOUD LUCK LURE MAGPIE MAIL MAKE MAN MAP MASK MAT MATCH MATH MEAT MEN MESS MICE MILK MONKEY MOON MOP MOTH MUCH MUG MUM NAIL NAME NAP NECK NEED NEST NET NEW NIGHT NOON NOSE NOTE NUT OIL OUCH OUT OWL PACK PAGE PAIN PAIR PAN PARK PAT PATCH PATH PAW PAY PEA PEEL PEG PEN PENCIL PETE PHONE PIE PIG PIN PINE PINK PLAY PLUG POOL PORT POT PUFF PUP PUPPY PURE PURPLE QUACK QUEEN QUILT QUIZ RAG RAIN RAT RED RICE RICH RIDE RING ROAD ROCK ROD ROOF ROOM ROPE ROSE ROW RUG RULE RUN SACK SAIL SALT SAND SAT SAUCE SAUCER SAW SCARE SCREW SEA SEAL SEE SEED SHARE SHED SHIP SHOP SHORE SHRIMP SHUT SIGH SING SINK SIT SIX SKY SLED SLOW SNORE SNOW SOAP SOCK SOIL SONG SOON SORT SOUR SPHERE SPIN SPLASH SPRING SPY SQUID STAGE STAR STEER STEW STIR STORE STRAW STRING SUN SURF SWIM TAG TAIL TALL TANK TAP TAPE TEA TEAR TEDDY TEN TENT THESE THIN THREAD THREE THUMB TIE TIME TIN TOAD TOE TOOL TOP TOWN TOY TRAY TREE TRUE TUB TUNE TURKEY TURN TURTLE VAN VET WAIT WALK WALL WATCH WAVE WEB WEED WELL WET WHALE WHEEL WHIP WHISK WIG WIN WING WINK WISH WITCH WITH WOOD WOOL WORM WRAP WREN WRIST WRITE YARN YAWN YEAR ZIP ZOO'.split(' ')),f:new Set('avo corn cuke egg greens mush naruto nigiri onigiri prawn tamago tempura'.split(' ')),s:new Set('bag bfly boombox bowS bunnyS cassette catS crownS diamond dogS flower heart heel light lips micS note rainbow star uni'.split(' ')),o:new Set('cactus donut rock sushiO'.split(' ')),g:new Set('0_bajukurung 0_barbie 0_batik 0_gown 0_hanbok 0_hanfu 0_hoodie 0_idol 0_kebaya 0_mermaid 0_pd_apple 0_pd_avalor 0_pd_bayou 0_pd_blossom 0_pd_dawn 0_pd_desert 0_pd_dragon 0_pd_glass 0_pd_highland 0_pd_ice 0_pd_island 0_pd_rose 0_pd_sea 0_pd_sunflower 0_pjs 0_princess 0_qipao 0_stripes 0_tangsuit 0_witch 1_bajukurung 1_barbie 1_batik 1_gown 1_hanbok 1_hanfu 1_hoodie 1_idol 1_kebaya 1_mermaid 1_pd_apple 1_pd_avalor 1_pd_bayou 1_pd_blossom 1_pd_dawn 1_pd_desert 1_pd_dragon 1_pd_glass 1_pd_highland 1_pd_ice 1_pd_island 1_pd_rose 1_pd_sea 1_pd_sunflower 1_pjs 1_princess 1_qipao 1_stripes 1_tangsuit 1_witch 2_bajukurung 2_barbie 2_batik 2_gown 2_hanbok 2_hanfu 2_hoodie 2_idol 2_kebaya 2_mermaid 2_pd_apple 2_pd_avalor 2_pd_bayou 2_pd_blossom 2_pd_dawn 2_pd_desert 2_pd_dragon 2_pd_glass 2_pd_highland 2_pd_ice 2_pd_island 2_pd_rose 2_pd_sea 2_pd_sunflower 2_pjs 2_princess 2_qipao 2_stripes 2_tangsuit 2_witch 3_bajukurung 3_barbie 3_batik 3_gown 3_hanbok 3_hanfu 3_hoodie 3_idol 3_kebaya 3_mermaid 3_pd_apple 3_pd_avalor 3_pd_bayou 3_pd_blossom 3_pd_dawn 3_pd_desert 3_pd_dragon 3_pd_glass 3_pd_highland 3_pd_ice 3_pd_island 3_pd_rose 3_pd_sea 3_pd_sunflower 3_pjs 3_princess 3_qipao 3_stripes 3_tangsuit 3_witch 4_bajukurung 4_barbie 4_batik 4_gown 4_hanbok 4_hanfu 4_hoodie 4_idol 4_kebaya 4_mermaid 4_pd_apple 4_pd_avalor 4_pd_bayou 4_pd_blossom 4_pd_dawn 4_pd_desert 4_pd_dragon 4_pd_glass 4_pd_highland 4_pd_ice 4_pd_island 4_pd_rose 4_pd_sea 4_pd_sunflower 4_pjs 4_princess 4_qipao 4_stripes 4_tangsuit 4_witch 5_bajukurung 5_barbie 5_batik 5_gown 5_hanbok 5_hanfu 5_hoodie 5_idol 5_kebaya 5_mermaid 5_pd_apple 5_pd_avalor 5_pd_bayou 5_pd_blossom 5_pd_dawn 5_pd_desert 5_pd_dragon 5_pd_glass 5_pd_highland 5_pd_ice 5_pd_island 5_pd_rose 5_pd_sea 5_pd_sunflower 5_pjs 5_princess 5_qipao 5_stripes 5_tangsuit 5_witch'.split(' ')),a:new Set('bow_dots bow_gold bow_pink bow_purple bow_rainbow bow_red hat_beanie hat_beret hat_cone hat_cowgirl hat_crown hat_flowers hat_party hat_sun shoe_ballet shoe_boot shoe_glass shoe_red shoe_sandal shoe_sneaker'.split(' '))};
 function picSrc(kind,key){ return PICS[kind].has(key) ? 'pics/'+kind+'/'+key+'.webp?v='+PICS_V : null; }
 function picSVG(kind,key,vb){ const s=picSrc(kind,key); return s && `<svg viewBox="0 0 ${vb||'60 60'}" xmlns="http://www.w3.org/2000/svg"><image href="${s}" width="100%" height="100%"/></svg>`; }
 function picImg(kind,key){ const s=picSrc(kind,key); if(!s) return null; const i=new Image(); i.src=s; return i; }
@@ -1432,6 +1499,8 @@ const SHOP = [
   {cat:'outfits', id:'mermaid', name:'Mermaid Tail', cost:14, ico:'🧜‍♀️'},
   {cat:'outfits', id:'barbie', name:'Barbie Glam Dress', cost:14, ico:'💖'},
   ...PRINCESS_DRESSES.map(pd=>({cat:'outfits', id:pd.id, name:pd.name, cost:pd.cost, ico:pd.ico})),
+  ...Object.values(WEAR).flat().filter(([k])=>!WEAR_FREE.includes(k)).map(([k,l])=>({cat:'acc', id:k, cost:k.startsWith('hat')?8:6, ico:'🎀',
+    name: k.startsWith('bow') ? l+' Bow' : k.startsWith('shoe') ? (l==='Glass'?'Glass Slippers':l==='Red'?'Red Shoes':l) : (l==='Princess'?'Princess Hat':l==='Party'?'Party Hat':l==='Cowgirl'?'Cowgirl Hat':l)})),
   {cat:'acc', id:'wand', name:'Star Wand', cost:8, ico:'🪄'},
   {cat:'acc', id:'magicwand', name:'Heart Wand', cost:8, ico:'💗'},
   {cat:'acc', id:'halo', name:'Angel Halo', cost:6, ico:'😇'},
@@ -2068,13 +2137,20 @@ function startDressup(){ duGirl=S.char; duTab='outfit'; go('dressup'); renderDU(
 function renderDU(pop){
   $('duSwitch').innerHTML = GIRLS.map((g,i)=>`<button class="${i===duGirl?'sel':''}" onclick="duPick(${i})">${g.nm}</button>`).join('');
   $('duStage').innerHTML = girlSVG(girlCfg(duGirl,{cls:pop?'pop':''}));
-  duTab='outfit';   // the girls are drawn pictures now, one per outfit, so colours/hair/eyes/accessories can't change
-  $('duTabs').style.display='none';
+  // the girls are pictures, one per outfit, so colours/hair/eyes can't change; bows, shoes and hats go on top
+  if(!['outfit','bow','shoes','hat'].includes(duTab)) duTab='outfit';
+  const tabPic={outfit:picSrc('g',duGirl+'_'+S.outfits[duGirl].outfit), bow:picSrc('a','bow_pink'), shoes:picSrc('a','shoe_ballet'), hat:picSrc('a','hat_sun')};
+  $('duTabs').style.display='';
+  $('duTabs').innerHTML = [['outfit','Clothes'],['bow','Bows'],['shoes','Shoes'],['hat','Hats']].map(([t,l])=>
+    `<button class="${duTab===t?'sel':''}" onclick="duTabGo('${t}')">${tabPic[t]?`<img src="${tabPic[t]}" alt="">`:''}${l}</button>`).join('');
   const o=S.outfits[duGirl];
   const curHair=o.hairStyle||GIRLS[duGirl].hair, curEye=o.eyeStyle||'default', curSkin=o.skin||GIRLS[duGirl].skin;
   let items='';
-  if(duTab==='outfit') items = OUTFITS.map(x=>{ const lock=!owns('outfits',x[0]);
-      return `<button class="duItem ${o.outfit===x[0]?'sel':''}" onclick="duSet('outfit','${x[0]}')"><span>${lock?'🔒':x[1]}<div class="lab">${x[2]}</div></span></button>`; }).join('');
+  if(duTab==='outfit') items = OUTFITS.map(x=>{ const lock=!owns('outfits',x[0]), p=picSrc('g',duGirl+'_'+x[0]);
+      return `<button class="duItem ${p?'pic':''} ${o.outfit===x[0]?'sel':''}" onclick="duSet('outfit','${x[0]}')">${p?`<img src="${p}" loading="lazy" alt="">`:''}<span>${lock?'🔒':p?'':x[1]}<div class="lab">${x[2]}</div></span></button>`; }).join('');
+  else if(WEAR[duTab]) items = `<button class="duItem ${!o[duTab]?'sel':''}" onclick="duWear('${duTab}','')"><span>✖<div class="lab">None</div></span></button>`+
+    WEAR[duTab].map(([k,l])=>{ const lock=!owns('acc',k), p=picSrc('a',k);
+      return `<button class="duItem pic wear ${o[duTab]===k?'sel':''}" onclick="duWear('${duTab}','${k}')">${p?`<img src="${p}" alt="">`:''}<span>${lock?'🔒':''}<div class="lab">${l}</div></span></button>`; }).join('');
   else if(duTab==='dcolor') items = DRESS_COLORS.map(c=>`<button class="duItem sw ${o.dressColor===c?'sel':''}" style="background:${c}" onclick="duSet('dressColor','${c}')"></button>`).join('');
   else if(duTab==='hstyle') items = HAIR_STYLES.map(h=>`<button class="duItem prev ${curHair===h?'sel':''}" onclick="duSet('hairStyle','${h}')">${headPreview({hair:h})}</button>`).join('');
   else if(duTab==='hcolor') items = HAIR_COLORS.map(c=>`<button class="duItem sw ${o.hairColor===c?'sel':''}" style="background:${c}" onclick="duSet('hairColor','${c}')"></button>`).join('');
@@ -2089,6 +2165,13 @@ function duTabGo(t){ duTab=t; sPop(); renderDU(); }
 function duSet(k,v){
   if(k==='outfit' && !owns('outfits',v)){ sNo(); say('You need to buy the '+v+' outfit in the shop! Tap the gift box.'); return; }
   S.outfits[duGirl][k]=v; save(); sPop(); renderDU(true);
+}
+function duWear(slot, k){
+  if(k && !owns('acc',k)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
+  const o=S.outfits[duGirl]; o[slot] = o[slot]===k ? '' : k;
+  if(o[slot] && slot==='shoes' && NO_SHOES.has(o.outfit)) say('Mermaids have no feet! Try another outfit.');
+  if(o[slot] && slot==='hat' && OWN_HAT.has(o.outfit)) say('She already has a hat on! Try another outfit.');
+  save(); sPop(); renderDU(true);
 }
 function duAcc(a){
   if(!owns('acc',a)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
@@ -3067,16 +3150,22 @@ const explainKey=u=>u.t.toLowerCase()+'|'+u.s+'|'+(u.split?'split':u.quiet?'quie
 // [{u, letters, text}] for the word's tricky bits, in reading order
 function wordExplain(w, units){
   units=units||wordUnits(w);
-  const out=TRICKY.has(w)?[{u:null, letters:w.toLowerCase(), text:TRICKY_LINE}]:[];
+  const out=[];
   units.forEach(u=>{
     if(u.split && u.s==='') return;            // the quiet e of a_e is told with its vowel
     const text=EXPLAIN[explainKey(u)]; if(!text) return;
     const letters=(u.split ? u.t+'_e' : u.quiet ? 'e' : u.t).toLowerCase();
     if(!out.some(o=>o.text===text)) out.push({u, letters:letters.length===1?letters.toUpperCase():letters, text});
   });
+  // the odd sounds first (they're what the child needs), then "learn it by heart"
+  if(TRICKY.has(w)) out.push({u:null, letters:'♥', text:TRICKY_LINE});
   return out;
 }
 const explainText=ex=>ex.map(o=>o.text).join(' ');
+// the explanation for one sound of a word, if that sound isn't the letter's usual one
+function unitExplain(w, units, k){ const u=units[k]; return u ? wordExplain(w, units).find(o=>o.u===u) : null; }
+// heart words: a little heart over the part you learn by heart (the a of was), as phonics books do
+const isHeartPart=(w,u)=>TRICKY.has(w) && u.odd && u.s!=='' && !(u.t==='s' && u.s==='z');
 // *sh* -> the sound in italics and colour (the text is the game's own, never typed in)
 const soundsHTML=t=>String(t).replace(/\*([^*]+)\*/g,'<i class="sd">$1</i>');
 function explainHTML(ex){
@@ -3230,7 +3319,9 @@ function teachPattern(){
   if(!wordCur || !wordPool().some(x=>x.w===wordCur.w)) nextWord(true);
 }
 const HEART_SVG='<svg viewBox="0 0 60 60"><path d="M30 52 C8 38 4 26 8 17 C12 8 25 7 30 18 C35 7 48 8 52 17 C56 26 52 38 30 52 Z" fill="#f472b6" stroke="#fbcfe8" stroke-width="2"/><path d="M17 20 Q19 15 24 15" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/><circle cx="23" cy="29" r="2.4" fill="#831843"/><circle cx="37" cy="29" r="2.4" fill="#831843"/><path d="M25 35 Q30 40 35 35" stroke="#831843" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
-function wordPicHTML(w){ return picSVG('w',w) || WORD_ART[w] || (TRICKY.has(w) && HEART_SVG) || '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="#fde047"/></svg>'; }
+// a heart word has no picture: the heart (same as over its tricky letters) says "learn me by heart"
+const HEART_WORD_SVG=HEART_SVG.replace('<svg viewBox="0 0 60 60">','<svg viewBox="0 0 60 60"><g transform="translate(9 0) scale(.7)">').replace('</svg>','</g><text x="30" y="56" text-anchor="middle" font-size="10.5" font-weight="900" fill="#fbcfe8" font-family="Arial">heart word</text></svg>');
+function wordPicHTML(w){ return picSVG('w',w) || WORD_ART[w] || (TRICKY.has(w) && HEART_WORD_SVG) ||'<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="#fde047"/></svg>'; }
 function clearWordDemo(){ wordDemoT.forEach(clearTimeout); wordDemoT=[]; stopPhon(); }
 function nextWord(quiet){
   clearWordDemo();
@@ -3262,6 +3353,14 @@ function showExplain(box, w, units){
   return ex;
 }
 function sayExplain(id){ const t=$(id).dataset.say; if(t){ stopPhon(); say(t); } }
+// show (and, when asked, say once the sound has played) why sound k of the word sounds the way it does
+function explainUnitNow(el, w, units, k, speak, timers){
+  const ex=unitExplain(w, units, k); if(!ex) return false;
+  el.innerHTML='💡 <b class="exL">'+ex.letters+'</b> '+soundsHTML(ex.text);
+  if(speak){ const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+250;
+    (timers||phonT).push(setTimeout(()=>say(ex.text), wait)); }
+  return true;
+}
 function sayWordAgain(){
   if(wordDone) return demoSoundOut();
   if(hasRecordedWord(wordCur.w)) return sayWord(wordCur.w);
@@ -3291,7 +3390,7 @@ function unitsHTML(w, units, filled){
     const slots=w.substr(u.i0,u.n).split('').map((l,j)=>{ const i=u.i0+j;
       return `<div class="slot ${i<filled?'filled':''} ${u.split?'split':''}">${i<filled?l:''}</div>`; }).join('');
     const mark = u.split||u.quiet ? '<i class="snd silent"></i>' : u.n>1 ? '<i class="snd line"></i>' : '<i class="snd"></i>';
-    return `<div class="unit" data-u="${k}"><div class="uSlots">${slots}</div>${mark}</div>`;
+    return `<div class="unit${isHeartPart(w,u)?' hw':''}" data-u="${k}"><div class="uSlots">${slots}</div>${mark}</div>`;
   }).join('');
 }
 function drawSplitArc(box, units){
@@ -3320,7 +3419,11 @@ function pickWordLetter(btn,l){
     // the letter's sound, not its name; the last letter of a team (s-h, e-e) plays the team's sound
     const k=wordUnitsCur.findIndex(u=>wordIdx-1>=u.i0 && wordIdx-1<u.i0+u.n), u=wordUnitsCur[k];
     stopPhon();
-    if(u && wordIdx===u.i0+u.n) soundUnit($('wordSlots'), wordUnitsCur, k, 0);
+    if(u && wordIdx===u.i0+u.n){
+      soundUnit($('wordSlots'), wordUnitsCur, k, 0);
+      // a letter that doesn't say its usual sound (the a in was says o): say why, right then
+      if(wordIdx<wordCur.w.length) explainUnitNow($('wordHint'), wordCur.w, wordUnitsCur, k, true, wordDemoT);
+    }
     else playPhon(PHON[l.toLowerCase()]||l.toLowerCase(), 0);
     btn.disabled=true; btn.style.opacity=.25;
     if(wordIdx===wordCur.w.length){
@@ -3371,6 +3474,9 @@ function attachSwipe(box, get){
     const st=get(), n=st.units.length;
     // swiped every sound, left to right → light the word up, once the sounds have finished.
     // The child says the blended word themselves, so it isn't read out for them.
+    // one sound tapped on its own: if it's an odd one, say why; a swipe only shows it
+    const odd=seen.find(k=>unitExplain(st.word, st.units, k));
+    if(odd!==undefined && st.explainEl) explainUnitNow(st.explainEl(), st.word, st.units, odd, seen.length===1);
     const inOrder = n>1 && st.units.every((_,k)=>seen.includes(k)) && seen.indexOf(0)<seen.lastIndexOf(n-1);
     if(inOrder && st.complete){
       const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+350;
@@ -3384,7 +3490,7 @@ function attachSwipe(box, get){
   };
   addEventListener('pointerup',up); addEventListener('pointercancel',up);
 }
-attachSwipe($('wordSlots'), ()=>({units:wordUnitsCur, word:wordCur.w, ready:unitReady, complete:wordIdx===wordCur.w.length,
+attachSwipe($('wordSlots'), ()=>({units:wordUnitsCur, word:wordCur.w, ready:unitReady, complete:wordIdx===wordCur.w.length, explainEl:()=>$('wordHint'),
   stop:()=>{ wordDemoT.forEach(clearTimeout); wordDemoT=[]; },
   onBlend:()=>{ if(!wordSwiped){ wordSwiped=true; addStars(1); $('feedback5').textContent='⭐ You read '+wordCur.w+'!'; } }}));
 
@@ -3433,7 +3539,7 @@ function startRead(){
   const pool=shuffle(wordPool().slice());
   rd.pool=pool.map(x=>x.w); rd.list=[]; fitReadList();
   go('read'); renderWordRule(); showReadWord();
-  say("Read each word out loud! Tap the microphone, read the word, then tap it again.");
+  say(S.readMic===false ? "Read each word out loud!" : "Read each word out loud! Tap the microphone, read the word, then tap it again.");
 }
 async function startPractice(){
   const again=(await recAll()).filter(r=>r.status==='again');
@@ -3453,8 +3559,8 @@ function showReadWord(){
   $('readPic').innerHTML = rd.mode==='practice' ? wordPicHTML(w) : '<div class="picHidden">?</div>'; repoBuf('w', w);
   const box=$('readWord'); box.innerHTML=unitsHTML(w, rd.units, w.length); drawSplitArc(box, rd.units);
   box.classList.toggle('quiet', !rd.sounds);
-  $('readStatus').textContent = rd.mode==='practice' ? 'Slide your finger under the word to sound it out.' : 'Slide your finger under the word to hear its sounds, then tap 🎤 and read it.';
-  $('readSetBtn').style.display = rd.mode==='practice' ? 'none' : '';
+  showReadStatus();
+  $('readSetBtn').style.display = $('readMicBtn').style.display = rd.mode==='practice' ? 'none' : '';
   $('readHintBtn').style.display = rd.mode==='practice' ? 'none' : '';
   $('readHearBtn').style.display = rd.mode==='practice' ? '' : 'none';
   $('readNextBtn').style.display = rd.mode==='practice' ? 'none' : '';
@@ -3464,7 +3570,11 @@ function showReadWord(){
 function renderReadBtns(){
   const r=$('readRecBtn'); r.classList.toggle('on', rd.recording); r.textContent = rd.recording ? '⏹' : '🎤';
   $('readPlayBtn').disabled = !rd.last || rd.recording;
-  $('readNextBtn').disabled = rd.recording || (!rd.last && rd.mode==='read');
+  $('readNextBtn').disabled = rd.recording;   // recording is optional
+  const mic = S.readMic!==false;
+  r.style.display = $('readPlayBtn').style.display = mic ? '' : 'none';
+  $('readMicBtn').textContent = mic ? '🎤 Record: on' : '🎤 Record: off';
+  $('readMicBtn').classList.toggle('off', !mic);
 }
 // hint 1: show the sound buttons and play the sounds; hint 2: say the word
 function readHint(){
@@ -3482,7 +3592,7 @@ function readHint(){
   else { sayWord(w, '.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
 }
 function readHear(){ const w=rd.list[rd.i]; if(!w) return; stopPhon(); playUnitsThenWord($('readWord'), rd.units, w); }
-attachSwipe($('readWord'), ()=>({units:rd.units, word:rd.list[rd.i]||'', ready:()=>rd.sounds, complete:rd.sounds}));
+attachSwipe($('readWord'), ()=>({units:rd.units, word:rd.list[rd.i]||'', ready:()=>rd.sounds, complete:rd.sounds, explainEl:()=>$('readStatus')}));
 
 let recWasMusic=false;
 /* ---- games unlock with reading: every S.gate.per words read earns one go at a fun game ---- */
@@ -3617,7 +3727,17 @@ function showReadProg(){
   $('readProg').textContent = rd.mode==='practice' ? 'Practice '+(rd.i+1)+' of '+rd.list.length
     : S.wordGoal ? 'Word '+(rd.i+1)+' of '+rd.list.length : 'Word '+(rd.i+1);
 }
-function readNext(){ if(rd.recording) return; rd.i++; if(rd.mode==='read' && !S.wordGoal) fitReadList(); sPop(); showReadWord(); }
+function readToggleMic(){ S.readMic = S.readMic===false; save(); sPop(); renderReadBtns(); showReadStatus(); }
+function showReadStatus(){
+  $('readStatus').textContent = rd.mode==='practice' ? 'Slide your finger under the word to sound it out.'
+    : S.readMic===false ? 'Slide your finger under the word to hear its sounds, read it out loud, then tap Next.'
+    : 'Slide your finger under the word to hear its sounds, then read it out loud. Tap 🎤 to record it if you like.';
+}
+function readNext(){
+  if(rd.recording) return;
+  // read out loud without recording: it still counts towards game time
+  if(rd.mode==='read' && !rd.last && rd.list[rd.i]) addReadCredit();
+  rd.i++; if(rd.mode==='read' && !S.wordGoal) fitReadList(); sPop(); showReadWord(); }
 async function readPracticeMark(ok){
   const w=rd.list[rd.i];
   if(ok){
@@ -3828,7 +3948,8 @@ function renderShop(){
       contentIco = `<div class="sPack">${it.stickers.map(s=>stickerSVG(s)).join('')}</div>`;
     } else {
       owned = owns(it.cat, it.id);
-      contentIco = `<span class="sIco">${it.ico}</span>`;
+      const p = it.cat==='outfits' ? picSrc('g', S.char+'_'+it.id) : picSrc('a', it.id);
+      contentIco = p ? `<img class="sPic${it.cat==='outfits'?' girl':''}" src="${p}" loading="lazy" alt="">` : `<span class="sIco">${it.ico}</span>`;
     }
     return `<div class="shopCard ${owned?'owned':''}">${contentIco}<div class="sName">${it.name}</div>${
       owned ? `<div class="ownedTag">✓ Yours!</div>` : `<button class="sBuy" onclick="shopBuy(${i})">⭐ ${it.cost}</button>`}</div>`;
