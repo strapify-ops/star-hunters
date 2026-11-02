@@ -728,7 +728,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.42', APP_DATE='3 Nov 2026';
+const APP_VERSION='2.43', APP_DATE='3 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -812,7 +812,23 @@ function girlCfg(i, extra){
 
 /* ================= AUDIO ================= */
 let AC=null;
-function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state!=='running') AC.resume().catch(()=>{}); return AC; }
+/* iPhone: game sound counts as "ambient" and the ring/silent switch mutes it, until the mic is used
+   (then it plays loud). Tell Safari this is media playback so it always plays, like a video does:
+   iOS 17+ has audioSession; older ones need a silent <audio> element playing alongside. */
+try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+let keepAlive=null;
+function silentWav(){
+  const n=8000, b=new ArrayBuffer(44+n*2), v=new DataView(b), w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
+}
+function soundOn(){
+  if(navigator.audioSession) return;
+  if(!keepAlive){ keepAlive=new Audio(silentWav()); keepAlive.loop=true; keepAlive.setAttribute('playsinline',''); keepAlive.setAttribute('x-webkit-airplay','deny'); }
+  if(keepAlive.paused) keepAlive.play().catch(()=>{});
+}
 function tone(f, t, dur, type, vol){
   const a=ac(); if(!a) return;
   const o=a.createOscillator(), g=a.createGain();
@@ -1075,7 +1091,10 @@ function duckMusic(on, deep){
   MX.bus.gain.cancelScheduledValues(AC.currentTime);
   MX.bus.gain.setTargetAtTime(on?(deep?.025:MUSIC_DUCK):MUSIC_VOL, AC.currentTime, on?.06:.5);
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopMusic(); else if(musicUnlocked) startMusic(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ stopMusic(); if(keepAlive) keepAlive.pause(); }
+  else { ac(); if(musicUnlocked){ soundOn(); startMusic(); } }
+});
 function toggleMusic(){
   S.music=!S.music; save();
   if(S.music) startMusic(); else stopMusic();
@@ -1085,7 +1104,7 @@ function renderMusicBtns(){
   $('musicBtn').textContent = S.music?'🎵':'🔇';
   $('musicBtn2').textContent = S.music?'🎵 Music is ON — tap to turn off':'🔇 Music is OFF — tap to turn on';
 }
-document.addEventListener('pointerdown', ()=>{ ac(); loadPhon(); if(!musicUnlocked){ musicUnlocked=true; startMusic(); } });
+document.addEventListener('pointerdown', ()=>{ soundOn(); ac(); loadPhon(); if(!musicUnlocked){ musicUnlocked=true; startMusic(); } });
 
 /* ================= VOICE =================
    The browser's own voices. What makes them sound robotic is mostly the voice
