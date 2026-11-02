@@ -115,6 +115,15 @@ svg.happyjump { animation:hjump .5s ease-in-out 2; }
 .duItem.pic span { position:relative; width:100%; font-size:22px; line-height:1; text-align:center; }
 .duItem.pic .lab { background:rgba(26,11,61,.75); border-radius:0 0 12px 12px; padding:1px 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #duTabs button img { display:block; height:24px; width:24px; object-fit:contain; margin:0 auto 2px; }
+#buyAsk { position:fixed; inset:0; z-index:60; background:rgba(10,4,30,.6); display:flex; align-items:center; justify-content:center; padding:16px; animation:screenIn .25s ease-out; }
+.buyCard { background:linear-gradient(160deg,#4c1d95,#1e1b4b); border:3px solid #fde047; border-radius:24px; padding:16px; width:min(320px,100%); text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+.buyCard img { width:110px; height:110px; object-fit:contain; display:block; margin:0 auto; }
+.buyCard img.girl { height:180px; width:140px; }
+.buyIco { font-size:60px; }
+.buyName { font-size:20px; font-weight:900; margin:6px 0 2px; }
+.buyQ { font-size:18px; font-weight:800; margin:4px 0 12px; }
+.buyBtns { display:flex; gap:10px; justify-content:center; }
+.buyBtns .bigbtn { margin:0; flex:1; }
 .sPic { width:64px; height:64px; object-fit:contain; display:block; margin:0 auto; }
 .sPic.girl { height:84px; object-fit:cover; object-position:50% 8%; border-radius:12px; }
 .duItem.prev { padding:0; overflow:hidden; background:rgba(255,255,255,.9); }
@@ -719,7 +728,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.39', APP_DATE='3 Nov 2026';
+const APP_VERSION='2.40', APP_DATE='3 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -2167,18 +2176,18 @@ function renderDU(pop){
 function duPick(i){ duGirl=i; sPop(); renderDU(true); say(GIRLS[i].greet); }
 function duTabGo(t){ duTab=t; sPop(); renderDU(); }
 function duSet(k,v){
-  if(k==='outfit' && !owns('outfits',v)){ sNo(); say('You need to buy the '+v+' outfit in the shop! Tap the gift box.'); return; }
+  if(k==='outfit' && !owns('outfits',v)) return askBuy('outfits', v, ()=>duSet(k,v));
   S.outfits[duGirl][k]=v; save(); sPop(); renderDU(true);
 }
 function duWear(slot, k){
-  if(k && !owns('acc',k)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
+  if(k && !owns('acc',k)) return askBuy('acc', k, ()=>duWear(slot,k));
   const o=S.outfits[duGirl]; o[slot] = o[slot]===k ? '' : k;
   if(o[slot] && slot==='shoes' && NO_SHOES.has(o.outfit)) say('Mermaids have no feet! Try another outfit.');
   if(o[slot] && slot==='hat' && OWN_HAT.has(o.outfit)) say('She already has a hat on! Try another outfit.');
   save(); sPop(); renderDU(true);
 }
 function duAcc(a){
-  if(!owns('acc',a)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
+  if(!owns('acc',a)) return askBuy('acc', a, ()=>duAcc(a));
   const arr=S.outfits[duGirl].acc; const ix=arr.indexOf(a);
   if(ix>=0) arr.splice(ix,1); else arr.push(a);
   save(); sPop(); renderDU(true);
@@ -2233,11 +2242,11 @@ function renderMixer(pop){
 }
 function mxTabGo(t){ mxTab=t; sPop(); renderMixer(); }
 function mxSet(k,v){
-  if(k==='outfit' && !owns('outfits',v)){ sNo(); say('You need to buy this outfit in the shop! Tap the gift box.'); return; }
+  if(k==='outfit' && !owns('outfits',v)) return askBuy('outfits', v, ()=>mxSet(k,v));
   S.mix[k]=v; save(); sPop(); renderMixer(true);
 }
 function mxAcc(a){
-  if(!owns('acc',a)){ sNo(); say('Buy this in the shop first! Tap the gift box on the home screen.'); return; }
+  if(!owns('acc',a)) return askBuy('acc', a, ()=>mxAcc(a));
   const arr=S.mix.acc; const ix=arr.indexOf(a);
   if(ix>=0) arr.splice(ix,1); else arr.push(a);
   save(); sPop(); renderMixer(true);
@@ -3959,6 +3968,27 @@ function renderShop(){
       owned ? `<div class="ownedTag">✓ Yours!</div>` : `<button class="sBuy" onclick="shopBuy(${i})">⭐ ${it.cost}</button>`}</div>`;
   }).join('');
 }
+/* tapping something not bought yet: "Buy this for ⭐12?" right there, Yes puts it on */
+function askBuy(cat, id, then){
+  const it=SHOP.find(x=>x.cat===cat && x.id===id); if(!it) return;
+  closeBuy();
+  const p = cat==='outfits' ? picSrc('g', (typeof duGirl==='number'?duGirl:S.char)+'_'+id) : picSrc('a', id);
+  const enough = S.stars>=it.cost;
+  const box=document.createElement('div'); box.id='buyAsk';
+  box.innerHTML=`<div class="buyCard">${p?`<img src="${p}" class="${cat==='outfits'?'girl':''}" alt="">`:`<div class="buyIco">${it.ico}</div>`}
+    <div class="buyName">${it.name}</div>
+    ${enough ? `<div class="buyQ">Buy it for ⭐ ${it.cost}?</div>
+      <div class="buyBtns"><button class="bigbtn green" id="buyYes">✔ Yes!</button><button class="bigbtn" onclick="closeBuy()">✖ No</button></div>`
+    : `<div class="buyQ">It costs ⭐ ${it.cost}. You have ⭐ ${S.stars}.</div>
+      <div class="buyBtns"><button class="bigbtn" onclick="closeBuy()">OK</button></div>`}</div>`;
+  box.addEventListener('click', e=>{ if(e.target===box) closeBuy(); });
+  document.body.appendChild(box); sPop();
+  if(enough){
+    $('buyYes').onclick=()=>{ closeBuy(); if(buy(cat, id, it.cost)){ say('Yay! You got it!'); then&&then(); } };
+    say(`Do you want to buy this for ${it.cost} stars?`);
+  } else say('You need more stars! Play games to earn them!');
+}
+function closeBuy(){ const b=$('buyAsk'); if(b) b.remove(); }
 function shopBuy(i){
   const it=SHOP[i];
   if(it.pack){
