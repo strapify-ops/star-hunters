@@ -499,7 +499,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
       <button class="mcard c2" data-fun onclick="gateGame(()=>startJump())"><span class="mi">🦘</span>Jump &amp; Run</button>
       <button class="mcard c8" data-learn onclick="startRead()"><span class="mi">🎤</span>Read to Me</button>
       <button class="mcard c3" data-learn onclick="startPhone()"><span class="mi">📱</span>Phone Call</button>
-      <button class="mcard c9" data-fun onclick="gateGame(()=>startShop())"><span class="mi">🎁</span>Sticker Shop</button>
+      <button class="mcard c9" onclick="startShop()"><span class="mi">🎁</span>Sticker Shop</button>
       <button class="mcard c7" data-fun onclick="gateGame(()=>go('pet'))"><span class="mi" id="miPet"></span>Boba Buddy</button>
     </div>
     <div class="appVer" data-ver></div>
@@ -728,7 +728,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.43', APP_DATE='3 Nov 2026';
+const APP_VERSION='2.44', APP_DATE='4 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
