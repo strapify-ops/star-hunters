@@ -285,6 +285,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; letter-spacing:.5px; background:rgba(134,239,172,.16); border-radius:6px; padding:0 4px; }
 #wordExplain, #readExplain { display:none; width:100%; background:rgba(56,189,248,.16); border:2px solid rgba(56,189,248,.55); border-radius:16px; padding:8px 12px; margin:4px 0 6px; font-size:14px; font-weight:700; line-height:1.35; }
 .exHead { display:flex; justify-content:space-between; align-items:center; font-weight:900; color:#7dd3fc; margin-bottom:4px; }
+.exSay { border:none; background:rgba(255,255,255,.22); color:#fff; border-radius:999px; padding:2px 10px; margin-left:6px; font-size:14px; font-weight:900; vertical-align:middle; }
 .exHead button { border:none; background:rgba(255,255,255,.18); color:#fff; border-radius:10px; padding:3px 9px; font-size:15px; }
 .unit.hw { position:relative; }
 .unit.hw::before { content:'♥'; position:absolute; left:50%; top:-14px; transform:translateX(-50%); color:#f472b6; font-size:20px; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.4); }
@@ -777,7 +778,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.47', APP_DATE='5 Nov 2026';
+const APP_VERSION='2.48', APP_DATE='6 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -1140,9 +1141,14 @@ function duckMusic(on, deep){
   MX.bus.gain.cancelScheduledValues(AC.currentTime);
   MX.bus.gain.setTargetAtTime(on?(deep?.025:MUSIC_DUCK):MUSIC_VOL, AC.currentTime, on?.06:.5);
 }
+addEventListener('pageshow', e=>{ if(e.persisted && AC && AC.state!=='running') AC.resume().catch(()=>{}); });
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ stopMusic(); if(keepAlive) keepAlive.pause(); }
-  else { ac(); if(musicUnlocked){ soundOn(); startMusic(); } }
+  else {
+    try{ speechSynthesis.cancel(); }catch(e){}   // a voice left half-spoken in the background blocks the next one
+    try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+    ac(); if(musicUnlocked){ soundOn(); startMusic(); }
+  }
 });
 function toggleMusic(){
   S.music=!S.music; save();
@@ -1153,7 +1159,31 @@ function renderMusicBtns(){
   $('musicBtn').textContent = S.music?'🎵':'🔇';
   $('musicBtn2').textContent = S.music?'🎵 Music is ON — tap to turn off':'🔇 Music is OFF — tap to turn on';
 }
-document.addEventListener('pointerdown', ()=>{ soundOn(); ac(); loadPhon(); if(!musicUnlocked){ musicUnlocked=true; startMusic(); } });
+/* iPhone: after the app has been in the background (or a fresh load that started with no tap) the
+   sound engine can come back "interrupted" and stay silent however often it is resumed. Every tap:
+   resume it and play a silent blip (Safari only unlocks sound inside a tap); if it is "interrupted"
+   or the last tap's resume didn't take, throw it away and build a new one. Decoded sounds carry over. */
+function unlockAudio(){
+  try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+  soundOn();
+  const a=ac(); if(!a) return;
+  try{ const b=a.createBuffer(1,1,22050), src=a.createBufferSource(); src.buffer=b; src.connect(a.destination); src.start(0); }catch(e){}
+  if(a.state==='running'){ a._tried=0; return; }
+  // stuck: "interrupted", or an earlier tap's resume never took. Rebuild now, inside this tap,
+  // because Safari only lets a new sound engine start during a tap
+  if(a.state==='interrupted' || (a._tried && Date.now()-a._tried>300)) return rebuildAudio();
+  a._tried=a._tried||Date.now();
+}
+function rebuildAudio(){
+  const was=musicOn; stopMusic();
+  try{ AC.close(); }catch(e){}
+  AC=null; MX=null; saySrc=null; recSrc=null;
+  ac();
+  try{ const b=AC.createBuffer(1,1,22050), src=AC.createBufferSource(); src.buffer=b; src.connect(AC.destination); src.start(0); }catch(e){}
+  if(was || musicUnlocked) startMusic();
+}
+document.addEventListener('pointerdown', ()=>{ unlockAudio(); loadPhon(); if(!musicUnlocked){ musicUnlocked=true; startMusic(); } }, true);
+document.addEventListener('touchend', unlockAudio, true);
 
 /* ================= VOICE =================
    The browser's own voices. What makes them sound robotic is mostly the voice
@@ -3433,19 +3463,20 @@ function nextWord(quiet){
 function showExplain(box, w, units){
   const ex=wordExplain(w, units);
   if(!ex.length){ box.style.display='none'; return ex; }
-  box.innerHTML=`<div class="exHead"><span>How to read it</span><button onclick="sayExplain('${box.id}')">🔊</button></div>`+explainHTML(ex);
+  box.innerHTML=`<div class="exHead"><span>How to read it</span><button onclick="sayExplain('${box.id}')">🔊 How to say it</button></div>`+explainHTML(ex);
   box.style.display='block'; box.dataset.say=explainText(ex);
   return ex;
 }
 function sayExplain(id){ const t=$(id).dataset.say; if(t){ stopPhon(); say(t); } }
 // show (and, when asked, say once the sound has played) why sound k of the word sounds the way it does
-function explainUnitNow(el, w, units, k, speak, timers){
+function explainUnitNow(el, w, units, k){
   const ex=unitExplain(w, units, k); if(!ex) return false;
-  el.innerHTML='💡 <b class="exL">'+ex.letters+'</b> '+soundsHTML(ex.text);
-  if(speak){ const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+250;
-    (timers||phonT).push(setTimeout(()=>say(ex.text), wait)); }
+  el.innerHTML='💡 <b class="exL">'+ex.letters+'</b> '+soundsHTML(ex.text)+sayBtn(ex.text);
   return true;
 }
+// how-to-say-it help is only read out when this button is pressed
+const sayBtn=t=>`<button class="exSay" data-t="${encodeURIComponent(t)}" onclick="sayBtnClick(this)">🔊 How to say it</button>`;
+function sayBtnClick(b){ sPop(); stopSay(); stopPhon(); say(decodeURIComponent(b.dataset.t)); }
 function sayWordAgain(){
   if(wordDone) return demoSoundOut();
   if(hasRecordedWord(wordCur.w)) return sayWord(wordCur.w);
@@ -3507,7 +3538,7 @@ function pickWordLetter(btn,l){
     if(u && wordIdx===u.i0+u.n){
       soundUnit($('wordSlots'), wordUnitsCur, k, 0);
       // a letter that doesn't say its usual sound (the a in was says o): say why, right then
-      if(wordIdx<wordCur.w.length) explainUnitNow($('wordHint'), wordCur.w, wordUnitsCur, k, true, wordDemoT);
+      if(wordIdx<wordCur.w.length) explainUnitNow($('wordHint'), wordCur.w, wordUnitsCur, k);
     }
     else playPhon(PHON[l.toLowerCase()]||l.toLowerCase(), 0);
     btn.disabled=true; btn.style.opacity=.25;
@@ -3535,8 +3566,8 @@ function pickWordLetter(btn,l){
             setTimeout(()=>say(`Amazing! You did all ${S.wordGoal} words!`), 600);
             return;
           }
-          const ex=showExplain($('wordExplain'), wordCur.w, wordUnitsCur);
-          say((ex.length?explainText(ex)+' ':'')+'Now you try! Slide your finger across the word.');
+          showExplain($('wordExplain'), wordCur.w, wordUnitsCur);
+          say('Now you try! Slide your finger across the word.');
         }, end*1000+1300));
       }, 2400));
     }
@@ -3561,7 +3592,7 @@ function attachSwipe(box, get){
     // The child says the blended word themselves, so it isn't read out for them.
     // one sound tapped on its own: if it's an odd one, say why; a swipe only shows it
     const odd=seen.find(k=>unitExplain(st.word, st.units, k));
-    if(odd!==undefined && st.explainEl) explainUnitNow(st.explainEl(), st.word, st.units, odd, seen.length===1);
+    if(odd!==undefined && st.explainEl) explainUnitNow(st.explainEl(), st.word, st.units, odd);
     const inOrder = n>1 && st.units.every((_,k)=>seen.includes(k)) && seen.indexOf(0)<seen.lastIndexOf(n-1);
     if(inOrder && st.complete){
       const wait=Math.max(0, phonEnd-(AC?AC.currentTime:0))*1000+350;
@@ -3644,10 +3675,9 @@ function listHint(){
   [...$('listRows').children].forEach((x,k)=>x.classList.toggle('hinting', k===r));
   const box=$('listRows').children[r].querySelector('.listWord'), units=ls.units[r];
   if(lsHint.n===1){
-    let end=0; units.forEach((u,k)=>{ end=soundUnit(box, units, k, .3); });
+    units.forEach((u,k)=>soundUnit(box, units, k, .3));
     const ex=wordExplain(w, units);
-    $('listExplain').innerHTML='💡 '+(ex.length ? soundsHTML(explainText(ex)) : 'Listen to the sounds, then put them together!');
-    if(ex.length) phonT.push(setTimeout(()=>{ if(listWordAt(r)===w) say(explainText(ex)); }, end*1000+400));
+    $('listExplain').innerHTML='💡 '+(ex.length ? soundsHTML(explainText(ex))+sayBtn(explainText(ex)) : 'Listen to the sounds, then put them together!');
   } else {
     sayWord(w, '.'); $('listExplain').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!';
   }
@@ -3752,8 +3782,7 @@ function readHint(){
   else if(rd.hints<=2){
     stopPhon(); let end=0; rd.units.forEach((u,k)=>{ end=soundUnit($('readWord'), rd.units, k, .3); });
     $('readStatus').textContent='💡 Listen to the sounds, then put them together!';
-    const ex=showExplain($('readExplain'), w, rd.units);
-    if(ex.length) phonT.push(setTimeout(()=>{ if(rd.list[rd.i]===w) say(explainText(ex)); }, end*1000+400));
+    showExplain($('readExplain'), w, rd.units);   // its 🔊 button reads the help out
   }
   else { sayWord(w, '.'); $('readStatus').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!'; }
 }
