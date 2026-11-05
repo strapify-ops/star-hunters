@@ -778,7 +778,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.48', APP_DATE='6 Nov 2026';
+const APP_VERSION='2.49', APP_DATE='6 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -1163,9 +1163,11 @@ function renderMusicBtns(){
    sound engine can come back "interrupted" and stay silent however often it is resumed. Every tap:
    resume it and play a silent blip (Safari only unlocks sound inside a tap); if it is "interrupted"
    or the last tap's resume didn't take, throw it away and build a new one. Decoded sounds carry over. */
+let audioDirty=false;
 function unlockAudio(){
   try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
   soundOn();
+  if(audioDirty && AC){ audioDirty=false; return rebuildAudio(); }
   const a=ac(); if(!a) return;
   try{ const b=a.createBuffer(1,1,22050), src=a.createBufferSource(); src.buffer=b; src.connect(a.destination); src.start(0); }catch(e){}
   if(a.state==='running'){ a._tried=0; return; }
@@ -3846,7 +3848,9 @@ const MIC_OPTS={audio:{echoCancellation:false, noiseSuppression:false, autoGainC
 const recOpts=mime=>Object.assign({audioBitsPerSecond:128000}, mime?{mimeType:mime}:{});
 // iOS 17+: after using the mic, switch the audio session back so sound comes out of the loudspeaker at full quality
 function micStart(){ try{ if(navigator.audioSession) navigator.audioSession.type='play-and-record'; }catch(e){} }
-function micDone(){ try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){} }
+// using the mic switches the iPhone's sound over to recording and back; the old sound engine can
+// come out of that silent while still saying it's running, so the next tap builds a fresh one
+function micDone(){ try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){} audioDirty=true; }
 // ask for the microphone as soon as the app opens, so the question never pops up in the middle of reading.
 // Already allowed or blocked: don't ask. The mic is switched straight off again.
 async function askMicEarly(){
@@ -3861,7 +3865,7 @@ async function readRecord(){
   if(!navigator.mediaDevices || !window.MediaRecorder){ $('readStatus').textContent='This browser can’t record. Try Safari or Chrome.'; return; }
   speechSynthesis.cancel(); stopPhon();
   micStart(); try{ rd.stream=await navigator.mediaDevices.getUserMedia(MIC_OPTS); }
-  catch(e){ $('readStatus').textContent='🎤 The microphone is switched off. A grown-up can allow it in the browser settings.'; return; }
+  catch(e){ micDone(); $('readStatus').textContent='🎤 The microphone is switched off. A grown-up can allow it in the browser settings.'; return; }
   recWasMusic=musicOn; stopMusic();
   const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'';
   rd.rec=new MediaRecorder(rd.stream, recOpts(mime)); rd.chunks=[];
@@ -4081,7 +4085,7 @@ async function voiceRec(key){
   if(!navigator.mediaDevices || !window.MediaRecorder){ alert('This browser can’t record. Try Safari or Chrome.'); return; }
   speechSynthesis.cancel(); stopPhon();
   micStart(); try{ VR.stream=await navigator.mediaDevices.getUserMedia(MIC_OPTS); }
-  catch(e){ alert('The microphone is blocked. Allow it for this site in the browser settings.'); return; }
+  catch(e){ micDone(); alert('The microphone is blocked. Allow it for this site in the browser settings.'); return; }
   VR.music=musicOn; stopMusic();
   const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'';
   VR.key=key; VR.chunks=[]; VR.rec=new MediaRecorder(VR.stream, recOpts(mime));
