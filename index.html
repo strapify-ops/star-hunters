@@ -305,6 +305,9 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 #listRows.n10 .snd.line { height:5px; margin:1px 0; }
 #listRows.n10 .speakBtn { padding:3px 8px; font-size:15px; }
 #listRows.n10 .unit.hw::before { top:-11px; font-size:14px; }
+#listRows.n10 .splitArc { height:8px; border-width:3px; }
+.listRow.hinting { box-shadow:0 0 0 3px #fde047; }
+#listHintBtn { flex:0 0 auto; border:none; border-radius:999px; padding:0 16px; margin:4px 0; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 4px 0 rgba(0,0,0,.25); }
 #scr-list.n10 h2 { display:none; }
 .listNav .bigbtn:disabled { opacity:.4; }
 #listExplain { font-size:14px; font-weight:800; text-align:center; min-height:20px; margin:2px 0; }
@@ -722,7 +725,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
     <div id="listProg"></div>
     <div id="listRows"></div>
     <div id="listExplain">👉 Swipe along a word to hear its sounds</div>
-    <div class="listNav"><button class="bigbtn" id="listBackBtn" onclick="listPage(-1)">◀ Back</button><button class="bigbtn green" id="listNextBtn" onclick="listPage(1)">Next ▶</button></div>
+    <div class="listNav"><button class="bigbtn" id="listBackBtn" onclick="listPage(-1)">◀ Back</button><button id="listHintBtn" onclick="listHint()">💡 Hint</button><button class="bigbtn green" id="listNextBtn" onclick="listPage(1)">Next ▶</button></div>
   </div>
 
   <!-- GROWN-UP CHECK -->
@@ -768,7 +771,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.45', APP_DATE='5 Nov 2026';
+const APP_VERSION='2.46', APP_DATE='5 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -3473,11 +3476,11 @@ function drawSplitArc(box, units){
   const sp=units.map((u,k)=>u.split?k:-1).filter(k=>k>=0);
   if(sp.length!==2) return;
   const a=box.querySelector(`.unit[data-u="${sp[0]}"]`), b=box.querySelector(`.unit[data-u="${sp[1]}"]`);
-  const br=box.getBoundingClientRect(), ar=a.getBoundingClientRect(), bb=b.getBoundingClientRect();
-  const arc=document.createElement('div'); arc.className='splitArc';
-  arc.style.left=(ar.left-br.left+ar.width/2)+'px'; arc.style.width=(bb.left-ar.left+bb.width/2-ar.width/2)+'px';
-  arc.style.top=(ar.top-br.top+ar.height-14)+'px';
-  box.appendChild(arc);
+  // layout offsets, not screen rects: a screen still sliding/scaling in would put the arc in the wrong place
+  const arc=document.createElement('div'); arc.className='splitArc'; box.appendChild(arc);
+  const l=a.offsetLeft+a.offsetWidth/2, r=b.offsetLeft+b.offsetWidth/2;
+  arc.style.left=l+'px'; arc.style.width=(r-l)+'px';
+  arc.style.top=(a.offsetTop+a.offsetHeight-arc.offsetHeight*.78)+'px';
 }
 function renderWordSlots(){
   const box=$('wordSlots'); box.innerHTML=unitsHTML(wordCur.w, wordUnitsCur, wordIdx); drawSplitArc(box, wordUnitsCur);
@@ -3613,7 +3616,8 @@ function renderList(){
   }));
   const a=ls.page*n+1, b=Math.min(ls.words.length, a+n-1);
   $('listProg').textContent=`Words ${a}–${b} of ${ls.words.length}`;
-  $('listExplain').textContent='👉 Swipe along a word to hear its sounds';
+  $('listExplain').textContent='👉 Swipe along a word to hear its sounds'; lsHint={w:'', n:0};
+  [...$('listRows').children].forEach(x=>x.classList.remove('hinting'));
   $('listBackBtn').disabled = ls.page===0;
   $('listNextBtn').textContent = ls.page>=pages-1 ? 'Start again ▶' : 'Next ▶';
 }
@@ -3623,10 +3627,29 @@ function listPage(d){
   renderList();
 }
 function listToggleSize(){ const first=ls.page*S.listSize; S.listSize = S.listSize===5 ? 10 : 5; save(); ls.page=Math.floor(first/S.listSize); sPop(); renderList(); }
+// hint on the first word not read yet: 1st tap sounds it out (and says why for a tricky bit), 2nd tap says the word
+let lsHint={w:'', n:0};
+function listHint(){
+  const n=[...$('listRows').children].filter(x=>x.style.display!=='none').length;
+  let r=[...Array(n).keys()].find(k=>!ls.done.has(k)); if(r===undefined) r=0;
+  const w=listWordAt(r); if(!w) return;
+  if(lsHint.w!==w) lsHint={w, n:0};
+  lsHint.n++; sPop(); stopSay(); stopPhon();
+  [...$('listRows').children].forEach((x,k)=>x.classList.toggle('hinting', k===r));
+  const box=$('listRows').children[r].querySelector('.listWord'), units=ls.units[r];
+  if(lsHint.n===1){
+    let end=0; units.forEach((u,k)=>{ end=soundUnit(box, units, k, .3); });
+    const ex=wordExplain(w, units);
+    $('listExplain').innerHTML='💡 '+(ex.length ? soundsHTML(explainText(ex)) : 'Listen to the sounds, then put them together!');
+    if(ex.length) phonT.push(setTimeout(()=>{ if(listWordAt(r)===w) say(explainText(ex)); }, end*1000+400));
+  } else {
+    sayWord(w, '.'); $('listExplain').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!';
+  }
+}
 function listSay(r){ const w=listWordAt(r); if(w){ stopPhon(); sayWord(w); } }
 function listBlended(r){
   const row=$('listRows').children[r]; if(!row || ls.done.has(r)) return;
-  ls.done.add(r); row.classList.add('done'); row.querySelector('.lrTick').textContent='✅';
+  ls.done.add(r); row.classList.add('done'); row.classList.remove('hinting'); row.querySelector('.lrTick').textContent='✅';
   const shown=[...$('listRows').children].filter(x=>x.style.display!=='none').length;
   if(ls.done.size>=shown && !ls.credited){ ls.credited=true; addStars(1); addReadCredit(); $('listExplain').textContent='🌟 You read the whole list! Tap Next for more.'; }
 }
