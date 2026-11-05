@@ -258,7 +258,7 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
 #zapFlash.go { animation:zapfl .35s; }
 @keyframes zapfl { 0%{opacity:.9} 100%{opacity:0} }
 
-#wordSlots { display:flex; gap:12px; justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
+#wordSlots { display:flex; --g:12px; gap:var(--g); justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
 #wordSlots .unit { display:flex; flex-direction:column; align-items:center; gap:5px; border-radius:16px; padding:3px; transition:transform .15s, background .15s; }
 #wordSlots .uSlots { display:flex; gap:3px; }
 #wordSlots .unit.lit { background:rgba(253,224,71,.35); transform:translateY(-6px) scale(1.08); }
@@ -269,7 +269,12 @@ svg.lineart * { fill:none !important; stroke:#8b7aa8 !important; stroke-width:2.
   font-size:34px; font-weight:900; display:flex; align-items:center; justify-content:center; }
 .slot.filled { border-style:solid; border-color:#fde047; background:rgba(253,224,71,.3); animation:popin .35s; }
 .slot.filled.split { border-color:#f472b6; background:rgba(244,114,182,.3); }
-.splitArc { position:absolute; height:14px; border:4px solid #f472b6; border-top:none; border-radius:0 0 40px 40px; pointer-events:none; box-shadow:0 4px 8px -4px #f472b6; }
+.unit.arcS, .unit.arcM, .unit.arcE { position:relative; }
+.unit.arcS::after, .unit.arcM::after, .unit.arcE::after { content:''; position:absolute; bottom:-4px; height:18px; box-sizing:border-box;
+  border:0 solid #f472b6; border-bottom-width:4px; pointer-events:none; filter:drop-shadow(0 3px 3px rgba(244,114,182,.6)); }
+.unit.arcS::after { left:50%; right:calc(var(--g,12px) / -2); border-left-width:4px; border-bottom-left-radius:40px 18px; }
+.unit.arcM::after { left:calc(var(--g,12px) / -2); right:calc(var(--g,12px) / -2); }
+.unit.arcE::after { left:calc(var(--g,12px) / -2); right:50%; border-right-width:4px; border-bottom-right-radius:40px 18px; }
 .wordBtns { display:flex; gap:10px; justify-content:center; align-items:center; }
 .wordBtns .speakBtn { margin:2px 0; }
 #wordHintBtn { border:none; border-radius:999px; padding:10px 16px; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 4px 0 rgba(0,0,0,.25); }
@@ -291,21 +296,22 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 .listRow.done { background:rgba(134,239,172,.2); }
 .listRow .lrTick { width:26px; font-size:20px; text-align:center; flex:none; }
 .listRow .speakBtn { flex:none; margin:0; padding:6px 10px; font-size:18px; }
-.listWord { flex:1; min-width:0; display:flex; gap:10px; justify-content:center; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding:14px 0 4px; }
+.listWord { flex:1; min-width:0; display:flex; --g:10px; gap:var(--g); justify-content:center; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding:14px 0 4px; }
 .listWord .unit { display:flex; flex-direction:column; align-items:center; gap:4px; border-radius:14px; padding:2px; transition:transform .15s, background .15s; }
 .listWord .uSlots { display:flex; gap:2px; }
 .listWord .unit.lit { background:rgba(253,224,71,.35); transform:translateY(-4px) scale(1.06); }
 .listWord .slot { text-transform:lowercase; width:auto; min-width:.5em; height:auto; background:none; border:none; font-size:44px; line-height:1; padding:0 1px; animation:none; }
 #listRows.n10 { gap:4px; }
 #listRows.n10 .listRow { padding:2px 6px; border-radius:14px; }
-#listRows.n10 .listWord { padding:8px 0 0; gap:8px; }
+#listRows.n10 .listWord { padding:8px 0 0; --g:8px; }
 #listRows.n10 .listWord .unit { gap:3px; }
 #listRows.n10 .listWord .slot { font-size:26px; }
 #listRows.n10 .snd { width:8px; height:8px; }
 #listRows.n10 .snd.line { height:5px; margin:1px 0; }
 #listRows.n10 .speakBtn { padding:3px 8px; font-size:15px; }
 #listRows.n10 .unit.hw::before { top:-11px; font-size:14px; }
-#listRows.n10 .splitArc { height:8px; border-width:3px; }
+#listRows.n10 .unit.arcS::after, #listRows.n10 .unit.arcM::after, #listRows.n10 .unit.arcE::after { height:11px; border-bottom-width:3px; bottom:-3px; }
+#listRows.n10 .unit.arcS::after { border-left-width:3px; } #listRows.n10 .unit.arcE::after { border-right-width:3px; }
 .listRow.hinting { box-shadow:0 0 0 3px #fde047; }
 #listHintBtn { flex:0 0 auto; border:none; border-radius:999px; padding:0 16px; margin:4px 0; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 4px 0 rgba(0,0,0,.25); }
 #scr-list.n10 h2 { display:none; }
@@ -366,12 +372,12 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 #readExplain { flex:0 1 auto !important; min-height:52px; overflow-y:auto; }
 .picHidden { width:100%; height:100%; border-radius:24px; border:4px dashed rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center; font-size:64px; font-weight:900; color:rgba(255,255,255,.4); }
 #readPic svg { width:100%; height:100%; }
-#readWord { display:flex; gap:12px; justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
+#readWord { display:flex; --g:12px; gap:var(--g); justify-content:center; margin:8px 0 2px; position:relative; touch-action:none; user-select:none; -webkit-user-select:none; padding-bottom:4px; }
 #readWord .unit { display:flex; flex-direction:column; align-items:center; gap:5px; border-radius:16px; padding:3px; transition:transform .15s, background .15s; }
 #readWord .uSlots { display:flex; gap:2px; }
 #readWord .unit.lit { background:rgba(253,224,71,.35); transform:translateY(-6px) scale(1.08); }
 #readWord .slot { text-transform:lowercase; width:auto; min-width:34px; height:auto; background:none; border:none; font-size:64px; line-height:1; padding:0 2px; animation:none; }
-#readWord.quiet .snd, #readWord.quiet .splitArc { visibility:hidden; }
+#readWord.quiet .snd, #readWord.quiet .unit::after { visibility:hidden; }
 #readStatus { font-size:15px; font-weight:800; text-align:center; min-height:40px; margin:6px 0; }
 .readBtns { display:flex; gap:12px; justify-content:center; align-items:center; margin:4px 0; }
 .readBtns > button:not(.bigbtn) { border:none; border-radius:999px; padding:12px 16px; font-size:17px; font-weight:900; color:#fff; background:rgba(255,255,255,.2); }
@@ -771,7 +777,7 @@ b.exL { background:#fde047; color:#1e0b45; border-radius:8px; padding:0 6px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='2.46', APP_DATE='5 Nov 2026';
+const APP_VERSION='2.47', APP_DATE='5 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -3475,12 +3481,12 @@ function unitsHTML(w, units, filled){
 function drawSplitArc(box, units){
   const sp=units.map((u,k)=>u.split?k:-1).filter(k=>k>=0);
   if(sp.length!==2) return;
-  const a=box.querySelector(`.unit[data-u="${sp[0]}"]`), b=box.querySelector(`.unit[data-u="${sp[1]}"]`);
-  // layout offsets, not screen rects: a screen still sliding/scaling in would put the arc in the wrong place
-  const arc=document.createElement('div'); arc.className='splitArc'; box.appendChild(arc);
-  const l=a.offsetLeft+a.offsetWidth/2, r=b.offsetLeft+b.offsetWidth/2;
-  arc.style.left=l+'px'; arc.style.width=(r-l)+'px';
-  arc.style.top=(a.offsetTop+a.offsetHeight-arc.offsetHeight*.78)+'px';
+  // nothing is measured (that went wrong while a screen slid in): each letter from the vowel to the e
+  // carries a piece of the arc in CSS, so it always follows the letters
+  for(let k=sp[0]; k<=sp[1]; k++){
+    const el=box.querySelector(`.unit[data-u="${k}"]`);
+    if(el) el.classList.add(k===sp[0]?'arcS':k===sp[1]?'arcE':'arcM');
+  }
 }
 function renderWordSlots(){
   const box=$('wordSlots'); box.innerHTML=unitsHTML(wordCur.w, wordUnitsCur, wordIdx); drawSplitArc(box, wordUnitsCur);
@@ -3607,9 +3613,9 @@ function renderList(){
   // the split-vowel arcs need the rows laid out first
   requestAnimationFrame(()=>[...$('listRows').children].forEach((row,r)=>{
     if(!ls.units[r] || !ls.units[r].length) return;
-    const box=row.querySelector('.listWord'); box.style.gap=''; box.querySelectorAll('.slot').forEach(x=>x.style.fontSize='');
+    const box=row.querySelector('.listWord'); box.style.removeProperty('--g'); box.querySelectorAll('.slot').forEach(x=>x.style.fontSize='');
     // a long word (astronaut): close the gaps, then shrink the letters until it fits the row
-    if(box.scrollWidth>box.clientWidth) box.style.gap='3px';
+    if(box.scrollWidth>box.clientWidth) box.style.setProperty('--g','3px');
     let fs=parseFloat(getComputedStyle(box.querySelector('.slot')).fontSize);
     while(box.scrollWidth>box.clientWidth && fs>14){ fs-=2; box.querySelectorAll('.slot').forEach(x=>x.style.fontSize=fs+'px'); }
     drawSplitArc(box, ls.units[r]);
