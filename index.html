@@ -320,6 +320,20 @@ i.sd { font-style:italic; font-weight:900; font-size:1.15em; color:#86efac; lett
 .listRow.hinting { box-shadow:0 0 0 3px #fde047; }
 #listHintBtn { flex:0 0 auto; border:none; border-radius:999px; padding:0 16px; margin:4px 0; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(135deg,#fbbf24,#f97316); box-shadow:0 4px 0 rgba(0,0,0,.25); }
 #scr-list.n10 h2 { display:none; }
+/* hints or none: asked each time; no hints = no sounds, no speaker, no Hint, tap a row once it is read */
+#listAsk { display:none; flex-direction:column; align-items:center; gap:14px; margin:18px 0; width:100%; max-width:560px; }
+#listAsk .q { font-size:22px; font-weight:900; text-align:center; }
+#listAsk .bigbtn { width:100%; max-width:360px; font-size:22px; }
+#scr-list.asking #listAsk { display:flex; }
+#scr-list.asking #listRows, #scr-list.asking #listProg, #scr-list.asking #listExplain, #scr-list.asking .listNav { display:none !important; }
+#scr-list.nohint #listHintBtn, #scr-list.nohint .listRow .speakBtn { display:none; }
+#scr-list.nohint .listRow, #scr-list.sent .listRow { cursor:pointer; }
+.listSent { flex:1; min-width:0; display:none; flex-wrap:wrap; justify-content:center; gap:4px 12px; font-size:32px; font-weight:900; padding:10px 0; line-height:1.15; }
+.listSent .sw { border-radius:10px; padding:0 3px; }
+.listSent .sw.lit { background:rgba(253,224,71,.35); }
+#scr-list.sent .listWord { display:none; }
+#scr-list.sent .listSent { display:flex; }
+#listRows.n10 .listSent { font-size:20px; padding:4px 0; gap:2px 8px; }
 .listNav .bigbtn:disabled { opacity:.4; }
 #listExplain { font-size:14px; font-weight:800; text-align:center; min-height:20px; margin:2px 0; }
 .listNav { display:flex; gap:10px; justify-content:center; width:100%; max-width:560px; }
@@ -901,7 +915,8 @@ h2 { font-size:21px; font-weight:900; letter-spacing:.2px; }
   <!-- WORD LIST -->
   <div class="screen" id="scr-list">
     <h2>📋 Word List</h2>
-    <div class="setRow"><button id="listSetBtn" class="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button><button id="listSizeBtn" class="sizeToggle" onclick="listToggleSize()">5 words</button></div>
+    <div class="setRow"><button id="listSetBtn" class="wordSetBtn" onclick="openWordChooser()">📚 All words ▾</button><button id="listKindBtn" class="sizeToggle" onclick="listToggleKind()">🔤 Words</button><button id="listSizeBtn" class="sizeToggle" onclick="listToggleSize()">5 words</button><button id="listHintsBtn" class="sizeToggle" onclick="listAskHints()">💡 Hints</button></div>
+    <div id="listAsk"></div>
     <div id="listProg"></div>
     <div id="listRows"></div>
     <div id="listExplain">👉 Swipe along a word to hear its sounds</div>
@@ -1000,7 +1015,7 @@ h2 { font-size:21px; font-weight:900; letter-spacing:.2px; }
 addEventListener('contextmenu', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('selectstart', e=>{ if(!e.target.closest || !e.target.closest('input,textarea')) e.preventDefault(); });
 addEventListener('dragstart', e=>e.preventDefault());
-const APP_VERSION='3.0', APP_DATE='14 Nov 2026';
+const APP_VERSION='3.1', APP_DATE='20 Nov 2026';
 document.addEventListener('DOMContentLoaded', ()=>document.querySelectorAll('[data-ver]').forEach(el=>el.textContent=`Star Hunters v${APP_VERSION} · ${APP_DATE}`));
 
 'use strict';
@@ -4058,27 +4073,68 @@ const ls={words:[], page:0, done:new Set(), credited:false, units:[]};
 // the rows are made once, each with its own swipe (attachSwipe listens on the whole window)
 for(let r=0;r<10;r++){
   const row=document.createElement('div'); row.className='listRow';
-  row.innerHTML=`<span class="lrTick"></span><div class="listWord"></div><button class="speakBtn" onclick="listSay(${r})">🔊</button>`;
+  row.innerHTML=`<span class="lrTick"></span><div class="listWord"></div><div class="listSent"></div><button class="speakBtn" onclick="listSay(${r})">🔊</button>`;
   $('listRows').appendChild(row);
   const box=row.querySelector('.listWord');
-  attachSwipe(box, ()=>{ const w=listWordAt(r)||''; return {units:ls.units[r]||[], word:w, ready:()=>true, complete:true,
+  // a tap: no hints = "I read it" tick; sentences with hints = tap a word to hear it, tap the circle when read
+  let tx=0, ty=0;
+  row.addEventListener('pointerdown',e=>{ tx=e.clientX; ty=e.clientY; });
+  row.addEventListener('pointerup',e=>{
+    if(Math.hypot(e.clientX-tx, e.clientY-ty)>12 || e.target.closest('.speakBtn')) return;
+    if(!ls.hints) return listBlended(r);
+    if(S.listKind!=='sent') return;
+    const sw=e.target.closest('.sw');
+    if(sw){ stopSay(); stopPhon(); sw.classList.add('lit'); setTimeout(()=>sw.classList.remove('lit'),600); sayWord(sw.dataset.w); }
+    else listBlended(r);
+  });
+  attachSwipe(box, ()=>{ const w=listWordAt(r)||''; return {units:ls.units[r]||[], word:w, ready:()=>ls.hints, complete:true,
     explainEl:()=>$('listExplain'), onBlend:()=>listBlended(r)}; });
 }
 const listWordAt=r=>ls.words[ls.page*S.listSize+r];
+// first reading sentences: short sound-it-out words plus a few heart words
+const SENTENCES=[
+ 'The cat sat on a mat.','A big dog ran.','I can hop.','Mum has a hat.','Dad got a red bus.','The pig is in the mud.',
+ 'Sam had a nap.','A fox sat on a log.','The hen is in a box.','I am on top.','The bug is on a rug.','Pat the dog.',
+ 'I can see a cat.','Get the cup.','A man had a van.','The sun is hot.','Tim can run.','A cat can nap.',
+ 'Is it a bat?','I got a pen.','The jam is on the bun.','Ten men sat.','The kid hid.','Dig in the mud.',
+ 'A pup is in a cot.','I had a big hug.','The rat ran to the bin.','Pip can sit.','Nan has a wig.','The cap is red.',
+ 'A bat and a cat.','I like my hat.','We can hop and run.','The dog got wet.','Look at the pig.','He has a big bag.',
+ 'She can hum.','Put the lid on.','Go to bed.','Can you see me?','My mum is fun.','The fish is in a tub.',
+ 'I see the moon.','The ship is big.','A duck can quack.','The frog can jump.','I can sing a song.','We had fun.'];
+S.listKind = S.listKind==='sent' ? 'sent' : 'word';
+S.listHints = S.listHints!==false;
 function startList(){
-  ls.words=shuffle(wordPool().map(x=>x.w)); ls.page=0;
-  go('list'); renderWordRule(); renderList();
+  ls.page=0; listFill();
+  go('list'); renderWordRule(); listAskHints();
 }
+function listFill(){ ls.words = S.listKind==='sent' ? shuffle([...SENTENCES]) : shuffle(wordPool().map(x=>x.w)); }
+function listAskHints(){
+  stopSay(); stopPhon();
+  $('listAsk').innerHTML=`<div class="q">Do you want hints?</div>
+    <button class="bigbtn gold" onclick="listSetHints(true)">💡 Yes, hints please</button>
+    <button class="bigbtn" onclick="listSetHints(false)">🙈 No hints</button>`;
+  $('scr-list').classList.add('asking');
+  say('Do you want hints?');
+}
+function listSetHints(on){ sPop(); S.listHints=on; save(); $('scr-list').classList.remove('asking'); renderList(); }
+function listToggleKind(){ sPop(); S.listKind = S.listKind==='sent' ? 'word' : 'sent'; save(); ls.page=0; listFill(); renderList(); }
 function renderList(){
   const n=S.listSize, pages=Math.max(1, Math.ceil(ls.words.length/n));
   ls.page=Math.max(0, Math.min(ls.page, pages-1)); ls.done=new Set(); ls.credited=false;
+  ls.hints=S.listHints; const sent=S.listKind==='sent';
+  $('scr-list').classList.toggle('nohint', !ls.hints); $('scr-list').classList.toggle('sent', sent);
+  $('listKindBtn').textContent = sent ? '📝 Sentences' : '🔤 Words';
+  $('listHintsBtn').textContent = ls.hints ? '💡 Hints on' : '🙈 No hints';
   $('listRows').classList.toggle('n10', n===10); $('scr-list').classList.toggle('n10', n===10);
   $('listSizeBtn').textContent=n+' words';
   [...$('listRows').children].forEach((row,r)=>{
     const w=r<n && listWordAt(r);
-    row.style.display = w ? '' : 'none'; row.classList.remove('done'); row.querySelector('.lrTick').textContent='';
-    const box=row.querySelector('.listWord');
-    if(!w){ box.innerHTML=''; ls.units[r]=[]; return; }
+    row.style.display = w ? '' : 'none'; row.classList.remove('done'); row.querySelector('.lrTick').textContent = w && (sent||!ls.hints) ? '⭕' : '';
+    const box=row.querySelector('.listWord'), sb=row.querySelector('.listSent');
+    if(!w || sent){ box.innerHTML=''; ls.units[r]=[];
+      sb.innerHTML = w&&sent ? w.split(' ').map(t=>`<span class="sw" data-w="${t.replace(/[^A-Za-z]/g,'').toUpperCase()}">${t}</span>`).join('') : '';
+      return; }
+    sb.innerHTML='';
     ls.units[r]=wordUnits(w); box.innerHTML=unitsHTML(w, ls.units[r], w.length);
   });
   // the split-vowel arcs need the rows laid out first
@@ -4092,8 +4148,10 @@ function renderList(){
     drawSplitArc(box, ls.units[r]);
   }));
   const a=ls.page*n+1, b=Math.min(ls.words.length, a+n-1);
-  $('listProg').textContent=`Words ${a}–${b} of ${ls.words.length}`;
-  $('listExplain').textContent='👉 Swipe along a word to hear its sounds'; lsHint={w:'', n:0};
+  $('listProg').textContent=`${sent?'Sentences':'Words'} ${a}–${b} of ${ls.words.length}`;
+  $('listExplain').textContent = !ls.hints ? '👉 Read each one out loud, then tap it ✅'
+    : sent ? '👉 Tap a word to hear it. Tap ⭕ when you read it' : '👉 Swipe along a word to hear its sounds';
+  lsHint={w:'', n:0};
   [...$('listRows').children].forEach(x=>x.classList.remove('hinting'));
   $('listBackBtn').disabled = ls.page===0;
   $('listNextBtn').textContent = ls.page>=pages-1 ? 'Start again ▶' : 'Next ▶';
@@ -4109,8 +4167,13 @@ let lsHint={w:'', n:0};
 function listHint(){
   const n=[...$('listRows').children].filter(x=>x.style.display!=='none').length;
   let r=[...Array(n).keys()].find(k=>!ls.done.has(k)); if(r===undefined) r=0;
-  const w=listWordAt(r); if(!w) return;
+  const w=listWordAt(r); if(!w || !ls.hints) return;
   if(lsHint.w!==w) lsHint={w, n:0};
+  if(S.listKind==='sent'){
+    sPop(); stopSay(); stopPhon();
+    [...$('listRows').children].forEach((x,k)=>x.classList.toggle('hinting', k===r));
+    say(w); $('listExplain').textContent='💡 Listen, then you read it!'; return;
+  }
   lsHint.n++; sPop(); stopSay(); stopPhon();
   [...$('listRows').children].forEach((x,k)=>x.classList.toggle('hinting', k===r));
   const box=$('listRows').children[r].querySelector('.listWord'), units=ls.units[r];
@@ -4122,10 +4185,11 @@ function listHint(){
     sayWord(w, '.'); $('listExplain').textContent='💡 It says "'+w.toLowerCase()+'". Now you read it!';
   }
 }
-function listSay(r){ const w=listWordAt(r); if(w){ stopPhon(); sayWord(w); } }
+function listSay(r){ const w=listWordAt(r); if(!w) return; stopPhon(); if(S.listKind==='sent'){ stopSay(); say(w); } else sayWord(w); }
 function listBlended(r){
   const row=$('listRows').children[r]; if(!row || ls.done.has(r)) return;
-  ls.done.add(r); row.classList.add('done'); row.classList.remove('hinting'); row.querySelector('.lrTick').textContent='✅';
+  if(!listWordAt(r)) return;
+  ls.done.add(r); row.classList.add('done'); row.classList.remove('hinting'); row.querySelector('.lrTick').textContent='✅'; if(S.listKind==='sent'||!ls.hints) sDing();
   const shown=[...$('listRows').children].filter(x=>x.style.display!=='none').length;
   if(ls.done.size>=shown && !ls.credited){ ls.credited=true; addStars(1); addReadCredit(); $('listExplain').textContent='🌟 You read the whole list! Tap Next for more.'; }
 }
